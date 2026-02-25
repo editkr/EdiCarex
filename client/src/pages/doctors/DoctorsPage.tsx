@@ -47,6 +47,7 @@ import {
 } from "@/components/ui/alert-dialog"
 import { format, isToday } from 'date-fns'
 import { es } from 'date-fns/locale'
+import { usePermissions } from '@/hooks/usePermissions'
 
 // Visual Schedule Component
 const ScheduleBadges = ({ schedules }: { schedules: any[] }) => {
@@ -93,6 +94,7 @@ const ScheduleBadges = ({ schedules }: { schedules: any[] }) => {
 
 export default function DoctorsPage() {
     const navigate = useNavigate()
+    const { hasPermission } = usePermissions()
     const [searchTerm, setSearchTerm] = useState('')
     const [doctors, setDoctors] = useState<any[]>([])
     const [appointments, setAppointments] = useState<any[]>([])
@@ -269,10 +271,12 @@ export default function DoctorsPage() {
                         Gestionar personal médico y horarios • {filteredDoctors.length} total
                     </p>
                 </div>
-                <Button onClick={handleAdd}>
-                    <Plus className="h-4 w-4 mr-2" />
-                    Nuevo Doctor
-                </Button>
+                {hasPermission('DOCTORS_CREATE') && (
+                    <Button onClick={handleAdd}>
+                        <Plus className="h-4 w-4 mr-2" />
+                        Nuevo Doctor
+                    </Button>
+                )}
             </div>
 
             {/* Search Bar */}
@@ -380,20 +384,24 @@ export default function DoctorsPage() {
                                                 >
                                                     <Eye className="h-4 w-4" />
                                                 </Button>
-                                                <Button
-                                                    variant="ghost"
-                                                    size="sm"
-                                                    onClick={() => handleEdit(doctor)}
-                                                >
-                                                    <Edit className="h-4 w-4" />
-                                                </Button>
-                                                <Button
-                                                    variant="ghost"
-                                                    size="sm"
-                                                    onClick={() => setDeleteId(doctor.id)}
-                                                >
-                                                    <Trash2 className="h-4 w-4 text-red-500" />
-                                                </Button>
+                                                {hasPermission('DOCTORS_EDIT') && (
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        onClick={() => handleEdit(doctor)}
+                                                    >
+                                                        <Edit className="h-4 w-4" />
+                                                    </Button>
+                                                )}
+                                                {hasPermission('DOCTORS_DELETE') && (
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        onClick={() => setDeleteId(doctor.id)}
+                                                    >
+                                                        <Trash2 className="h-4 w-4 text-red-500" />
+                                                    </Button>
+                                                )}
                                             </div>
                                         </TableCell>
                                     </TableRow>

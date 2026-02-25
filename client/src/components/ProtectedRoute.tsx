@@ -1,16 +1,31 @@
 import { Navigate, Outlet, useLocation } from 'react-router-dom'
+import { usePermissions } from '@/hooks/usePermissions'
 import { useAuthStore } from '@/stores/authStore'
+import { Permission } from '@/constants/permissions'
 
 interface ProtectedRouteProps {
     children?: React.ReactNode
     allowedRoles?: string[]
+    requiredPermission?: Permission | string
+    requireBoth?: boolean // Si true, requiere rol Y permiso
 }
 
-export default function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) {
+/**
+ * Componente de ruta protegida con validación de roles y permisos granulares
+ * Prioriza permisos sobre roles para mayor flexibilidad
+ */
+export default function ProtectedRoute({
+    children,
+    allowedRoles,
+    requiredPermission,
+    requireBoth = false
+}: ProtectedRouteProps) {
     const { isAuthenticated, user } = useAuthStore()
+    const { hasPermission, hasRole } = usePermissions()
     const localToken = localStorage.getItem('token')
     const location = useLocation()
 
+    // 1. Verificar autenticación
     if (!isAuthenticated && !localToken) {
         // Redirección inteligente: si es una ruta de asistencia, ir al login operativo
         if (location.pathname.startsWith('/attendance')) {
@@ -19,18 +34,42 @@ export default function ProtectedRoute({ children, allowedRoles }: ProtectedRout
         return <Navigate to="/login" replace />
     }
 
-    // 1. Verificar roles si están especificados
-    if (allowedRoles && user && !allowedRoles.includes(user.role)) {
-        console.warn(`Acceso denegado: El rol ${user.role} no tiene permiso para esta sección.`)
-        // Si intenta entrar a asistencia sin ser HR, mandarlo al login de asistencia (o dashboard)
-        if (location.pathname.startsWith('/attendance')) {
-            return <Navigate to="/attendance/login" state={{ error: 'Acceso Restringido: Personal Autorizado' }} replace />
+    // 2. Verificar permiso granular (PRIORIDAD)
+    if (requiredPermission) {
+        const hasRequiredPermission = hasPermission(requiredPermission)
+
+        if (!hasRequiredPermission) {
+            console.warn(`Acceso denegado: Falta permiso ${requiredPermission}`)
+
+            if (location.pathname.startsWith('/attendance')) {
+                return <Navigate to="/attendance/login" state={{ error: 'Acceso Restringido: Permiso Requerido' }} replace />
+            }
+            return <Navigate to="/dashboard" replace />
         }
-        return <Navigate to="/dashboard" replace />
     }
 
-    // 2. Nota: El backend ya bloquea las peticiones (503). 
-    // Podríamos añadir un check de estado global aquí si el store tuviera el flag de mantenimiento.
+    // 3. Verificar rol (si se especifica y no se cumplió el permiso)
+    if (allowedRoles) {
+        const hasRequiredRole = hasRole(allowedRoles)
+
+        // Si requireBoth es true, necesita AMBOS (rol Y permiso)
+        if (requireBoth && requiredPermission) {
+            if (!hasRequiredRole) {
+                console.warn(`Acceso denegado: El rol ${user?.role} no está autorizado`)
+                if (location.pathname.startsWith('/attendance')) {
+                    return <Navigate to="/attendance/login" state={{ error: 'Acceso Restringido: Personal Autorizado' }} replace />
+                }
+                return <Navigate to="/dashboard" replace />
+            }
+        } else if (!requiredPermission && !hasRequiredRole) {
+            // Solo validar rol si no hay permiso especificado
+            console.warn(`Acceso denegado: El rol ${user?.role} no está autorizado`)
+            if (location.pathname.startsWith('/attendance')) {
+                return <Navigate to="/attendance/login" state={{ error: 'Acceso Restringido: Personal Autorizado' }} replace />
+            }
+            return <Navigate to="/dashboard" replace />
+        }
+    }
 
     return children ? <>{children}</> : <Outlet />
 }

@@ -1,4 +1,4 @@
-import { PrismaClient } from '../node_modules/.prisma/client/index';
+import { PrismaClient } from '@prisma/client';
 // @ts-ignore
 import * as bcrypt from 'bcrypt';
 
@@ -6,6 +6,19 @@ const prisma = new PrismaClient();
 
 async function main() {
     console.log('🌱 Starting database seeding...');
+
+    const ROLE_DEFAULTS: Record<string, string[]> = {
+        'Admin': ['ALL'],
+        'Doctor': ['DASHBOARD', 'PATIENTS_VIEW', 'PATIENTS_EDIT', 'MEDICAL_RECORDS_VIEW', 'MEDICAL_RECORDS_CREATE', 'MEDICAL_RECORDS_EDIT', 'PRESCRIPTIONS_CREATE', 'PRESCRIPTIONS_VIEW', 'APPOINTMENTS_VIEW', 'APPOINTMENTS_EDIT', 'EMERGENCY_VIEW', 'EMERGENCY_EDIT', 'EMERGENCY_DISCHARGE', 'BEDS_VIEW', 'BEDS_ASSIGN', 'LAB_VIEW', 'LAB_CREATE', 'LAB_RESULTS', 'PHARMACY_VIEW', 'REPORTS_VIEW', 'AI_USE', 'MESSAGES_VIEW', 'MESSAGES_SEND'],
+        'Nurse': ['DASHBOARD', 'PATIENTS_VIEW', 'PATIENTS_EDIT', 'MEDICAL_RECORDS_VIEW', 'MEDICAL_RECORDS_EDIT', 'PRESCRIPTIONS_VIEW', 'APPOINTMENTS_VIEW', 'EMERGENCY_VIEW', 'EMERGENCY_EDIT', 'EMERGENCY_DISCHARGE', 'BEDS_VIEW', 'BEDS_EDIT', 'BEDS_ASSIGN', 'PHARMACY_VIEW', 'PHARMACY_DISPENSE', 'LAB_VIEW', 'MESSAGES_VIEW', 'MESSAGES_SEND'],
+        'Receptionist': ['DASHBOARD', 'PATIENTS_VIEW', 'PATIENTS_CREATE', 'PATIENTS_EDIT', 'APPOINTMENTS_VIEW', 'APPOINTMENTS_CREATE', 'APPOINTMENTS_EDIT', 'WAITING_VIEW', 'WAITING_MANAGE', 'BILLING_VIEW', 'MESSAGES_VIEW', 'MESSAGES_SEND'],
+        'Lab': ['DASHBOARD', 'PATIENTS_VIEW', 'LAB_VIEW', 'LAB_CREATE', 'LAB_EDIT', 'LAB_RESULTS', 'REPORTS_VIEW', 'MESSAGES_VIEW', 'MESSAGES_SEND'],
+        'Pharmacy': ['DASHBOARD', 'PATIENTS_VIEW', 'PHARMACY_VIEW', 'PHARMACY_EDIT', 'PHARMACY_DISPENSE', 'PRESCRIPTIONS_VIEW', 'BILLING_VIEW', 'REPORTS_VIEW', 'MESSAGES_VIEW', 'MESSAGES_SEND'],
+        'HR': ['DASHBOARD', 'HR_VIEW', 'HR_CREATE', 'HR_EDIT', 'HR_DELETE', 'ATTENDANCE_VIEW', 'ATTENDANCE_EDIT', 'REPORTS_VIEW', 'ANALYTICS_VIEW', 'MESSAGES_VIEW', 'MESSAGES_SEND'],
+        'Billing': ['DASHBOARD', 'PATIENTS_VIEW', 'BILLING_VIEW', 'BILLING_CREATE', 'BILLING_EDIT', 'REPORTS_VIEW', 'ANALYTICS_VIEW', 'MESSAGES_VIEW', 'MESSAGES_SEND'],
+        'Management': ['DASHBOARD', 'PATIENTS_VIEW', 'DOCTORS_VIEW', 'APPOINTMENTS_VIEW', 'EMERGENCY_VIEW', 'BEDS_VIEW', 'PHARMACY_VIEW', 'LAB_VIEW', 'BILLING_VIEW', 'REPORTS_VIEW', 'REPORTS_EXPORT', 'ANALYTICS_VIEW', 'ANALYTICS_ADVANCED', 'AI_USE', 'MESSAGES_VIEW', 'MESSAGES_SEND'],
+        'Audit': ['DASHBOARD', 'ADMIN_VIEW', 'AUDIT_VIEW', 'BACKUPS_VIEW', 'BACKUPS_CREATE', 'SETTINGS_VIEW', 'SETTINGS_EDIT', 'MESSAGES_VIEW', 'MESSAGES_SEND'],
+    };
 
     // Create Roles
     const adminRole = await prisma.role.upsert({
@@ -123,6 +136,19 @@ async function main() {
 
     console.log('✅ Roles created');
 
+    const roleMap: Record<string, string> = {
+        'Admin': adminRole.id,
+        'Doctor': doctorRole.id,
+        'Nurse': nurseRole.id,
+        'Receptionist': receptionistRole.id,
+        'Lab': labRole.id,
+        'Pharmacy': pharmacyRole.id,
+        'Billing': billingRole.id,
+        'HR': hrRole.id,
+        'Management': managementRole.id,
+        'Audit': auditRole.id,
+    };
+
     // Create Admin User
     const hashedPassword = await bcrypt.hash('password123', 10);
 
@@ -137,6 +163,9 @@ async function main() {
             phone: '+1234567890',
             roleId: adminRole.id,
             isActive: true,
+            preferences: {
+                permissions: ['ALL']
+            }
         },
     });
 
@@ -328,6 +357,36 @@ async function main() {
 
         // Shifts - for simplicity, delete existing scheduled shifts for this employee and recreate?
         // Or just skip.
+
+        // Create User for Employee if not exists
+        const existingUser = await prisma.user.findUnique({ where: { email: emp.email } });
+        if (!existingUser) {
+            const hashedEmpPw = await bcrypt.hash('password123', 10);
+            const roleId = roleMap[emp.role] || adminRole.id; // Fallback to admin if role not found (unsafe but ok for seed)
+
+            // Split name
+            const names = emp.name.split(' ');
+            const lastName = names.pop() || '';
+            const firstName = names.join(' ').replace('Dr. ', '').replace('Dra. ', '').replace('Enf. ', '');
+
+            await prisma.user.create({
+                data: {
+                    email: emp.email,
+                    password: hashedEmpPw,
+                    firstName: firstName,
+                    lastName: lastName,
+                    roleId: roleId,
+                    isActive: true,
+                    phone: '+1234556677',
+                    preferences: {
+                        permissions: ROLE_DEFAULTS[emp.role] || [],
+                        department: emp.department,
+                        hireDate: emp.hireDate,
+                    }
+                }
+            });
+            console.log(`✅ Created User for Employee: ${emp.email} / password123`);
+        }
     }
     console.log('✅ HR Data (Employees, Payroll) checked/seeded');
 

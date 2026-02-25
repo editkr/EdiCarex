@@ -23,6 +23,30 @@ import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 export class FilesController {
     constructor(private readonly filesService: FilesService) { }
 
+    @Post('upload')
+    @UseInterceptors(
+        FileInterceptor('file', {
+            storage: diskStorage({
+                destination: join(process.cwd(), 'public', 'uploads', 'general'),
+                filename: (req, file, cb) => {
+                    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+                    cb(null, `${file.fieldname}-${uniqueSuffix}${extname(file.originalname)}`);
+                },
+            }),
+        }),
+    )
+    async uploadFileGeneral(
+        @UploadedFile()
+        file: Express.Multer.File,
+    ) {
+        if (!file) {
+            console.error('[FILES] No se recibió ningún archivo en el controlador');
+            return { message: 'No file uploaded', statusCode: 400 };
+        }
+
+        return this.filesService.handleFileUpload(file);
+    }
+
     @Post('upload/laboratory')
     @UseInterceptors(
         FileInterceptor('file', {

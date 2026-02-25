@@ -26,6 +26,7 @@ import {
     Loader2,
 } from 'lucide-react'
 import { patientsAPI, doctorsAPI, appointmentsAPI } from '@/services/api'
+import { useOrganization } from '@/contexts/OrganizationContext'
 
 interface SearchResult {
     type: 'patient' | 'doctor' | 'appointment' | 'invoice' | 'medication'
@@ -37,6 +38,7 @@ interface SearchResult {
 
 export default function GlobalSearch() {
     const navigate = useNavigate()
+    const { config } = useOrganization()
     const [open, setOpen] = useState(false)
     const [query, setQuery] = useState('')
     const [loading, setLoading] = useState(false)
@@ -173,7 +175,7 @@ export default function GlobalSearch() {
 
                 <div className="flex items-center gap-2">
                     <Search className="h-4 w-4 opacity-50 group-hover:opacity-100 group-hover:text-primary transition-all" />
-                    <span className="font-normal tracking-wide">Buscar en EdiCarex...</span>
+                    <span className="font-normal tracking-wide">Buscar en {config?.hospitalName || 'EdiCarex'}...</span>
                 </div>
 
                 <div className="flex items-center gap-1">

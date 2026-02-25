@@ -75,8 +75,11 @@ import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { exportToExcel, exportHRAttendanceToPDF, exportPayrollToPDF } from '@/utils/exportUtils'
+import { useOrganization } from '@/contexts/OrganizationContext'
+import { formatCurrency } from '@/utils/financialUtils'
 
 export default function AttendancePage() {
+    const { config } = useOrganization()
     const location = useLocation()
     const navigate = useNavigate()
 
@@ -441,8 +444,8 @@ export default function AttendancePage() {
     }
 
     const handleExportPDF = () => {
-        if (activeTab === 'ops') exportHRAttendanceToPDF(data.attendance)
-        else if (activeTab === 'payroll') exportPayrollToPDF(data.payroll)
+        if (activeTab === 'ops') exportHRAttendanceToPDF(data.attendance, config)
+        else if (activeTab === 'payroll') exportPayrollToPDF(data.payroll, config)
         else toast({ title: 'Info', description: 'PDF disponible para Asistencia y Nómina' })
     }
 
@@ -767,7 +770,7 @@ export default function AttendancePage() {
                                         <h3 className="text-xl font-bold text-foreground tracking-tight mb-2">Motor Financiero</h3>
                                         <p className="text-muted-foreground text-xs mb-6 leading-relaxed font-medium">Cálculo automatizado de haberes y emisión de boletas legales.</p>
                                         <div className="text-3xl font-bold text-edicarex">
-                                            S/ {(data.payroll || []).reduce((acc: number, p: any) => acc + (Number(p.netSalary) || 0), 0).toLocaleString()}
+                                            {formatCurrency((data.payroll || []).reduce((acc: number, p: any) => acc + (Number(p.netSalary) || 0), 0), config)}
                                             <span className="text-xs font-semibold text-muted-foreground uppercase tracking-widest ml-2">Total</span>
                                         </div>
                                     </Card>

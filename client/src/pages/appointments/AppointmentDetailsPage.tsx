@@ -22,12 +22,14 @@ import {
 import { format, differenceInMinutes } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { useToast } from '@/components/ui/use-toast'
+import { usePermissions } from '@/hooks/usePermissions'
 import AppointmentModal from '@/components/modals/AppointmentModal'
 
 export default function AppointmentDetailsPage() {
     const { id } = useParams<{ id: string }>()
     const navigate = useNavigate()
     const { toast } = useToast()
+    const { hasPermission } = usePermissions()
     const [activeTab, setActiveTab] = useState('details')
     const [showEditModal, setShowEditModal] = useState(false)
     const [showInvoiceModal, setShowInvoiceModal] = useState(false)
@@ -226,15 +228,17 @@ export default function AppointmentDetailsPage() {
                     </div>
                 </div>
                 <div className="flex gap-2">
-                    <Button
-                        onClick={handleBilling}
-                        className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold"
-                    >
-                        <Banknote className="h-4 w-4 mr-2" />
-                        Facturar
-                    </Button>
+                    {hasPermission('BILLING_CREATE') && (
+                        <Button
+                            onClick={handleBilling}
+                            className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold"
+                        >
+                            <Banknote className="h-4 w-4 mr-2" />
+                            Facturar
+                        </Button>
+                    )}
 
-                    {appointment.status !== 'COMPLETED' && appointment.status !== 'CANCELLED' && (
+                    {appointment.status !== 'COMPLETED' && appointment.status !== 'CANCELLED' && hasPermission('APPOINTMENTS_EDIT') && (
                         <Button
                             className="bg-green-600 hover:bg-green-700"
                             onClick={handleCompleteAppointment}
@@ -243,7 +247,7 @@ export default function AppointmentDetailsPage() {
                             Finalizar Consulta
                         </Button>
                     )}
-                    {appointment.status !== 'COMPLETED' && appointment.status !== 'CANCELLED' && (
+                    {appointment.status !== 'COMPLETED' && appointment.status !== 'CANCELLED' && hasPermission('APPOINTMENTS_DELETE') && (
                         <Button
                             variant="destructive"
                             onClick={handleCancelAppointment}
@@ -252,10 +256,12 @@ export default function AppointmentDetailsPage() {
                             Cancelar
                         </Button>
                     )}
-                    <Button variant="outline" onClick={() => setShowEditModal(true)}>
-                        <Edit className="h-4 w-4 mr-2" />
-                        Editar
-                    </Button>
+                    {hasPermission('APPOINTMENTS_EDIT') && (
+                        <Button variant="outline" onClick={() => setShowEditModal(true)}>
+                            <Edit className="h-4 w-4 mr-2" />
+                            Editar
+                        </Button>
+                    )}
                 </div>
             </div>
 

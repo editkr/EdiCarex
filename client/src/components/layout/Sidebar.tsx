@@ -1,6 +1,9 @@
 import { useState } from 'react'
+import { useTheme } from '@/components/theme-provider'
 import { Link, useLocation } from 'react-router-dom'
 import { useAuthStore } from '@/stores/authStore'
+import { usePermissions } from '@/hooks/usePermissions'
+import { useOrganization } from '@/contexts/OrganizationContext'
 import { cn } from '@/lib/utils'
 import {
     LayoutDashboard,
@@ -12,7 +15,6 @@ import {
     FlaskConical,
     Receipt,
     FileText,
-    Brain,
     Settings,
     Activity,
     UserCog,
@@ -27,7 +29,17 @@ import {
 } from 'lucide-react'
 
 // Tipos de roles profesionales
-type UserRole = 'ADMIN' | 'DOCTOR' | 'LAB' | 'PHARMACY' | 'HR' | 'RECEPTIONIST'
+import { UserRole } from '@/stores/authStore'
+
+const AILogoIcon = ({ className }: { className?: string }) => (
+    <div className={cn("flex items-center justify-center", className)}>
+        <img
+            src="/assets/logoIA.png"
+            alt="AI"
+            className="w-full h-full object-contain"
+        />
+    </div>
+);
 
 interface MenuItem {
     icon: any
@@ -61,35 +73,35 @@ const menuSections: MenuSection[] = [
                 label: 'Pacientes',
                 path: '/patients',
                 roles: ['ADMIN', 'DOCTOR', 'LAB', 'PHARMACY', 'RECEPTIONIST'],
-                permission: 'PATIENTS'
+                permission: 'PATIENTS_VIEW'
             },
             {
                 icon: Stethoscope,
                 label: 'Doctores',
                 path: '/doctors',
-                roles: ['ADMIN', 'DOCTOR', 'RECEPTIONIST'],
-                permission: 'DOCTORS'
+                roles: ['ADMIN', 'DOCTOR', 'RECEPTIONIST', 'MANAGEMENT', 'AUDIT'],
+                permission: 'DOCTORS_VIEW'
             },
             {
                 icon: Calendar,
                 label: 'Citas',
                 path: '/appointments',
-                roles: ['ADMIN', 'DOCTOR', 'RECEPTIONIST'],
-                permission: 'APPOINTMENTS'
+                roles: ['ADMIN', 'DOCTOR', 'RECEPTIONIST', 'MANAGEMENT'],
+                permission: 'APPOINTMENTS_VIEW'
             },
             {
                 icon: Clock,
                 label: 'Sala de Espera',
                 path: '/waiting-room',
-                roles: ['ADMIN', 'DOCTOR', 'RECEPTIONIST'],
-                permission: 'WAITING_ROOM'
+                roles: ['ADMIN', 'DOCTOR', 'RECEPTIONIST', 'MANAGEMENT'],
+                permission: 'WAITING_VIEW'
             },
             {
                 icon: Bed,
                 label: 'Camas',
                 path: '/beds',
-                roles: ['ADMIN', 'DOCTOR', 'RECEPTIONIST', 'HR'],
-                permission: 'BEDS'
+                roles: ['ADMIN', 'DOCTOR', 'RECEPTIONIST', 'HR', 'MANAGEMENT', 'NURSE'],
+                permission: 'BEDS_VIEW'
             },
         ],
     },
@@ -101,22 +113,22 @@ const menuSections: MenuSection[] = [
                 icon: AlertTriangle,
                 label: 'Emergencia',
                 path: '/emergency',
-                roles: ['ADMIN', 'DOCTOR'],
-                permission: 'EMERGENCY'
+                roles: ['ADMIN', 'DOCTOR', 'NURSE', 'MANAGEMENT'],
+                permission: 'EMERGENCY_VIEW'
             },
             {
                 icon: Pill,
                 label: 'Farmacia',
                 path: '/pharmacy',
-                roles: ['ADMIN', 'PHARMACY'],
-                permission: 'PRESCRIPTIONS'
+                roles: ['ADMIN', 'PHARMACY', 'NURSE', 'MANAGEMENT'],
+                permission: 'PHARMACY_VIEW'
             },
             {
                 icon: FlaskConical,
                 label: 'Laboratorio',
                 path: '/laboratory',
-                roles: ['ADMIN', 'DOCTOR', 'LAB'],
-                permission: 'LAB_RESULTS'
+                roles: ['ADMIN', 'DOCTOR', 'LAB', 'MANAGEMENT', 'NURSE'],
+                permission: 'LAB_VIEW'
             },
         ],
     },
@@ -128,56 +140,56 @@ const menuSections: MenuSection[] = [
                 icon: Receipt,
                 label: 'Facturación',
                 path: '/billing',
-                roles: ['ADMIN'],
-                permission: 'BILLING'
+                roles: ['ADMIN', 'BILLING', 'MANAGEMENT', 'RECEPTIONIST'],
+                permission: 'BILLING_VIEW'
             },
             {
                 icon: FileText,
                 label: 'Reportes',
                 path: '/reports',
-                roles: ['ADMIN', 'DOCTOR', 'LAB', 'PHARMACY', 'HR'],
-                permission: 'REPORTS'
+                roles: ['ADMIN', 'DOCTOR', 'LAB', 'PHARMACY', 'HR', 'MANAGEMENT', 'BILLING', 'AUDIT'],
+                permission: 'REPORTS_VIEW'
             },
             {
                 icon: BarChart3,
                 label: 'Analítica',
                 path: '/analytics',
-                roles: ['ADMIN', 'HR'],
-                permission: 'ANALYTICS'
+                roles: ['ADMIN', 'HR', 'MANAGEMENT'],
+                permission: 'ANALYTICS_VIEW'
             },
             {
                 icon: UserCog,
                 label: 'Recursos Humanos',
                 path: '/hr',
-                roles: ['ADMIN', 'HR'],
-                permission: 'HR'
+                roles: ['ADMIN', 'HR', 'MANAGEMENT'],
+                permission: 'HR_VIEW'
             },
             {
                 icon: Shield,
                 label: 'Auditoría',
                 path: '/admin/audit',
-                roles: ['ADMIN'],
-                permission: 'AUDIT'
+                roles: ['ADMIN', 'AUDIT'],
+                permission: 'AUDIT_VIEW'
             },
             {
                 icon: Sliders,
                 label: 'Sistema',
                 path: '/admin',
                 roles: ['ADMIN', 'HR'],
-                permission: 'SYSTEM'
+                permission: 'ADMIN_VIEW'
             },
         ],
     },
     {
         title: 'Inteligencia Artificial',
-        icon: Brain,
+        icon: AILogoIcon,
         items: [
             {
-                icon: Brain,
+                icon: AILogoIcon,
                 label: 'IA Médica',
                 path: '/ai',
                 roles: ['ADMIN', 'DOCTOR', 'LAB'],
-                permission: 'AI'
+                permission: 'AI_USE'
             },
         ],
     },
@@ -189,7 +201,7 @@ const menuSections: MenuSection[] = [
                 icon: MessageSquare,
                 label: 'Mensajes',
                 path: '/messages',
-                permission: 'MESSAGES'
+                permission: 'MESSAGES_VIEW'
             },
         ],
     },
@@ -229,18 +241,21 @@ export default function Sidebar({ userRole = 'ADMIN' }: SidebarProps) {
         )
     }
 
-    // Filtrar items según el rol del usuario
+    // Filtrar items según permisos del usuario (SIN fallback a roles)
     const { user } = useAuthStore()
+    const { hasPermission } = usePermissions()
+    const { config } = useOrganization()
+    const { theme } = useTheme()
 
     const canAccessItem = (item: MenuItem) => {
-        // 1. Check Explicit Permission Grant (from 'switches')
-        if (item.permission && (user as any)?.preferences?.permissions?.includes(item.permission)) {
-            return true;
+        // LÓGICA SIMPLE: SOLO verificar permisos, SIN fallback a roles
+        // Si el item no requiere permiso específico, permitir acceso
+        if (!item.permission) {
+            return true
         }
 
-        // 2. Fallback to Role-based Access
-        if (!item.roles) return true // Sin restricción
-        return item.roles.includes(safeRole as UserRole)
+        // Verificar si tiene el permiso específico
+        return hasPermission(item.permission)
     }
 
     const canAccessSection = (section: MenuSection) => {
@@ -250,15 +265,28 @@ export default function Sidebar({ userRole = 'ADMIN' }: SidebarProps) {
         }
         return section.roles.includes(safeRole as UserRole)
     }
+    // Determine if logo should be inverted based on current theme and logo type
+    const isDark = theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)
+    const logoType = config?.branding?.logoType || 'dark'
+    const shouldInvert = (logoType === 'dark' && isDark) || (logoType === 'light' && !isDark)
 
     return (
         <aside className="w-64 bg-card border-r border-border h-screen overflow-y-auto">
             {/* Header */}
             <div className="p-6 border-b border-border">
                 <div className="flex items-center gap-2">
-                    <img src="/assets/logo-edicarex.png" alt="EdiCarex" className="h-14 w-14 object-contain" />
+                    <img
+                        src={config?.logo || "/assets/logo-edicarex.png"}
+                        alt={config?.hospitalName || "EdiCarex"}
+                        className={cn(
+                            "h-14 w-14 object-contain transition-all",
+                            shouldInvert && "invert brightness-200"
+                        )}
+                    />
                     <div>
-                        <h1 className="text-2xl font-bold">EdiCarex</h1>
+                        <h1 className="text-xl font-bold truncate max-w-[140px]" title={config?.hospitalName || "EdiCarex"}>
+                            {config?.hospitalName || "EdiCarex"}
+                        </h1>
                         <p className="text-xs text-muted-foreground">Enterprise</p>
                     </div>
                 </div>
@@ -334,8 +362,8 @@ export default function Sidebar({ userRole = 'ADMIN' }: SidebarProps) {
                     )
                 })}
 
-                {/* Settings - Only for ADMIN, DOCTOR, HR */}
-                {(['ADMIN', 'DOCTOR', 'HR'] as UserRole[]).includes(userRole) && (
+                {/* Settings - Solo si tiene permiso SETTINGS_VIEW */}
+                {hasPermission('SETTINGS_VIEW') && (
                     <div className="pt-4 mt-4 border-t border-border">
                         <Link
                             to="/settings"
@@ -352,6 +380,6 @@ export default function Sidebar({ userRole = 'ADMIN' }: SidebarProps) {
                     </div>
                 )}
             </nav>
-        </aside>
+        </aside >
     )
 }

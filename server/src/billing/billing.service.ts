@@ -2,6 +2,11 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { PharmacyService } from '../pharmacy/pharmacy.service';
 
+interface BillingConfig {
+    invoicePrefix?: string;
+    currency?: string;
+}
+
 @Injectable()
 export class BillingService {
     constructor(
@@ -94,8 +99,15 @@ export class BillingService {
                 appointmentId
             } = data;
 
-            // Generate invoice number
-            const invoiceNumber = `INV-${Date.now()}`;
+
+            // Get organization config for prefix
+            const config = await this.prisma.organizationConfig.findFirst();
+            const billingConfig = config?.billing as unknown as BillingConfig;
+            const prefix = billingConfig?.invoicePrefix || 'INV';
+            const invoiceNumber = `${prefix}-${Date.now()}`;
+
+            // Use currency from data or fallback to config
+            const currency = data.currency || billingConfig?.currency || 'PEN';
 
             // Calculate subtotal if not provided
             const calculatedSubtotal = subtotal || (total - (tax || 0) + (discount || 0));
@@ -109,7 +121,8 @@ export class BillingService {
                     tax: tax || 0,
                     discount: discount || 0,
                     total: total,
-                    status: status || 'PENDING', // Use status from request or default to PENDING
+                    currency,
+                    status: status || 'PENDING',
                     paymentMethod: paymentMethod || null,
                     paymentDate: paymentDate ? new Date(paymentDate) : null,
                     destinationAccountId: destinationAccountId || null,

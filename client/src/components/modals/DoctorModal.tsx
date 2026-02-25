@@ -526,9 +526,9 @@ export default function DoctorModal({
                                 <div>
                                     <h3 className="text-lg font-medium mb-1 flex items-center gap-2">
                                         <Clock className="h-5 w-5 text-indigo-500" />
-                                        Horarios de Atención
+                                        Horario de Consulta
                                     </h3>
-                                    <p className="text-sm text-slate-500">Define los días y horas de consulta clínica.</p>
+                                    <p className="text-sm text-slate-500">Define los días y horas de consulta médica.</p>
                                 </div>
                                 <Button type="button" variant="ghost" size="sm" onClick={applyStandardSchedule} className="text-xs text-indigo-600 hover:bg-indigo-50">
                                     Aplicar Estándar (L-V 8-5)

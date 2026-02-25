@@ -50,6 +50,7 @@ import { PAYMENT_METHODS, COMPANY_ACCOUNTS, formatCurrency } from '@/utils/finan
 import QRCode from 'qrcode'
 import { cn } from '@/lib/utils'
 import { Label } from '@/components/ui/label'
+import { useOrganization } from '@/contexts/OrganizationContext'
 
 // Catalog data - same as POS
 const CATALOG = {
@@ -125,6 +126,7 @@ interface UnifiedInvoiceModalProps {
 
 export function UnifiedInvoiceModal({ open, onOpenChange, invoice, onSuccess, initialData }: UnifiedInvoiceModalProps) {
     const { toast } = useToast()
+    const { config } = useOrganization()
     const queryClient = useQueryClient()
     const { data: medsData, isLoading: isLoadingMeds } = useQuery({
         queryKey: ['pharmacy', 'medications'],
@@ -353,12 +355,13 @@ export function UnifiedInvoiceModal({ open, onOpenChange, invoice, onSuccess, in
         const manualTotal = manualItems.reduce((sum, item) => sum + (item.quantity * item.unitPrice), 0)
 
         const subtotal = servicesTotal + proceduresTotal + medicationsTotal + manualTotal
-        const tax = subtotal * 0.18 // IGV 18%
+        const taxRate = (config?.billing?.taxRate || 18) / 100
+        const tax = subtotal * taxRate
         const discount = form.watch('discount') || 0
         const total = subtotal + tax - discount
 
         return { subtotal, tax, total }
-    }, [activeCatalog.services, activeCatalog.procedures, activeCatalog.medications, selectedServices, selectedProcedures, selectedMedications, manualItems, form.watch('discount')])
+    }, [activeCatalog.services, activeCatalog.procedures, activeCatalog.medications, selectedServices, selectedProcedures, selectedMedications, manualItems, form.watch('discount'), config])
 
     // Toggle catalog item
     const toggleItem = (id: string, list: string[], setList: (items: string[]) => void) => {
@@ -407,11 +410,11 @@ export function UnifiedInvoiceModal({ open, onOpenChange, invoice, onSuccess, in
     const generateQR = async () => {
         try {
             const qrData = JSON.stringify({
-                empresa: 'EdiCarex Clinic SAC',
-                ruc: '20601234567',
+                empresa: config?.hospitalName || 'EdiCarex Clinic SAC',
+                ruc: config?.billing?.taxId || '20601234567',
                 fecha: new Date().toISOString().split('T')[0],
                 total: totals.total.toFixed(2),
-                moneda: 'PEN',
+                moneda: config?.billing?.currency || 'PEN',
                 metodo: watchPaymentMethod,
             })
             const url = await QRCode.toDataURL(qrData, { width: 150, margin: 1 })
@@ -475,6 +478,7 @@ export function UnifiedInvoiceModal({ open, onOpenChange, invoice, onSuccess, in
                 notes: data.notes || null,
                 doctorId: data.doctorId || null,
                 appointmentId: data.appointmentId || null,
+                currency: config?.billing?.currency || 'PEN',
             }
 
             if (invoice) {
@@ -678,7 +682,7 @@ export function UnifiedInvoiceModal({ open, onOpenChange, invoice, onSuccess, in
                                                         {selectedServices.includes(item.id) && <Check className="h-3 w-3 text-cyan-400 shrink-0" />}
                                                     </div>
                                                     <div className="text-right">
-                                                        <span className={cn("text-sm font-black font-mono", selectedServices.includes(item.id) ? "text-cyan-400" : "text-zinc-500")}>{formatCurrency(item.price)}</span>
+                                                        <span className={cn("text-sm font-black font-mono", selectedServices.includes(item.id) ? "text-cyan-400" : "text-zinc-500")}>{formatCurrency(item.price, config)}</span>
                                                     </div>
                                                 </div>
                                             ))}
@@ -705,7 +709,7 @@ export function UnifiedInvoiceModal({ open, onOpenChange, invoice, onSuccess, in
                                                         {selectedProcedures.includes(item.id) && <Check className="h-3 w-3 text-purple-400 shrink-0" />}
                                                     </div>
                                                     <div className="text-right">
-                                                        <span className={cn("text-sm font-black font-mono", selectedProcedures.includes(item.id) ? "text-purple-400" : "text-zinc-500")}>{formatCurrency(item.price)}</span>
+                                                        <span className={cn("text-sm font-black font-mono", selectedProcedures.includes(item.id) ? "text-purple-400" : "text-zinc-500")}>{formatCurrency(item.price, config)}</span>
                                                     </div>
                                                 </div>
                                             ))}
@@ -735,7 +739,7 @@ export function UnifiedInvoiceModal({ open, onOpenChange, invoice, onSuccess, in
                                                         <span className={cn("text-[9px] font-bold px-1.5 py-0.5 rounded", (item.stock ?? 0) > 0 ? "bg-emerald-500/10 text-emerald-500" : "bg-red-500/10 text-red-500")}>
                                                             {(item.stock ?? 0) > 0 ? `Stock: ${item.stock}` : 'Agotado'}
                                                         </span>
-                                                        <span className={cn("text-sm font-black font-mono", selectedMedications.includes(item.id) ? "text-amber-400" : "text-zinc-500")}>{formatCurrency(item.price)}</span>
+                                                        <span className={cn("text-sm font-black font-mono", selectedMedications.includes(item.id) ? "text-amber-400" : "text-zinc-500")}>{formatCurrency(item.price, config)}</span>
                                                     </div>
                                                 </div>
                                             ))}
@@ -806,7 +810,7 @@ export function UnifiedInvoiceModal({ open, onOpenChange, invoice, onSuccess, in
                                                 <span className="text-[10px] text-cyan-500 font-bold uppercase">Servicio</span>
                                             </div>
                                             <div className="flex items-center gap-3">
-                                                <span className="text-xs font-mono text-white">{formatCurrency(item.price)}</span>
+                                                <span className="text-xs font-mono text-white">{formatCurrency(item.price, config)}</span>
                                                 <button type="button" onClick={() => toggleItem(item.id, selectedServices, setSelectedServices)} className="text-zinc-600 hover:text-red-500 transition-colors">
                                                     <X className="h-3 w-3" />
                                                 </button>
@@ -821,7 +825,7 @@ export function UnifiedInvoiceModal({ open, onOpenChange, invoice, onSuccess, in
                                                 <span className="text-[10px] text-purple-500 font-bold uppercase">Procedimiento</span>
                                             </div>
                                             <div className="flex items-center gap-3">
-                                                <span className="text-xs font-mono text-white">{formatCurrency(item.price)}</span>
+                                                <span className="text-xs font-mono text-white">{formatCurrency(item.price, config)}</span>
                                                 <button type="button" onClick={() => toggleItem(item.id, selectedProcedures, setSelectedProcedures)} className="text-zinc-600 hover:text-red-500 transition-colors">
                                                     <X className="h-3 w-3" />
                                                 </button>
@@ -836,7 +840,7 @@ export function UnifiedInvoiceModal({ open, onOpenChange, invoice, onSuccess, in
                                                 <span className="text-[10px] text-amber-500 font-bold uppercase">Farmacia</span>
                                             </div>
                                             <div className="flex items-center gap-3">
-                                                <span className="text-xs font-mono text-white">{formatCurrency(item.price)}</span>
+                                                <span className="text-xs font-mono text-white">{formatCurrency(item.price, config)}</span>
                                                 <button type="button" onClick={() => toggleItem(item.id, selectedMedications, setSelectedMedications)} className="text-zinc-600 hover:text-red-500 transition-colors">
                                                     <X className="h-3 w-3" />
                                                 </button>
@@ -851,7 +855,7 @@ export function UnifiedInvoiceModal({ open, onOpenChange, invoice, onSuccess, in
                                                 <span className="text-[10px] text-blue-500 font-bold uppercase">Personalizado ({item.quantity})</span>
                                             </div>
                                             <div className="flex items-center gap-3">
-                                                <span className="text-xs font-mono text-white">{formatCurrency(item.quantity * item.unitPrice)}</span>
+                                                <span className="text-xs font-mono text-white">{formatCurrency(item.quantity * item.unitPrice, config)}</span>
                                                 <div className="flex gap-1">
                                                     <button type="button" onClick={() => { setEditingManualId(item.id); setManualItemForm({ description: item.description, quantity: item.quantity, unitPrice: item.unitPrice }) }} className="text-zinc-600 hover:text-blue-500 transition-colors">
                                                         <Edit3 className="h-3 w-3" />
@@ -877,11 +881,11 @@ export function UnifiedInvoiceModal({ open, onOpenChange, invoice, onSuccess, in
                                     <div className="space-y-2 mb-4">
                                         <div className="flex justify-between text-xs text-zinc-400">
                                             <span>Subtotal</span>
-                                            <span className="font-mono">{formatCurrency(totals.subtotal)}</span>
+                                            <span className="font-mono">{formatCurrency(totals.subtotal, config)}</span>
                                         </div>
                                         <div className="flex justify-between text-xs text-zinc-400">
-                                            <span>IGV (18%)</span>
-                                            <span className="font-mono">{formatCurrency(totals.tax)}</span>
+                                            <span>{config?.billing?.taxLabel || 'IGV'} ({config?.billing?.taxRate || 18}%)</span>
+                                            <span className="font-mono">{formatCurrency(totals.tax, config)}</span>
                                         </div>
                                         <div className="flex justify-between items-center text-xs text-zinc-400">
                                             <span>Descuento</span>
@@ -901,7 +905,7 @@ export function UnifiedInvoiceModal({ open, onOpenChange, invoice, onSuccess, in
                                     </div>
                                     <div className="flex justify-between items-baseline mb-4 p-3 bg-black rounded-lg border border-zinc-800">
                                         <span className="text-sm font-black text-white uppercase">Total</span>
-                                        <span className="text-2xl font-black text-emerald-500 font-mono">{formatCurrency(totals.total)}</span>
+                                        <span className="text-2xl font-black text-emerald-500 font-mono">{formatCurrency(totals.total, config)}</span>
                                     </div>
 
                                     {/* Payment Method Selector (Only visible if PAID) */}

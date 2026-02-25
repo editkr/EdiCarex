@@ -221,18 +221,8 @@
   }
 
   /* 6. Cabecera del Reporte (aparece solo al imprimir) */
-  body::before {
-    content: "EDICAREX - REPORTE DE PACIENTES";
-    display: block;
-    font-size: 24pt;
-    font-weight: bold;
-    text-align: center;
-    margin-bottom: 20px;
-    color: #0f766e;
-    /* Color primario teal */
-    border-bottom: 3px solid #0f766e;
-    padding-bottom: 10px;
-  }
+  /* 6. Cabecera del Reporte (aparece solo al imprimir) */
+  /* body::before removed to allow dynamic logo handling */
 
   /* 7. Manejo de saltos de página */
   tr {

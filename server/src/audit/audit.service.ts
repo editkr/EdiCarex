@@ -15,6 +15,7 @@ export class AuditService {
         ipAddress?: string;
         userAgent?: string;
     }) {
+        console.log(`[AUDIT] Creating log: Action=${data.action}, Resource=${data.resource}`);
         return this.prisma.auditLog.create({
             data: {
                 userId: data.userId,
@@ -26,6 +27,29 @@ export class AuditService {
                 userAgent: data.userAgent,
             },
         });
+    }
+
+    async updateLog(id: string, data: { changes?: any }) {
+        return this.prisma.auditLog.update({
+            where: { id },
+            data: {
+                changes: data.changes ? JSON.parse(JSON.stringify(data.changes)) : undefined,
+            },
+        });
+    }
+
+    async deleteLog(id: string) {
+        console.log(`[AUDIT] Deleting log: ID=${id}`);
+        try {
+            const result = await this.prisma.auditLog.delete({
+                where: { id },
+            });
+            console.log(`[AUDIT] Delete successful for ID=${id}`);
+            return result;
+        } catch (error) {
+            console.error(`[AUDIT] Delete FAILED for ID=${id}: ${error.message}`);
+            throw error;
+        }
     }
 
     async findAll(params: {

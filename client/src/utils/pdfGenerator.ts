@@ -38,7 +38,12 @@ interface Invoice {
     notes?: string;
 }
 
-export const generateInvoicePDF = (invoice: Invoice) => {
+
+import { getLogoBase64 } from './logoUtils';
+
+// ... (interfaces remain the same)
+
+export const generateInvoicePDF = async (invoice: Invoice, config?: any) => {
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.width;
     const pageHeight = doc.internal.pageSize.height;
@@ -50,27 +55,40 @@ export const generateInvoicePDF = (invoice: Invoice) => {
     const lightGray = '#f1f5f9';   // Slate 100
 
     // --- HEADER ---
-    // Logo Placeholder (Red Square with 'M')
-    doc.setFillColor(accentColor);
-    doc.roundedRect(15, 15, 12, 12, 2, 2, 'F');
-    doc.setTextColor('#ffffff');
-    doc.setFontSize(10);
-    doc.setFont('helvetica', 'bold');
-    doc.text('M', 18.5, 22.5);
+    // Try to load dynamic logo
+    const logoBase64 = await getLogoBase64(config?.logo);
+
+    if (logoBase64) {
+        try {
+            // Add logo (approx 20x20mm)
+            doc.addImage(logoBase64, 'PNG', 15, 15, 20, 20);
+        } catch (e) {
+            console.error('Error adding logo to PDF:', e);
+            // Fallback to placeholder if image fails
+            drawLogoPlaceholder(doc, accentColor, config);
+        }
+    } else {
+        // Fallback to placeholder
+        drawLogoPlaceholder(doc, accentColor, config);
+    }
+
+    // Company Name (Adjusted X position if logo is present)
+    const textStartX = 40; // Shifted right to accommodate logo
+
 
     // Company Name
     doc.setTextColor(primaryColor);
     doc.setFontSize(22);
     doc.setFont('helvetica', 'bold');
-    doc.text('EDICAREX CLINIC', 32, 21);
+    doc.text((config?.hospitalName || 'EDICAREX CLINIC').toUpperCase(), textStartX, 21);
 
     // Company Subtitle
     doc.setTextColor(grayColor);
     doc.setFontSize(9);
     doc.setFont('helvetica', 'normal');
-    doc.text('Servicios Médicos Especializados', 32, 26);
-    doc.text('Av. Principal 123, Lima, Perú', 32, 31);
-    doc.text('RUC: 20123456789 | Tel: (01) 234-5678', 32, 36);
+    doc.text('Servicios Médicos Especializados', textStartX, 26);
+    doc.text(config?.address || 'Av. Principal 123, Lima, Perú', textStartX, 31);
+    doc.text(`RUC: ${config?.billing?.taxId || '20601234567'} | Tel: ${config?.phone || '(01) 234-5678'}`, textStartX, 36);
 
     // Invoice Status Badge (Top Right)
     const statusText = invoice.status === 'PAID' ? 'PAGADO' : invoice.status === 'PENDING' ? 'PENDIENTE' : 'VENCIDO';
@@ -133,8 +151,8 @@ export const generateInvoicePDF = (invoice: Invoice) => {
         const itemData = [
             item.description || item.name || 'Item sin descripción',
             item.quantity,
-            formatCurrency(item.unitPrice || item.price || 0),
-            formatCurrency((item.quantity * (item.unitPrice || item.price || 0)))
+            formatCurrency(item.unitPrice || item.price || 0, config),
+            formatCurrency((item.quantity * (item.unitPrice || item.price || 0)), config)
         ];
         tableRows.push(itemData);
     });
@@ -194,10 +212,11 @@ export const generateInvoicePDF = (invoice: Invoice) => {
         currentY += isGaint ? 8 : 6;
     };
 
-    drawTotalRow('Subtotal:', formatCurrency(invoice.subtotal));
-    drawTotalRow('IGV (18%):', formatCurrency(invoice.tax));
+    drawTotalRow('Subtotal:', formatCurrency(invoice.subtotal, config));
+    const taxRate = config?.billing?.taxRate || 18;
+    drawTotalRow(`Impuesto (${taxRate}%):`, formatCurrency(invoice.tax, config));
     if (invoice.discount > 0) {
-        drawTotalRow('Descuento:', `- ${formatCurrency(invoice.discount)}`);
+        drawTotalRow('Descuento:', `- ${formatCurrency(invoice.discount, config)}`);
     }
 
     // Total Line
@@ -205,7 +224,7 @@ export const generateInvoicePDF = (invoice: Invoice) => {
     doc.line(labelX - 20, currentY - 2, rightMargin, currentY - 2);
     currentY += 4;
 
-    drawTotalRow('TOTAL:', formatCurrency(invoice.total), true, true);
+    drawTotalRow('TOTAL:', formatCurrency(invoice.total, config), true, true);
 
     // --- PAYMENT INFO (Bottom Left) ---
     let footerY = finalY + 10;
@@ -244,4 +263,13 @@ export const generateInvoicePDF = (invoice: Invoice) => {
 
     // OR Save directly
     doc.save(`Factura-${invoice.invoiceNumber || invoice.id.slice(0, 8)}.pdf`);
+};
+
+const drawLogoPlaceholder = (doc: any, color: string, config: any) => {
+    doc.setFillColor(color);
+    doc.roundedRect(15, 15, 12, 12, 2, 2, 'F');
+    doc.setTextColor('#ffffff');
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'bold');
+    doc.text(config?.hospitalName?.charAt(0) || 'M', 18.5, 22.5);
 };

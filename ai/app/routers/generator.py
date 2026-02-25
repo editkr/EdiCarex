@@ -16,7 +16,7 @@ async def generate_text(data: TextGeneratorInput):
         - template_type: Tipo de documento generado
     """
     try:
-        result = generator_service.generate(data)
+        result = await generator_service.generate(data)
         return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Fallo en la generación de texto: {str(e)}")

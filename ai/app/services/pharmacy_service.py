@@ -37,33 +37,39 @@ class PharmacyService:
                 logger.warning(f"Error en procesamiento estadístico Numpy: {e}")
 
         prompt = f"""
-        REQUERIMIENTO DE PREVISIÓN DE INVENTARIO (EdiCarex Pharma Core)
+        REQUERIMIENTO DE INTELIGENCIA LOGÍSTICA (EdiCarex Pharma System)
         
         IDENTIFICADOR DE MEDICAMENTO: {data.medication_id}
-        DATOS BRUTOS DE CONSUMO (Histórico): {data.historical_data}
-        ANÁLISIS ESTADÍSTICO DE SOPORTE (Numpy): {stats_summary}
+        DATOS DE CONSUMO (Histórico Reciente): {data.historical_data}
+        ESTADÍSTICAS CALCULADAS: {stats_summary}
         
-        TAREA LOGÍSTICA:
-        1. Proyecta la cantidad exacta para el siguiente ciclo de reabastecimiento.
-        2. Determina el nivel de confianza basado en la estabilidad de la serie temporal.
-        3. Genera una recomendación ejecutiva de stock (ej. Just-in-Time, Stock de Seguridad, Rotación).
+        TAREA PARA JEFE DE FARMACIA AI:
+        1. Predicción EXACTA: Proyecta el consumo para el próximo ciclo ({data.days_ahead} días).
+        2. Análisis de Riesgo: Evalúa si hay riesgo de desabastecimiento (stockout).
+        3. Estrategia de Compras: Determina si se requiere una orden de compra urgente.
         
-        FORMATO JSON REQUERIDO:
+        INDICADORES REQUERIDOS EN LA RECOMENDACIÓN:
+        - Punto de Reorden Sugerido.
+        - Stock de Seguridad Recomendado.
+        - Justificación clínica (ej: si es un medicamento crítico para UCI/Emergencia).
+        
+        DEBES RESPONDER EXCLUSIVAMENTE EN FORMATO JSON:
         {{
             "predicted_demand": int,
             "confidence": float,
-            "recommendation": "Plan de acción logístico detallado en español para el farmacéutico jefe."
+            "recommendation": "Decisión logística senior detallada con pasos a seguir (en español)."
         }}
         """
 
         try:
-            result = await self.groq.execute_prompt(prompt, system_persona)
+            result = await self.groq.execute_prompt(prompt, system_persona, model=data.model, temperature=data.temperature)
             if result:
                 return PharmacyDemandOutput(
                     medication_id=data.medication_id,
                     predicted_demand=result.get("predicted_demand", int(np.mean(data.historical_data)) if data.historical_data else 100),
                     confidence=result.get("confidence", 0.85),
-                    recommendation=result.get("recommendation", "Análisis completado por EdiCarex AI.")
+                    recommendation=result.get("recommendation", "Análisis completado por EdiCarex AI."),
+                    model=result.get("model")
                 )
             return self._fallback_pharmacy(data.medication_id)
         except Exception as e:

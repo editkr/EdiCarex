@@ -1,4 +1,8 @@
 import { useState, useEffect } from 'react'
+import { format, subMonths, startOfMonth, endOfMonth } from 'date-fns'
+import { es } from 'date-fns/locale'
+import { formatCurrency } from '@/utils/financialUtils'
+import { useOrganization } from '@/contexts/OrganizationContext'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import {
@@ -50,6 +54,7 @@ import {
 } from 'recharts'
 
 export default function AnalyticsPage() {
+    const { config } = useOrganization()
     const [loading, setLoading] = useState(true)
     const [timeRange, setTimeRange] = useState('12months')
     const { toast } = useToast()
@@ -213,19 +218,19 @@ export default function AnalyticsPage() {
                     },
                     {
                         title: 'Facturación Total',
-                        value: `S/. ${stats.totalRevenue.toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 })}`,
-                        sub: `S/. ${stats.thisMonthRevenue.toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 })} este mes`,
+                        value: formatCurrency(stats.totalRevenue, config),
+                        sub: `${formatCurrency(stats.thisMonthRevenue, config)} este mes`,
                         icon: <DollarSign />,
                         color: 'green',
                         trend: 'up'
                     },
                     {
                         title: 'Recaudación Pendiente',
-                        value: `S/. ${stats.pendingRevenue.toLocaleString()}`,
+                        value: formatCurrency(stats.pendingRevenue, config),
                         sub: 'Cuentas por cobrar',
                         icon: <TrendingUp />,
                         color: 'purple',
-                        trend: 'neutral'
+                        trend: 'up'
                     },
                     {
                         title: 'Saturación Prom.',
@@ -406,8 +411,8 @@ export default function AnalyticsPage() {
                                         </defs>
                                         <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
                                         <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#64748b' }} />
-                                        <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#64748b' }} tickFormatter={(val) => `S/. ${val.toLocaleString()}`} />
-                                        <Tooltip />
+                                        <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#64748b' }} tickFormatter={(val) => formatCurrency(val, config)} />
+                                        <Tooltip formatter={(val: any) => formatCurrency(Number(val), config)} />
                                         <Area type="monotone" dataKey="revenue" stroke="#10b981" strokeWidth={3} fillOpacity={1} fill="url(#colorRevenue)" name="Recaudación Mensual" />
                                     </AreaChart>
                                 </ResponsiveContainer>
@@ -439,7 +444,7 @@ export default function AnalyticsPage() {
                                             tickLine={false}
                                             tick={{ fontSize: 11, fontWeight: 500 }}
                                         />
-                                        <Tooltip formatter={(val) => `S/. ${val.toLocaleString()}`} />
+                                        <Tooltip formatter={(val: any) => formatCurrency(Number(val), config)} />
                                         <Bar dataKey="revenue" fill="#6366f1" radius={[0, 4, 4, 0]} name="Ingresos Totales" barSize={30}>
                                             {(analyticsData.topDoctors || []).map((entry: any, index: number) => (
                                                 <Cell key={`cell-${index}`} fill={index === 0 ? '#4f46e5' : '#818cf8'} />

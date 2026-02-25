@@ -6,7 +6,7 @@ import { AddVitalSignDto, AddMedicationDto, AddProcedureDto, AddAttachmentDto } 
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { MaintenanceGuard } from '../common/guards/maintenance.guard';
 import { AuditInterceptor } from '../common/interceptors/audit.interceptor';
-import { Audit } from '../common/decorators/audit.decorator';
+import { Audit } from '../common/decorators';
 
 @ApiTags('Emergency')
 @ApiBearerAuth()

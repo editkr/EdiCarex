@@ -12,11 +12,13 @@ import {
     TrendingDown,
     Activity,
     FileText,
-    Brain,
     Loader2,
     CheckCircle2,
     XCircle,
     AlertCircle,
+    DollarSign,
+    Euro,
+    Coins
 } from 'lucide-react'
 import { analyticsAPI, appointmentsAPI, patientsAPI, doctorsAPI, usersAPI, billingAPI } from '@/services/api'
 import { useToast } from '@/components/ui/use-toast'
@@ -39,6 +41,8 @@ import {
 } from 'recharts'
 import { format, isToday, parseISO } from 'date-fns'
 import { es } from 'date-fns/locale'
+import { formatCurrency } from '@/utils/financialUtils'
+import { useOrganization } from '@/contexts/OrganizationContext'
 
 // Colores profesionales
 const COLORS = {
@@ -53,6 +57,7 @@ const COLORS = {
 const CHART_COLORS = ['#22d3ee', '#3b82f6', '#10b981', '#6366f1', '#8b5cf6', '#14b8a6']
 
 export default function DashboardPage() {
+    const { config } = useOrganization()
     const [loading, setLoading] = useState(true)
     const [dashboardLayout, setDashboardLayout] = useState<'grid' | 'list' | 'compact'>('grid')
     const [kpis, setKpis] = useState({
@@ -445,11 +450,17 @@ export default function DashboardPage() {
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle className="text-sm font-semibold text-muted-foreground tracking-tight">Ingresos del Día</CardTitle>
                         <div className="p-2 bg-emerald-500/10 rounded-lg">
-                            <TrendingUp className="h-5 w-5 text-emerald-500" />
+                            {config?.billing?.currency === 'EUR' ? (
+                                <Euro className="h-5 w-5 text-emerald-500" />
+                            ) : config?.billing?.currency === 'PEN' ? (
+                                <Coins className="h-5 w-5 text-emerald-500" />
+                            ) : (
+                                <DollarSign className="h-5 w-5 text-emerald-500" />
+                            )}
                         </div>
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">S/ {Number(kpis.dailyIncome || 0).toFixed(2)}</div>
+                        <div className="text-2xl font-bold">{formatCurrency(kpis.dailyIncome || 0, config)}</div>
                         <p className="text-xs text-muted-foreground flex items-center gap-1">
                             <Activity className="h-3 w-3 text-emerald-500" /> Actualizado en tiempo real
                         </p>
@@ -470,7 +481,7 @@ export default function DashboardPage() {
                             <LineChart data={appointmentsByHour}>
                                 <CartesianGrid strokeDasharray="3 3" />
                                 <XAxis dataKey="hour" />
-                                <YAxis />
+                                <YAxis tickFormatter={(val) => formatCurrency(val, config)} />
                                 <Tooltip />
                                 <Legend />
                                 <Line
@@ -545,7 +556,7 @@ export default function DashboardPage() {
                             <AreaChart data={patientsPerDay}>
                                 <CartesianGrid strokeDasharray="3 3" />
                                 <XAxis dataKey="date" />
-                                <YAxis />
+                                <YAxis tickFormatter={(val) => formatCurrency(val, config)} />
                                 <Tooltip />
                                 <Legend />
                                 <Area
@@ -656,11 +667,19 @@ export default function DashboardPage() {
             {/* ========== D. PANEL IA ========== */}
             <Card className="border-2 border-purple-200 dark:border-purple-900">
                 <CardHeader>
-                    <div className="flex items-center gap-2">
-                        <Brain className="h-5 w-5 text-purple-500" />
-                        <CardTitle>Análisis y Predicciones IA</CardTitle>
+                    <div className="flex items-center gap-4">
+                        <div className="flex items-center justify-center p-2">
+                            <img
+                                src="/assets/logoIA.png"
+                                alt="AI Logo"
+                                className="h-20 w-20 object-contain drop-shadow-[0_0_15px_rgba(168,85,247,0.5)]"
+                            />
+                        </div>
+                        <div>
+                            <CardTitle className="text-xl">Análisis y Predicciones IA</CardTitle>
+                            <CardDescription>Potenciado por algoritmos de aprendizaje automático</CardDescription>
+                        </div>
                     </div>
-                    <CardDescription>Potenciado por algoritmos de aprendizaje automático</CardDescription>
                 </CardHeader>
                 <CardContent>
                     <div className="grid gap-4 md:grid-cols-3">

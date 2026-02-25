@@ -16,6 +16,8 @@ import {
     Sun,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { useOrganization } from '@/contexts/OrganizationContext'
+import PatientAIChatBubble from './PatientAIChatBubble'
 
 interface PatientPortalLayoutProps {
     children: ReactNode
@@ -25,6 +27,7 @@ export default function PatientPortalLayout({ children }: PatientPortalLayoutPro
     const location = useLocation()
     const navigate = useNavigate()
     const { theme, setTheme } = useTheme()
+    const { config } = useOrganization()
 
     const user = JSON.parse(localStorage.getItem('user') || '{}')
 
@@ -50,9 +53,15 @@ export default function PatientPortalLayout({ children }: PatientPortalLayoutPro
                 {/* Logo */}
                 <div className="p-6 border-b border-border">
                     <Link to="/patient-portal/dashboard" className="flex items-center gap-3">
-                        <img src="/assets/logo-edicarex.png" alt="EdiCarex" className="w-14 h-14 object-contain" />
+                        <img
+                            src={config?.logo || "/assets/logo-edicarex.png"}
+                            alt={config?.hospitalName || "EdiCarex"}
+                            className="w-14 h-14 object-contain"
+                        />
                         <div>
-                            <h1 className="font-bold text-foreground">EdiCarex</h1>
+                            <h1 className="font-bold text-foreground truncate max-w-[150px]" title={config?.hospitalName || "EdiCarex"}>
+                                {config?.hospitalName || "EdiCarex"}
+                            </h1>
                             <p className="text-xs text-muted-foreground">Portal del Paciente</p>
                         </div>
                     </Link>
@@ -165,6 +174,7 @@ export default function PatientPortalLayout({ children }: PatientPortalLayoutPro
                     </div>
                 </footer>
             </div>
+            <PatientAIChatBubble />
         </div>
     )
 }

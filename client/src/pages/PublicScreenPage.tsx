@@ -20,6 +20,8 @@ import { attendanceAPI } from '@/services/api'
 import { useToast } from '@/components/ui/use-toast'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
 import { motion, AnimatePresence } from 'framer-motion'
+import { useOrganization } from '@/contexts/OrganizationContext'
+import { InstitutionalFooter } from '@/components/InstitutionalFooter'
 
 const BACKGROUNDS = [
     '/assets/bg-public-1.png',
@@ -29,6 +31,7 @@ const BACKGROUNDS = [
 ]
 
 export default function PublicScreenPage() {
+    const { config } = useOrganization()
     const [currentTime, setCurrentTime] = useState(new Date())
     const [bgIndex, setBgIndex] = useState(0)
     const [stats, setStats] = useState({
@@ -140,16 +143,16 @@ export default function PublicScreenPage() {
                     <div className="space-y-8">
                         <div className="flex items-center gap-6">
                             <img
-                                src="/assets/logo-edicarex.png"
-                                alt="EdiCarex"
+                                src={config?.logo || "/assets/logo-edicarex.png"}
+                                alt={config?.hospitalName || "EdiCarex"}
                                 className="h-32 w-32 object-contain drop-shadow-[0_0_30px_rgba(20,184,166,0.5)]"
                             />
                             <div>
                                 <h2 className="text-sm font-semibold text-teal-400/90 tracking-[0.3em] uppercase mb-1">
                                     Centro Médico
                                 </h2>
-                                <h1 className="text-5xl font-black tracking-tight text-white">
-                                    EdiCarex
+                                <h1 className="text-5xl font-black tracking-tight text-white uppercase truncate max-w-[500px]" title={config?.hospitalName || "EdiCarex"}>
+                                    {config?.hospitalName || "EdiCarex"}
                                 </h1>
                             </div>
                         </div>
@@ -353,13 +356,14 @@ export default function PublicScreenPage() {
 
                         <div className="text-center pt-4">
                             <p className="text-xs text-gray-500 font-semibold uppercase tracking-wider">
-                                EdiCarex Secure Entry • v3.0
+                                {config?.hospitalName || "EdiCarex"} Secure Entry • v3.0
                             </p>
                         </div>
                     </div>
                 </DialogContent>
             </Dialog>
 
+            <InstitutionalFooter />
         </div>
     )
 }

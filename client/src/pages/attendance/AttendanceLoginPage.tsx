@@ -5,9 +5,13 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useToast } from '@/components/ui/use-toast'
-import { ShieldCheck, Lock, User, Loader2, ArrowRight, AlertTriangle } from 'lucide-react'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Lock, User, Loader2, ArrowRight } from 'lucide-react'
 
 import { authAPI } from '@/services/api'
+import { useOrganization } from '@/contexts/OrganizationContext'
+import { cn } from '@/lib/utils'
+import { InstitutionalFooter } from '@/components/InstitutionalFooter'
 
 export default function AttendanceLoginPage() {
     const [credentials, setCredentials] = useState({ username: '', password: '' })
@@ -16,6 +20,7 @@ export default function AttendanceLoginPage() {
     const navigate = useNavigate()
     const location = useLocation()
     const { toast } = useToast()
+    const { config } = useOrganization()
 
     // Error from ProtectedRoute redirection
     const navigationError = location.state?.error
@@ -82,39 +87,45 @@ export default function AttendanceLoginPage() {
 
 
     return (
-        <div className="min-h-screen w-full bg-[#050507] flex items-center justify-center p-6 relative overflow-hidden font-inter">
-            {/* Cyberpunk Background Elements */}
-            <div className="absolute inset-0 pointer-events-none">
-                <div className="absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-blue-600/10 blur-[150px] rounded-full animate-pulse"></div>
-                <div className="absolute bottom-1/4 right-1/4 w-[500px] h-[500px] bg-cyan-600/10 blur-[150px] rounded-full animate-pulse"></div>
-                <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-[0.03]"></div>
-            </div>
+        <div className="min-h-screen flex items-center justify-center bg-gradient-to-tr from-slate-950 via-emerald-950 to-emerald-900 p-4 relative overflow-hidden">
+            {/* Glossy overlays from main login */}
+            <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_30%_30%,rgba(34,211,238,0.1),transparent)] pointer-events-none" />
+            <div className="absolute bottom-0 right-0 w-full h-full bg-[radial-gradient(circle_at_70%_70%,rgba(16,185,129,0.1),transparent)] pointer-events-none" />
 
-            <div className="w-full max-w-md relative z-10">
-                {/* Logo Section */}
-                <div className="text-center mb-10">
-                    <div className="inline-flex h-20 w-20 rounded-3xl bg-blue-600 items-center justify-center shadow-[0_0_50px_rgba(37,99,235,0.3)] mb-6 border border-white/10 ring-4 ring-blue-600/20">
-                        <ShieldCheck className="h-10 w-10 text-white" />
+            <Card className="w-full max-w-md relative z-10">
+                <CardHeader className="space-y-1 text-center">
+                    <div className="flex justify-center mb-4">
+                        <img
+                            src={config?.logo || "/assets/logo-edicarex.png"}
+                            alt={config?.hospitalName || "EdiCarex"}
+                            className={cn(
+                                "h-32 w-32 object-contain transition-all",
+                                "h-32 w-32 object-contain transition-all",
+                                config?.branding?.logoType !== 'light' && "invert brightness-200"
+                            )}
+                        />
                     </div>
-                    <h1 className="text-4xl font-black tracking-tighter text-white uppercase italic">Medi<span className="text-blue-500">Ops</span></h1>
-                    <p className="text-[10px] font-black text-blue-500/60 uppercase tracking-[0.4em] mt-2">Operational Command Center</p>
-                </div>
-
-                <div className="bg-white/[0.03] backdrop-blur-2xl border border-white/5 p-10 rounded-[2.5rem] shadow-2xl overflow-hidden relative group">
-                    <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-blue-500 to-transparent"></div>
-
-                    <form onSubmit={handleSubmit} className="space-y-6">
+                    <CardTitle className="text-2xl font-bold uppercase tracking-tight">
+                        {config?.hospitalName || "EdiCarex"} <span className="text-emerald-500">Ops</span>
+                    </CardTitle>
+                    <CardDescription className="text-[10px] font-black text-emerald-500/60 uppercase tracking-[0.4em]">
+                        Operational Command Center
+                    </CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <form onSubmit={handleSubmit} className="space-y-4">
                         <div className="space-y-2">
                             <Label className="text-[10px] font-black uppercase text-slate-500 tracking-[0.2em] ml-1">Identificador de Usuario</Label>
                             <div className="relative group">
-                                <User className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-600 group-focus-within:text-blue-500 transition-colors" />
+                                <User className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-600 group-focus-within:text-emerald-500 transition-colors" />
                                 <Input
                                     type="text"
                                     required
                                     placeholder="OPERADOR_ID"
                                     value={credentials.username}
                                     onChange={(e) => setCredentials({ ...credentials, username: e.target.value })}
-                                    className="h-14 bg-white/5 border-white/10 rounded-2xl pl-12 text-white font-bold placeholder:text-slate-700 focus:border-blue-500/50 focus:ring-blue-500/10 transition-all uppercase text-sm"
+                                    className="h-12 bg-white/5 border-white/10 rounded-xl pl-12 text-white font-medium focus:border-emerald-500/50 focus:ring-emerald-500/10 transition-all uppercase text-sm"
+                                    disabled={isLoading}
                                 />
                             </div>
                         </div>
@@ -122,17 +133,18 @@ export default function AttendanceLoginPage() {
                         <div className="space-y-2">
                             <div className="flex justify-between items-center ml-1">
                                 <Label className="text-[10px] font-black uppercase text-slate-500 tracking-[0.2em]">Llave de Acceso</Label>
-                                <a href="#" className="text-[10px] font-black text-blue-500/50 uppercase tracking-widest hover:text-blue-500 transition-colors">Olvidé mi clave</a>
+                                <a href="#" className="text-[10px] font-black text-emerald-500/50 uppercase tracking-widest hover:text-emerald-500 transition-colors">Olvidé mi clave</a>
                             </div>
                             <div className="relative group">
-                                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-600 group-focus-within:text-blue-500 transition-colors" />
+                                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-600 group-focus-within:text-emerald-500 transition-colors" />
                                 <Input
                                     type="password"
                                     required
                                     placeholder="••••••••••••"
                                     value={credentials.password}
                                     onChange={(e) => setCredentials({ ...credentials, password: e.target.value })}
-                                    className="h-14 bg-white/5 border-white/10 rounded-2xl pl-12 text-white font-bold placeholder:text-slate-700 focus:border-blue-500/50 focus:ring-blue-500/10 transition-all uppercase text-sm"
+                                    className="h-12 bg-white/5 border-white/10 rounded-xl pl-12 text-white font-medium focus:border-emerald-500/50 focus:ring-emerald-500/10 transition-all text-sm"
+                                    disabled={isLoading}
                                 />
                             </div>
                         </div>
@@ -140,7 +152,7 @@ export default function AttendanceLoginPage() {
                         <Button
                             type="submit"
                             disabled={isLoading}
-                            className="w-full h-14 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl font-black uppercase text-xs tracking-[0.2em] shadow-xl shadow-blue-900/40 transition-all hover:-translate-y-1 active:scale-95 group"
+                            className="w-full h-12 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-black uppercase text-xs tracking-[0.2em] shadow-lg shadow-emerald-900/40 transition-all group"
                         >
                             {isLoading ? (
                                 <Loader2 className="h-5 w-5 animate-spin" />
@@ -151,18 +163,19 @@ export default function AttendanceLoginPage() {
                             )}
                         </Button>
                     </form>
-                </div>
 
-                <div className="mt-10 text-center space-y-4">
-                    <p className="text-[10px] font-bold text-slate-600 uppercase tracking-[0.2em]">
-                        Seguridad de Grado Militar EdiCarex
-                    </p>
-                    <div className="flex items-center justify-center gap-2">
-                        <div className="h-1.5 w-1.5 rounded-full bg-green-500 animate-pulse"></div>
-                        <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Protocolo de Auditoría Activo</span>
+                    <div className="mt-8 text-center space-y-3">
+                        <p className="text-[10px] font-bold text-slate-600 uppercase tracking-[0.2em]">
+                            Seguridad de Grado Militar {config?.hospitalName || "EdiCarex"}
+                        </p>
+                        <div className="flex items-center justify-center gap-2">
+                            <div className="h-1.5 w-1.5 rounded-full bg-green-500 animate-pulse"></div>
+                            <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Protocolo de Auditoría Activo</span>
+                        </div>
                     </div>
-                </div>
-            </div>
+                </CardContent>
+            </Card>
+            <InstitutionalFooter />
         </div>
     )
 }

@@ -28,52 +28,61 @@ class TriageService:
         severity_index = self._calculate_local_severity(data)
         
         system_persona = (
-            "Eres el Jefe de Triaje de EdiCarex Enterprise. Experto certificado en el Protocolo Manchester. "
-            "Tu análisis debe ser exhaustivo, citando signos vitales y gravedad potencial. "
-            "Usa un lenguaje clínico preciso y estructura tu respuesta para ser revisada por un médico senior."
+            "Eres el Jefe de Triaje Senior de EdiCarex Enterprise. Tu razonamiento debe ser de nivel médico especialista. "
+            "Sigues estrictamente el Protocolo Manchester de clasificación de riesgos. "
+            "No seas genérico. Analiza la cronicidad vs agudeza. Por ejemplo, 'cancer' por sí solo es una condición crónica, "
+            "pero debes evaluar si hay signos de descompensación aguda. "
+            "Tu objetivo es la seguridad del paciente y la eficiencia hospitalaria."
         )
         
         prompt = f"""
-        ANÁLISIS DE TRIAJE REQUERIDO:
-        - Paciente de {data.age} años.
+        SOLICITUD DE EVALUACIÓN CLÍNICA DE ALTA PRECISIÓN:
+        - Paciente: {data.age} años.
         - Motivo de Consulta: "{data.symptoms}"
+        - Historial Médico: {", ".join(data.medicalHistory) if data.medicalHistory else "Ninguno reportado"}
         - Signos Vitales: {json.dumps(data.vitalSigns)}
-        - Alertas Automáticas (Motor Local): {", ".join(vital_warnings)}
-        - Índice de Desviación Estadística: {severity_index:.2f}
+        - Alertas de Monitoreo Local: {", ".join(vital_warnings)}
+        - Índice de Desviación de Severidad: {severity_index:.2f}
         
-        TAREA:
-        1. Clasificación Manchester:
-           - ROJO: Emergencia (Atención inmediata).
-           - NARANJA: Muy Urgente (Atención < 10-15 min).
-           - AMARILLO: Urgente (Atención < 60 min).
-           - VERDE: Estándar (Atención < 120 min).
-           - AZUL: No urgente.
+        REQUERIMIENTOS TÉCNICOS:
+        1. Clasificación Manchester (PRIORIDAD):
+           - ROJO: Emergencia (Inmediato).
+           - NARANJA: Muy Urgente (10-15 min).
+           - AMARILLO: Urgente (60 min).
+           - VERDE: Estándar (120 min).
+           - AZUL: No urgente (240 min).
         
-        2. Proporciona una 'Justificación Clínica Senior' detallada.
+        2. Justificación Médica: Detalla por qué se asigna esa prioridad, riesgos potenciales y diagnósticos diferenciales.
         
-        FORMATO JSON REQUERIDO:
+        3. Acciones Recomendadas: Lista de 3 a 5 pasos clínicos concretos para el personal de enfermería/médico.
+        
+        DEBES RESPONDER EXCLUSIVAMENTE EN FORMATO JSON:
         {{
             "score": {vital_score},
             "priority": "COLOR (Nivel)",
-            "notes": "Análisis clínico detallado y estructurado con diagnósticos diferenciales potenciales.",
+            "wait_time": 0,
+            "recommendations": ["Acción 1", "Acción 2", ...],
+            "notes": "Análisis clínico senior detallado...",
             "confidence": 0.XX
         }}
         """
 
         try:
-            result = await self.groq.execute_prompt(prompt, system_persona)
+            result = await self.groq.execute_prompt(prompt, system_persona, model=data.model, temperature=data.temperature)
             if result:
-                # Enriquecimiento del resultado si es muy simple
+                # Normalización del resultado
                 notes = result.get("notes", "")
-                if len(notes) < 50:
-                    notes += f"\n\n[Soporte EdiCarex]: Se detectó una severidad local de {severity_index:.2f}. " \
-                             f"Revisión de signos vitales completada: {', '.join(vital_warnings) if vital_warnings else 'Estables'}."
+                if len(notes) < 30:
+                    notes += f"\n\n[Soporte EdiCarex]: Severidad {severity_index:.2f}. Signos: {', '.join(vital_warnings) or 'Estables'}."
 
                 return TriageOutput(
                     score=result.get("score", vital_score),
                     priority=result.get("priority", "VERDE (Estándar)"),
+                    recommendations=result.get("recommendations", ["Evaluación médica estándar", "Controlar signos vitales"]),
+                    wait_time=result.get("wait_time", 120),
                     notes=notes,
-                    confidence=result.get("confidence", 0.95)
+                    confidence=result.get("confidence", 0.95),
+                    model=result.get("model")
                 )
             return self._get_fallback_triage(vital_score, vital_warnings)
         except Exception as e:

@@ -23,6 +23,8 @@ import {
     Search,
     Loader2,
     DollarSign,
+    Euro,
+    Coins,
     Eye,
     Download,
     CreditCard,
@@ -48,12 +50,17 @@ import { UnifiedInvoiceModal } from '@/components/modals/UnifiedInvoiceModal'
 import { InvoiceViewerModal } from '@/components/modals/InvoiceViewerModal'
 import { formatCurrency, PAYMENT_METHODS, COMPANY_ACCOUNTS } from '@/utils/financialUtils'
 import { generateInvoicePDF } from '@/utils/pdfGenerator'
+import { usePermissions } from '@/hooks/usePermissions'
+import { useOrganization } from '@/contexts/OrganizationContext'
 
 export default function BillingPage() {
+    const { config } = useOrganization()
     const [invoices, setInvoices] = useState<any[]>([])
     const [searchTerm, setSearchTerm] = useState('')
     const [loading, setLoading] = useState(true)
+
     const { toast } = useToast()
+    const { hasPermission } = usePermissions()
 
     // Modal State
     const [selectedInvoice, setSelectedInvoice] = useState<any>(null)
@@ -103,7 +110,7 @@ export default function BillingPage() {
 
     const handleDownloadInvoice = (invoice: any) => {
         try {
-            generateInvoicePDF(invoice);
+            generateInvoicePDF(invoice, config);
             toast({
                 title: "PDF Generado",
                 description: "La factura se ha descargado correctamente.",
@@ -120,19 +127,16 @@ export default function BillingPage() {
 
     const handleExportExcel = () => {
         const dataToExport = filteredInvoices.map(inv => ({
-            'ID': inv.invoiceNumber || inv.id,
-            'Paciente': inv.patient ? `${inv.patient.firstName} ${inv.patient.lastName}` : 'Cliente General',
-            'DNI/RUC': inv.patient?.documentId || '-',
-            'Fecha Emisión': format(new Date(inv.invoiceDate || inv.createdAt), 'dd/MM/yyyy'),
-            'Fecha Vencimiento': inv.dueDate ? format(new Date(inv.dueDate), 'dd/MM/yyyy') : '-',
-            'Estado': getStatusText(inv.status),
-            'Método Pago': inv.paymentMethod || 'Pendiente',
-            'Nro. Operación': inv.operationNumber || '-',
-            'Subtotal': Number(inv.subtotal || 0).toFixed(2),
-            'IGV': Number(inv.tax || 0).toFixed(2),
-            'Total': Number(inv.total || 0).toFixed(2)
+            'Fecha': format(new Date(inv.invoiceDate || inv.createdAt), 'dd/MM/yyyy HH:mm'),
+            'Nro Factura': inv.invoiceNumber || inv.id.slice(0, 8),
+            'Paciente': inv.patient ? `${inv.patient.firstName} ${inv.patient.lastName}` : 'General',
+            'Estado': inv.status === 'PAID' ? 'PAGADO' : 'PENDIENTE',
+            'Subtotal': formatCurrency(inv.subtotal, config),
+            'Impuesto': formatCurrency(inv.tax, config),
+            'Descuento': formatCurrency(inv.discount || 0, config),
+            'Total': formatCurrency(inv.total, config),
+            'Método Pago': inv.paymentMethod || 'N/A'
         }));
-
         const ws = XLSX.utils.json_to_sheet(dataToExport);
         const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, ws, "Facturas");
@@ -248,24 +252,28 @@ export default function BillingPage() {
                     </div>
                 </div>
                 <div className="flex gap-2">
-                    <Button
-                        onClick={handleExportExcel}
-                        variant="outline"
-                        className="bg-zinc-900 border-zinc-800 hover:bg-zinc-800 text-green-500 font-bold uppercase text-xs"
-                    >
-                        <FileSpreadsheet className="h-4 w-4 mr-2" />
-                        Exportar Excel
-                    </Button>
-                    <Button
-                        onClick={() => {
-                            setSelectedInvoice(null)
-                            setShowInvoiceModal(true)
-                        }}
-                        className="bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg shadow-emerald-900/30 font-bold uppercase text-xs border border-emerald-500"
-                    >
-                        <Receipt className="h-4 w-4 mr-2" />
-                        Nueva Factura
-                    </Button>
+                    {hasPermission('REPORTS_EXPORT') && (
+                        <Button
+                            onClick={handleExportExcel}
+                            variant="outline"
+                            className="bg-zinc-900 border-zinc-800 hover:bg-zinc-800 text-green-500 font-bold uppercase text-xs"
+                        >
+                            <FileSpreadsheet className="h-4 w-4 mr-2" />
+                            Exportar Excel
+                        </Button>
+                    )}
+                    {hasPermission('BILLING_CREATE') && (
+                        <Button
+                            onClick={() => {
+                                setSelectedInvoice(null)
+                                setShowInvoiceModal(true)
+                            }}
+                            className="bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg shadow-emerald-900/30 font-bold uppercase text-xs border border-emerald-500"
+                        >
+                            <Receipt className="h-4 w-4 mr-2" />
+                            Nueva Factura
+                        </Button>
+                    )}
                 </div>
             </div>
 
@@ -274,10 +282,16 @@ export default function BillingPage() {
                 <Card className="bg-zinc-900 border-zinc-800">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle className="text-xs font-black uppercase text-emerald-500 tracking-wider">Ingreso Neto (Mes)</CardTitle>
-                        <DollarSign className="h-4 w-4 text-emerald-500" />
+                        {config?.billing?.currency === 'EUR' ? (
+                            <Euro className="h-4 w-4 text-emerald-500" />
+                        ) : config?.billing?.currency === 'PEN' ? (
+                            <Coins className="h-4 w-4 text-emerald-500" />
+                        ) : (
+                            <DollarSign className="h-4 w-4 text-emerald-500" />
+                        )}
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-black text-white">{formatCurrency(stats.paid)}</div>
+                        <div className="text-2xl font-black text-white">{formatCurrency(stats.paid, config)}</div>
                         <p className="text-[10px] text-zinc-500 font-medium uppercase mt-1 flex items-center gap-1">
                             <TrendingUp className="h-3 w-3" /> +12.5% vs mes anterior
                         </p>
@@ -290,7 +304,7 @@ export default function BillingPage() {
                         <Wallet className="h-4 w-4 text-zinc-500" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold text-white">{formatCurrency(stats.cashIncome)}</div>
+                        <div className="text-2xl font-bold text-white">{formatCurrency(stats.cashIncome, config)}</div>
                         <p className="text-[10px] text-zinc-500 font-medium uppercase mt-1">
                             Disponible en Caja Chica
                         </p>
@@ -303,7 +317,7 @@ export default function BillingPage() {
                         <Building2 className="h-4 w-4 text-zinc-500" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold text-white">{formatCurrency(stats.bankIncome)}</div>
+                        <div className="text-2xl font-bold text-white">{formatCurrency(stats.bankIncome, config)}</div>
                         <p className="text-[10px] text-zinc-500 font-medium uppercase mt-1">
                             BCP, BBVA, Interbank
                         </p>
@@ -316,9 +330,9 @@ export default function BillingPage() {
                         <Clock className="h-4 w-4 text-red-500" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold text-red-400">{formatCurrency(stats.pending + stats.overdue)}</div>
+                        <div className="text-2xl font-bold text-red-400">{formatCurrency(stats.pending + stats.overdue, config)}</div>
                         <p className="text-[10px] text-zinc-500 font-medium uppercase mt-1">
-                            {stats.overdue > 0 ? `${formatCurrency(stats.overdue)} Vencido` : 'Facturación vigente'}
+                            {stats.overdue > 0 ? `${formatCurrency(stats.overdue, config)} Vencido` : 'Facturación vigente'}
                         </p>
                     </CardContent>
                 </Card>
@@ -342,11 +356,11 @@ export default function BillingPage() {
                                 </defs>
                                 <CartesianGrid strokeDasharray="3 3" stroke="#333" vertical={false} />
                                 <XAxis dataKey="name" stroke="#666" fontSize={12} tickLine={false} axisLine={false} />
-                                <YAxis stroke="#666" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `S/.${value / 1000}k`} />
+                                <YAxis stroke="#666" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => formatCurrency(value, config)} />
                                 <Tooltip
                                     contentStyle={{ backgroundColor: '#18181b', borderColor: '#333', borderRadius: '8px', color: '#fff' }}
                                     itemStyle={{ color: '#10b981' }}
-                                    formatter={(value: number) => [formatCurrency(value), 'Ingresos']}
+                                    formatter={(value: number) => [formatCurrency(value, config), 'Ingresos']}
                                 />
                                 <Area type="monotone" dataKey="total" stroke="#10b981" strokeWidth={3} fillOpacity={1} fill="url(#colorTotal)" />
                             </AreaChart>
@@ -476,7 +490,7 @@ export default function BillingPage() {
                                             </div>
                                         </TableCell>
                                         <TableCell className="text-right font-mono font-bold text-emerald-400">
-                                            {formatCurrency(invoice.total)}
+                                            {formatCurrency(invoice.total, config)}
                                         </TableCell>
                                         <TableCell className="text-center">
                                             {(() => {
@@ -516,15 +530,17 @@ export default function BillingPage() {
                                                 >
                                                     <Eye className="h-4 w-4" />
                                                 </Button>
-                                                <Button
-                                                    variant="ghost"
-                                                    size="sm"
-                                                    className="h-8 w-8 p-0 hover:bg-zinc-800 hover:text-white rounded-lg transition-colors border border-transparent hover:border-zinc-700"
-                                                    onClick={() => handleEditInvoice(invoice)}
-                                                    title="Editar"
-                                                >
-                                                    <Pencil className="h-4 w-4" />
-                                                </Button>
+                                                {hasPermission('BILLING_EDIT') && (
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        className="h-8 w-8 p-0 hover:bg-zinc-800 hover:text-white rounded-lg transition-colors border border-transparent hover:border-zinc-700"
+                                                        onClick={() => handleEditInvoice(invoice)}
+                                                        title="Editar"
+                                                    >
+                                                        <Pencil className="h-4 w-4" />
+                                                    </Button>
+                                                )}
                                                 <Button
                                                     variant="ghost"
                                                     size="sm"

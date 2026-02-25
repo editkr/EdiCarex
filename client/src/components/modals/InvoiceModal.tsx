@@ -31,6 +31,7 @@ import { useToast } from '@/components/ui/use-toast'
 import { billingAPI, patientsAPI } from '@/services/api'
 import { Loader2, Plus, Trash2, CreditCard, Building2, Wallet, Banknote, FileText } from 'lucide-react'
 import { PAYMENT_METHODS, COMPANY_ACCOUNTS, formatCurrency } from '@/utils/financialUtils'
+import { useOrganization } from '@/contexts/OrganizationContext'
 
 // Schema for invoice items
 const invoiceItemSchema = z.object({
@@ -81,6 +82,7 @@ export default function InvoiceModal({
     onSuccess,
     readOnly = false,
 }: InvoiceModalProps) {
+    const { config } = useOrganization()
     const { toast } = useToast()
     const [patients, setPatients] = useState<any[]>([])
     const [loadingPatients, setLoadingPatients] = useState(false)
@@ -145,8 +147,9 @@ export default function InvoiceModal({
                     paymentDate: invoice.paymentDate ? new Date(invoice.paymentDate).toISOString().split('T')[0] : '',
                 })
             } else {
-                // Generate a temporary invoice number or let user input
-                const tempInvoiceNum = `INV-${Date.now().toString().slice(-6)}`
+                // Generate a temporary invoice number using organization prefix
+                const prefix = config?.billing?.invoicePrefix || 'INV'
+                const tempInvoiceNum = `${prefix}-${Date.now().toString().slice(-6)}`
                 form.reset({
                     patientId: '',
                     invoiceNumber: tempInvoiceNum,
@@ -522,7 +525,7 @@ export default function InvoiceModal({
                                 <div className="w-full md:w-1/3 space-y-2 bg-zinc-900 p-4 rounded-xl border border-zinc-800">
                                     <div className="flex justify-between items-center text-sm text-zinc-300">
                                         <span>Subtotal:</span>
-                                        <span className="font-medium text-white">{formatCurrency(subtotal)}</span>
+                                        <span className="font-medium text-white">{formatCurrency(subtotal, config)}</span>
                                     </div>
 
                                     <FormField
@@ -530,7 +533,7 @@ export default function InvoiceModal({
                                         name="tax"
                                         render={({ field }) => (
                                             <FormItem className="flex justify-between items-center gap-4 space-y-0">
-                                                <FormLabel className="whitespace-nowrap text-zinc-300 font-normal">Impuesto (S/.)</FormLabel>
+                                                <FormLabel className="whitespace-nowrap text-zinc-300 font-normal">Impuesto</FormLabel>
                                                 <FormControl>
                                                     <Input type="number" min="0" step="0.01" className="text-right w-24 h-8 bg-zinc-950 border-zinc-800 text-white disabled:opacity-100 disabled:cursor-default focus:ring-emerald-600 focus:border-emerald-600" {...field} disabled={readOnly} />
                                                 </FormControl>
@@ -543,7 +546,7 @@ export default function InvoiceModal({
                                         name="discount"
                                         render={({ field }) => (
                                             <FormItem className="flex justify-between items-center gap-4 space-y-0">
-                                                <FormLabel className="whitespace-nowrap text-zinc-300 font-normal">Descuento (S/.)</FormLabel>
+                                                <FormLabel className="whitespace-nowrap text-zinc-300 font-normal">Descuento</FormLabel>
                                                 <FormControl>
                                                     <Input type="number" min="0" step="0.01" className="text-right w-24 h-8 bg-zinc-950 border-zinc-800 text-white disabled:opacity-100 disabled:cursor-default focus:ring-emerald-600 focus:border-emerald-600" {...field} disabled={readOnly} />
                                                 </FormControl>
@@ -553,7 +556,7 @@ export default function InvoiceModal({
 
                                     <div className="flex justify-between items-center text-lg font-bold border-t border-zinc-800 pt-2 mt-2">
                                         <span className="text-white">Total:</span>
-                                        <span className="text-emerald-400">{formatCurrency(total)}</span>
+                                        <span className="text-emerald-400">{formatCurrency(total, config)}</span>
                                     </div>
                                 </div>
                             </div>

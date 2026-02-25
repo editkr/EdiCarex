@@ -11,7 +11,7 @@ async def predict_growth(data: AnalyticsInput):
     Predice el crecimiento futuro y las tendencias basándose en datos financieros reales.
     """
     try:
-        result = await analytics_service.predict_growth(data.financial_data)
+        result = await analytics_service.predict_growth(data)
         return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Fallo en la predicción analítica: {str(e)}")

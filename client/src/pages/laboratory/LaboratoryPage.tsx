@@ -58,6 +58,7 @@ import {
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { patientsAPI, doctorsAPI, laboratoryAPI } from '@/services/api'
+import { useOrganization } from '@/contexts/OrganizationContext'
 import { useToast } from '@/components/ui/use-toast'
 import ResultEntryForm from './components/ResultEntryForm'
 import LabOrderModal from '@/components/modals/LabOrderModal'
@@ -65,6 +66,7 @@ import { format, differenceInDays } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { cn } from "@/lib/utils"
 import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts'
+import { usePermissions } from '@/hooks/usePermissions'
 
 const statusMap: Record<string, string> = {
     'PENDIENTE': 'PENDIENTE',
@@ -78,10 +80,12 @@ const statusMap: Record<string, string> = {
 }
 
 export default function LaboratoryPage() {
+    const { hasPermission } = usePermissions()
     const [orders, setOrders] = useState<any[]>([])
     const [searchTerm, setSearchTerm] = useState('')
     const [loading, setLoading] = useState(true)
     const [activeTab, setActiveTab] = useState('orders')
+    const { config } = useOrganization()
     const [uploadingResult, setUploadingResult] = useState<string | null>(null)
     const { toast } = useToast()
 
@@ -351,13 +355,15 @@ export default function LaboratoryPage() {
                         <Loader2 className={cn("h-4 w-4 mr-2", loading && "animate-spin")} />
                         Actualizar
                     </Button>
-                    <Button
-                        onClick={() => setIsNewOrderOpen(true)}
-                        className="bg-red-600 hover:bg-red-700 text-white shadow-lg shadow-red-900/20"
-                    >
-                        <Plus className="h-4 w-4 mr-2" />
-                        Nueva Orden
-                    </Button>
+                    {hasPermission('LAB_CREATE') && (
+                        <Button
+                            onClick={() => setIsNewOrderOpen(true)}
+                            className="bg-red-600 hover:bg-red-700 text-white shadow-lg shadow-red-900/20"
+                        >
+                            <Plus className="h-4 w-4 mr-2" />
+                            Nueva Orden
+                        </Button>
+                    )}
                 </div>
             </div>
 
@@ -558,7 +564,7 @@ export default function LaboratoryPage() {
                                                             >
                                                                 <FileText className="h-4 w-4 text-green-600" />
                                                             </Button>
-                                                        ) : (
+                                                        ) : hasPermission('LAB_RESULTS') && (
                                                             <Button
                                                                 variant="ghost"
                                                                 size="sm"
@@ -578,24 +584,28 @@ export default function LaboratoryPage() {
                                                             </Button>
                                                         )}
 
-                                                        <Button
-                                                            variant="ghost"
-                                                            size="sm"
-                                                            title="Editar Orden"
-                                                            onClick={() => openEditDialog(order)}
-                                                        >
-                                                            <Clock className="h-4 w-4 text-blue-500" />
-                                                        </Button>
+                                                        {hasPermission('LAB_EDIT') && (
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="sm"
+                                                                title="Editar Orden"
+                                                                onClick={() => openEditDialog(order)}
+                                                            >
+                                                                <Clock className="h-4 w-4 text-blue-500" />
+                                                            </Button>
+                                                        )}
 
-                                                        <Button
-                                                            variant="ghost"
-                                                            size="sm"
-                                                            className="text-orange-500 hover:text-orange-600 hover:bg-orange-500/10"
-                                                            title="Eliminar Orden"
-                                                            onClick={() => setDeleteId(order.id)}
-                                                        >
-                                                            <XCircle className="h-4 w-4" />
-                                                        </Button>
+                                                        {hasPermission('LAB_DELETE') && (
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="sm"
+                                                                className="text-orange-500 hover:text-orange-600 hover:bg-orange-500/10"
+                                                                title="Eliminar Orden"
+                                                                onClick={() => setDeleteId(order.id)}
+                                                            >
+                                                                <XCircle className="h-4 w-4" />
+                                                            </Button>
+                                                        )}
                                                     </div>
                                                 </TableCell>
                                             </TableRow>
@@ -963,18 +973,33 @@ export default function LaboratoryPage() {
                                 {/* Report Header */}
                                 <div className="border-b-2 border-red-600 pb-6 mb-8 flex justify-between items-start">
                                     <div className="flex items-center gap-4">
-                                        <div className="h-16 w-16 bg-red-600 rounded-lg flex items-center justify-center text-white font-black text-2xl">
-                                            MS
+                                        {config?.logo ? (
+                                            <img
+                                                src={config.logo}
+                                                alt="Logo"
+                                                className="h-16 w-auto object-contain"
+                                                onError={(e) => {
+                                                    e.currentTarget.style.display = 'none';
+                                                    document.getElementById('fallback-logo')!.style.display = 'flex';
+                                                }}
+                                            />
+                                        ) : null}
+                                        <div
+                                            id="fallback-logo"
+                                            className="h-16 w-16 bg-red-600 rounded-lg flex items-center justify-center text-white font-black text-2xl"
+                                            style={{ display: config?.logo ? 'none' : 'flex' }}
+                                        >
+                                            {config?.hospitalName?.charAt(0) || 'M'}
                                         </div>
                                         <div>
-                                            <h2 className="text-2xl font-black text-zinc-900 tracking-tight">EDICAREX CLINIC</h2>
+                                            <h2 className="text-2xl font-black text-zinc-900 tracking-tight">{(config?.hospitalName || 'EDICAREX CLINIC').toUpperCase()}</h2>
                                             <p className="text-sm font-bold text-red-600">CENTRO DE ANÁLISIS CLÍNICOS</p>
                                         </div>
                                     </div>
                                     <div className="text-right text-xs text-zinc-500">
                                         <p>RUC: 20601234567</p>
-                                        <p>Av. Salud 123, Miraflores</p>
-                                        <p>Tel: (01) 444-5555</p>
+                                        <p>{config?.address || 'Av. Salud 123, Miraflores'}</p>
+                                        <p>Tel: {config?.phone || '(01) 444-5555'}</p>
                                     </div>
                                 </div>
 
@@ -1046,7 +1071,7 @@ export default function LaboratoryPage() {
                                 {/* Footer / Signature */}
                                 <div className="mt-auto pt-12 flex justify-between items-end border-t border-zinc-100 italic text-zinc-400 text-[10px]">
                                     <div>
-                                        <p>Documento generado electrónicamente por EdiCarex Enterprise</p>
+                                        <p>Documento generado electrónicamente por {(config?.hospitalName || 'EdiCarex')} Enterprise</p>
                                         <p>La interpretación de este resultado es exclusiva responsabilidad del médico tratante.</p>
                                     </div>
                                     <div className="text-center w-64 border-t border-dashed border-zinc-300 pt-2">

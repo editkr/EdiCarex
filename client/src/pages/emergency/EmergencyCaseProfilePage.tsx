@@ -42,6 +42,7 @@ import LabOrderModal from '@/components/modals/LabOrderModal'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { useToast } from '@/components/ui/use-toast'
+import { usePermissions } from '@/hooks/usePermissions'
 import { cn } from '@/lib/utils'
 import {
     Dialog,
@@ -92,6 +93,7 @@ export default function EmergencyCaseProfilePage() {
     const { id } = useParams<{ id: string }>()
     const navigate = useNavigate()
     const { toast } = useToast()
+    const { hasPermission } = usePermissions()
     const [activeTab, setActiveTab] = useState('vitals')
     const [loading, setLoading] = useState(false)
 
@@ -505,14 +507,18 @@ export default function EmergencyCaseProfilePage() {
                     </div>
                 </div>
                 <div className="flex gap-2">
-                    <Button variant="outline" onClick={() => setIsEditModalOpen(true)}>
-                        <Edit2 className="h-4 w-4 mr-2" />
-                        Editar Caso
-                    </Button>
-                    <Button variant="outline" onClick={() => handleTransfer('General')}>
-                        <Building2 className="h-4 w-4 mr-2" />
-                        Trasladar a Piso
-                    </Button>
+                    {hasPermission('EMERGENCY_EDIT') && (
+                        <Button variant="outline" onClick={() => setIsEditModalOpen(true)}>
+                            <Edit2 className="h-4 w-4 mr-2" />
+                            Editar Caso
+                        </Button>
+                    )}
+                    {hasPermission('EMERGENCY_EDIT') && (
+                        <Button variant="outline" onClick={() => handleTransfer('General')}>
+                            <Building2 className="h-4 w-4 mr-2" />
+                            Trasladar a Piso
+                        </Button>
+                    )}
                 </div>
             </div>
 
@@ -628,10 +634,12 @@ export default function EmergencyCaseProfilePage() {
                                     <CardTitle>Órdenes de Laboratorio</CardTitle>
                                     <CardDescription>Gestión de análisis clínicos para urgencias</CardDescription>
                                 </div>
-                                <Button onClick={() => setIsLabOrderOpen(true)} className="bg-red-600 hover:bg-red-700 text-white">
-                                    <FlaskConical className="h-4 w-4 mr-2" />
-                                    Nueva Orden
-                                </Button>
+                                {hasPermission('LAB_CREATE') && (
+                                    <Button onClick={() => setIsLabOrderOpen(true)} className="bg-red-600 hover:bg-red-700 text-white">
+                                        <FlaskConical className="h-4 w-4 mr-2" />
+                                        Nueva Orden
+                                    </Button>
+                                )}
                             </div>
                         </CardHeader>
                         <CardContent>
@@ -643,9 +651,11 @@ export default function EmergencyCaseProfilePage() {
                                 <p className="text-sm text-slate-500 max-w-sm mx-auto mb-4">
                                     Las órdenes creadas aparecerán aquí. (Integración con API de laboratorio en proceso)
                                 </p>
-                                <Button variant="outline" onClick={() => setIsLabOrderOpen(true)}>
-                                    Crear Orden
-                                </Button>
+                                {hasPermission('LAB_CREATE') && (
+                                    <Button variant="outline" onClick={() => setIsLabOrderOpen(true)}>
+                                        Crear Orden
+                                    </Button>
+                                )}
                             </div>
                         </CardContent>
                     </Card>
@@ -659,10 +669,12 @@ export default function EmergencyCaseProfilePage() {
                                     <CardTitle>Signos Vitales</CardTitle>
                                     <CardDescription>Monitoreo de constantes vitales en tiempo real</CardDescription>
                                 </div>
-                                <Button size="sm" onClick={() => setIsVitalsModalOpen(true)} className="bg-zinc-100 text-zinc-950 hover:bg-zinc-200">
-                                    <Activity className="h-4 w-4 mr-2" />
-                                    Nueva Toma
-                                </Button>
+                                {hasPermission('EMERGENCY_EDIT') && (
+                                    <Button size="sm" onClick={() => setIsVitalsModalOpen(true)} className="bg-zinc-100 text-zinc-950 hover:bg-zinc-200">
+                                        <Activity className="h-4 w-4 mr-2" />
+                                        Nueva Toma
+                                    </Button>
+                                )}
                             </div>
                         </CardHeader>
                         <CardContent>
@@ -755,10 +767,12 @@ export default function EmergencyCaseProfilePage() {
                                     <CardTitle>Medicamentos Administrados</CardTitle>
                                     <CardDescription>Registro completo de medicación</CardDescription>
                                 </div>
-                                <Button size="sm" onClick={() => setIsMedsModalOpen(true)} className="bg-zinc-100 text-zinc-950 hover:bg-zinc-200">
-                                    <Pill className="h-4 w-4 mr-2" />
-                                    Registrar Medicación
-                                </Button>
+                                {hasPermission('EMERGENCY_EDIT') && (
+                                    <Button size="sm" onClick={() => setIsMedsModalOpen(true)} className="bg-zinc-100 text-zinc-950 hover:bg-zinc-200">
+                                        <Pill className="h-4 w-4 mr-2" />
+                                        Registrar Medicación
+                                    </Button>
+                                )}
                             </div>
                         </CardHeader>
                         <CardContent>
@@ -837,10 +851,12 @@ export default function EmergencyCaseProfilePage() {
                                     <CardTitle>Procedimientos</CardTitle>
                                     <CardDescription>Estudios y acciones terapéuticas realizadas</CardDescription>
                                 </div>
-                                <Button size="sm" onClick={() => setIsProcsModalOpen(true)} className="bg-zinc-100 text-zinc-950 hover:bg-zinc-200">
-                                    <Activity className="h-4 w-4 mr-2" />
-                                    Nuevo Procedimiento
-                                </Button>
+                                {hasPermission('EMERGENCY_EDIT') && (
+                                    <Button size="sm" onClick={() => setIsProcsModalOpen(true)} className="bg-zinc-100 text-zinc-950 hover:bg-zinc-200">
+                                        <Activity className="h-4 w-4 mr-2" />
+                                        Nuevo Procedimiento
+                                    </Button>
+                                )}
                             </div>
                         </CardHeader>
                         <CardContent>
@@ -884,18 +900,20 @@ export default function EmergencyCaseProfilePage() {
                                     <CardTitle>Documentos Adjuntos</CardTitle>
                                     <CardDescription>Informes, imágenes y otros archivos del paciente</CardDescription>
                                 </div>
-                                <Button
-                                    size="sm"
-                                    onClick={() => {
-                                        setEditingDoc(null)
-                                        docsForm.reset()
-                                        setIsDocsModalOpen(true)
-                                    }}
-                                    className="bg-zinc-100 text-zinc-950 hover:bg-zinc-200"
-                                >
-                                    <Upload className="h-4 w-4 mr-2" />
-                                    Subir Archivo
-                                </Button>
+                                {hasPermission('EMERGENCY_EDIT') && (
+                                    <Button
+                                        size="sm"
+                                        onClick={() => {
+                                            setEditingDoc(null)
+                                            docsForm.reset()
+                                            setIsDocsModalOpen(true)
+                                        }}
+                                        className="bg-zinc-100 text-zinc-950 hover:bg-zinc-200"
+                                    >
+                                        <Upload className="h-4 w-4 mr-2" />
+                                        Subir Archivo
+                                    </Button>
+                                )}
                             </div>
                         </CardHeader>
                         <CardContent>
@@ -935,26 +953,30 @@ export default function EmergencyCaseProfilePage() {
                                                     >
                                                         <Download className="h-4 w-4" />
                                                     </Button>
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="icon"
-                                                        className="h-8 w-8 text-zinc-400 hover:text-zinc-100"
-                                                        onClick={() => {
-                                                            setEditingDoc(doc)
-                                                            docsForm.setValue('title', doc.title)
-                                                            setIsDocsModalOpen(true)
-                                                        }}
-                                                    >
-                                                        <Edit2 className="h-4 w-4" />
-                                                    </Button>
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="icon"
-                                                        className="h-8 w-8 text-red-500/50 hover:text-red-500 hover:bg-red-500/10"
-                                                        onClick={() => handleDeleteDoc(doc.id)}
-                                                    >
-                                                        <Trash2 className="h-4 w-4" />
-                                                    </Button>
+                                                    {hasPermission('EMERGENCY_EDIT') && (
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="icon"
+                                                            className="h-8 w-8 text-zinc-400 hover:text-zinc-100"
+                                                            onClick={() => {
+                                                                setEditingDoc(doc)
+                                                                docsForm.setValue('title', doc.title)
+                                                                setIsDocsModalOpen(true)
+                                                            }}
+                                                        >
+                                                            <Edit2 className="h-4 w-4" />
+                                                        </Button>
+                                                    )}
+                                                    {hasPermission('EMERGENCY_EDIT') && (
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="icon"
+                                                            className="h-8 w-8 text-red-500/50 hover:text-red-500 hover:bg-red-500/10"
+                                                            onClick={() => handleDeleteDoc(doc.id)}
+                                                        >
+                                                            <Trash2 className="h-4 w-4" />
+                                                        </Button>
+                                                    )}
                                                 </div>
                                             </TableCell>
                                         </TableRow>

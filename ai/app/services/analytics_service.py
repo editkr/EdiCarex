@@ -1,4 +1,4 @@
-from app.models.schemas import ChatOutput
+from app.models.schemas import AnalyticsInput, ChatOutput
 from app.services.groq_service import GroqService
 import json
 import logging
@@ -15,10 +15,11 @@ class AnalyticsService:
     def __init__(self):
         self.groq = GroqService()
 
-    async def predict_growth(self, financial_data: dict) -> dict:
+    async def predict_growth(self, data: AnalyticsInput) -> dict:
         """
         Genera proyecciones estratégicas utilizando el cerebro de EdiCarex.
         """
+        financial_data = data.financial_data
         system_persona = (
             "Eres el Director Financiero (CFO) de EdiCarex Enterprise de nivel Global. "
             "Tu análisis debe ser puramente estratégico y basado en datos reales. "
@@ -65,13 +66,21 @@ class AnalyticsService:
         """
 
         try:
-            result = await self.groq.execute_prompt(prompt, system_persona)
+            result = await self.groq.execute_prompt(prompt, system_persona, model=data.model, temperature=data.temperature)
             if result:
+                # Veracity Engine (Senior Plus): Penalize confidence if data volume is low
+                data_points = len(financial_data.get("history", [])) + len(financial_data.get("categories", []))
+                veracity_multiplier = min(1.0, data_points / 10.0) if data_points > 0 else 0.1
+                
+                if "accuracy_score" in result:
+                    # Hybrid Confidence: AI self-assessment * Data Integrity Multiplier
+                    result["accuracy_score"] = round(result["accuracy_score"] * veracity_multiplier, 2)
+                
                 # Post-procesamiento EdiCarex para asegurar profesionalidad
                 if "strategic" not in result.get("insight", "").lower():
                     result["insight"] = "### [ANÁLISIS ESTRATÉGICO EDICAREX]\n\n" + result.get("insight", "")
                 
-                logger.info("Información estratégica de EdiCarex generada exitosamente.")
+                logger.info(f"Información estratégica generada. Multiplicador de veracidad: {veracity_multiplier}")
                 return result
             return self._fallback_prediction(financial_data)
         except Exception as e:

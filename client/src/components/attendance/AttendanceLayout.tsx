@@ -25,6 +25,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { useTheme } from '@/components/theme-provider'
 import { Input } from '@/components/ui/input'
+import { useOrganization } from '@/contexts/OrganizationContext'
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -34,6 +35,7 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import HRAIChatBubble from './HRAIChatBubble'
 
 interface NavItemProps {
     icon: any
@@ -66,6 +68,7 @@ function NavItem({ icon: Icon, label, path }: NavItemProps) {
 
 export function AttendanceLayout({ children }: { children: React.ReactNode }) {
     const { theme, setTheme } = useTheme()
+    const { config } = useOrganization()
 
     return (
         <div className="flex h-screen w-full bg-background text-foreground overflow-hidden font-inter">
@@ -79,9 +82,15 @@ export function AttendanceLayout({ children }: { children: React.ReactNode }) {
             <aside className="w-72 bg-card/40 backdrop-blur-3xl border-r border-border flex flex-col z-20">
                 <div className="p-8 border-b border-border">
                     <div className="flex items-center gap-3">
-                        <img src="/assets/logo-edicarex.png" alt="EdiCarex" className="h-14 w-14 object-contain" />
+                        <img
+                            src={config?.logo || "/assets/logo-edicarex.png"}
+                            alt={config?.hospitalName || "EdiCarex"}
+                            className="h-14 w-14 object-contain"
+                        />
                         <div>
-                            <h1 className="text-xl font-bold tracking-tight leading-none text-white">EdiCarex</h1>
+                            <h1 className="text-xl font-bold tracking-tight leading-none text-white truncate max-w-[150px]" title={config?.hospitalName || "EdiCarex"}>
+                                {config?.hospitalName || "EdiCarex"}
+                            </h1>
                             <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mt-1">Portal Operativo</p>
                         </div>
                     </div>
@@ -209,6 +218,9 @@ export function AttendanceLayout({ children }: { children: React.ReactNode }) {
                     </div>
                 </main>
             </div>
+
+            {/* Global HR Assistant Bubble */}
+            <HRAIChatBubble />
         </div>
     )
 }

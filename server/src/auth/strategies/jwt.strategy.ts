@@ -11,7 +11,10 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
         private usersService: UsersService,
     ) {
         super({
-            jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+            jwtFromRequest: ExtractJwt.fromExtractors([
+                ExtractJwt.fromAuthHeaderAsBearerToken(),
+                (req: any) => req?.query?.token,
+            ]),
             ignoreExpiration: false,
             secretOrKey: configService.get<string>('JWT_SECRET'),
         });
@@ -33,6 +36,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
                 lastName: user.lastName,
                 roleId: user.roleId,
                 role: user.role,
+                preferences: user.preferences,
             };
         } catch (error) {
             console.error('JWT_STRATEGY: Error validating user', error.message);

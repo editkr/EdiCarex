@@ -345,10 +345,12 @@ export class AnalyticsService {
         const totalBeds = await this.prisma.bed.count();
         const occupiedBeds = await this.prisma.bed.count({ where: { status: 'OCCUPIED' } });
 
-        // Projected saturation based on daily appointments remaining
         const now = new Date();
-        const startOfDay = new Date(now.setHours(0, 0, 0, 0));
-        const endOfDay = new Date(now.setHours(23, 59, 59, 999));
+        const startOfDay = new Date(now);
+        startOfDay.setHours(0, 0, 0, 0);
+
+        const endOfDay = new Date(now);
+        endOfDay.setHours(23, 59, 59, 999);
 
         const appointments = await this.prisma.appointment.findMany({
             where: {
@@ -362,22 +364,24 @@ export class AnalyticsService {
 
         const currentSaturation = totalBeds > 0 ? (occupiedBeds / totalBeds) * 100 : 0;
 
-        // Generate hourly curve based on scheduled volume
         const curve = [];
         for (let h = 8; h <= 18; h++) {
-            const appsAtHour = appointments.filter(a => a.startTime && parseInt(a.startTime.split(':')[0]) === h).length;
+            const appsAtHour = appointments.filter(a => {
+                if (!a.startTime) return false;
+                const hour = parseInt(a.startTime.split(':')[0]);
+                return hour === h;
+            }).length;
 
-            // Real saturation: Occupied beds + appointments at this hour that likely lead to admission
-            // We use a heuristic: 20% of consultations might result in a bed being occupied
-            const estimatedAdmissionFromApps = Math.round(appsAtHour * 0.2);
-            const hourSaturation = totalBeds > 0
-                ? Math.min(100, Math.round(((occupiedBeds + estimatedAdmissionFromApps) / totalBeds) * 100))
-                : 0;
+            const baseSaturation = totalBeds > 0 ? (occupiedBeds / totalBeds) * 100 : 25; // Default floor
+
+            // Heuristic: Each app at this hour increases immediate pressure by 5%
+            const hourPressure = appsAtHour * 5;
+            const realTimeSaturation = Math.min(100, Math.round(baseSaturation + hourPressure));
 
             curve.push({
                 hour: `${h}:00`,
-                current: h <= now.getHours() ? hourSaturation : 0,
-                predicted: Math.min(100, hourSaturation + (appsAtHour > 5 ? 15 : 5)), // Buffer based on volume
+                current: h <= now.getHours() ? realTimeSaturation : 0,
+                predicted: Math.min(100, realTimeSaturation + (appsAtHour > 0 ? 15 : 5)),
                 capacity: 100
             });
         }
@@ -519,14 +523,24 @@ export class AnalyticsService {
 
         const now = new Date();
         const startDate = this.getStartDate(range);
-        const startOfWeek = new Date(now.setDate(now.getDate() - now.getDay()));
-        const endOfWeek = new Date(now.setDate(now.getDate() - now.getDay() + 6));
+
+        // Calculate Mon-Sun range clearly without mutation issues
+        const dayOfWeek = now.getDay(); // 0 is Sun, 1 is Mon...
+        const diffToMon = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+
+        const monday = new Date(now);
+        monday.setDate(now.getDate() - diffToMon);
+        monday.setHours(0, 0, 0, 0);
+
+        const sunday = new Date(monday);
+        sunday.setDate(monday.getDate() + 6);
+        sunday.setHours(23, 59, 59, 999);
 
         const appointments = await this.prisma.appointment.findMany({
             where: {
                 appointmentDate: {
-                    gte: range === '7days' ? startDate : startOfWeek,
-                    lte: endOfWeek
+                    gte: range === '7days' ? startDate : monday,
+                    lte: sunday
                 }
             },
             select: { appointmentDate: true, type: true }
@@ -544,9 +558,9 @@ export class AnalyticsService {
             });
         });
 
-        // Reorder to start with Monday
-        const mon = stats.shift(); // Remove Sun
-        stats.push(mon); // Add Sun to end
+        // Reorder to start with Monday (Monday is at index 1 originally)
+        const sun = stats.shift(); // Remove Sunday from start
+        stats.push(sun); // Move Sunday to end
 
         return stats;
     }

@@ -18,9 +18,10 @@ import {
     AlertTriangle,
     Pill,
     DollarSign,
+    Euro,
+    Coins,
     TrendingUp,
     BarChart3,
-    Brain,
     CheckCircle2,
 } from 'lucide-react'
 import ReactMarkdown from 'react-markdown'
@@ -28,12 +29,15 @@ import { reportsAPI } from '@/services/api'
 import { useToast } from '@/components/ui/use-toast'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
+import { formatCurrency } from '@/utils/financialUtils'
 import { BarChart, Bar, LineChart, Line, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts'
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
 import * as XLSX from 'xlsx'
+import { useOrganization } from '@/contexts/OrganizationContext'
 
 export default function ReportsPage() {
+    const { config } = useOrganization()
     const [loading, setLoading] = useState(true)
     const [activeReport, setActiveReport] = useState('appointments')
     const [dateRange, setDateRange] = useState('month')
@@ -144,7 +148,7 @@ export default function ReportsPage() {
             // Reutilizamos la lógica existente frontend pero con los datos ya filtrados en reportsData
             const doc = new jsPDF()
             doc.setFontSize(20)
-            doc.text('EdiCarex - Reporte Médico', 14, 20)
+            doc.text(`${(config?.hospitalName || 'EdiCarex')} - Reporte Médico`, 14, 20)
             doc.setFontSize(12)
             doc.text(`Tipo de Reporte: ${getReportTitle(reportType)}`, 14, 30)
             doc.text(`Rango: ${dateRange}`, 14, 37)
@@ -175,19 +179,19 @@ export default function ReportsPage() {
                 case 'medications':
                     columns = ['Medicamento', 'Cantidad', 'Costo ($)']
                     tableData = reportsData.medications.map((item: any) => [
-                        item.name, item.quantity, item.cost
+                        item.name, item.quantity, formatCurrency(item.cost, config)
                     ])
                     break
                 case 'doctors':
                     columns = ['Doctor', 'Pacientes', 'Satisfacción', 'Ingresos ($)']
                     tableData = reportsData.doctors.map((item: any) => [
-                        item.name, item.patients, item.satisfaction, item.revenue
+                        item.name, item.patients, item.satisfaction, formatCurrency(item.revenue, config)
                     ])
                     break
                 case 'economic':
                     columns = ['Mes', 'Ingresos', 'Gastos']
                     tableData = reportsData.economic.monthlyBreakdown?.map((item: any) => [
-                        item.month, item.revenue, item.expenses
+                        item.month, formatCurrency(item.revenue, config), formatCurrency(item.expenses, config)
                     ]) || []
                     break
             }
@@ -367,7 +371,13 @@ export default function ReportsPage() {
                 >
                     <CardContent className="pt-6">
                         <div className="flex flex-col items-center text-center gap-2">
-                            <DollarSign className="h-8 w-8 text-green-600" />
+                            {config?.billing?.currency === 'EUR' ? (
+                                <Euro className="h-8 w-8 text-green-600" />
+                            ) : config?.billing?.currency === 'PEN' ? (
+                                <Coins className="h-8 w-8 text-green-600" />
+                            ) : (
+                                <DollarSign className="h-8 w-8 text-green-600" />
+                            )}
                             <p className="font-semibold">Económico</p>
                         </div>
                     </CardContent>
@@ -403,7 +413,13 @@ export default function ReportsPage() {
                 >
                     <CardContent className="pt-6">
                         <div className="flex flex-col items-center text-center gap-2">
-                            <Brain className="h-8 w-8 text-indigo-600" />
+                            <div className="h-8 w-8 flex items-center justify-center">
+                                <img
+                                    src="/assets/logoIA.png"
+                                    alt="AI Logo"
+                                    className="h-8 w-8 object-contain drop-shadow-[0_0_5px_rgba(79,70,229,0.3)]"
+                                />
+                            </div>
                             <p className="font-semibold">Predicciones IA</p>
                         </div>
                     </CardContent>
@@ -569,13 +585,13 @@ export default function ReportsPage() {
                                         tickLine={false}
                                         axisLine={false}
                                         tick={{ fill: '#a1a1aa', fontSize: 12 }}
-                                        tickFormatter={(value) => `S/.${value}`}
+                                        tickFormatter={(value) => formatCurrency(value, config)}
                                     />
                                     <Tooltip
                                         cursor={{ fill: 'transparent' }}
                                         contentStyle={{ backgroundColor: '#18181b', borderColor: '#27272a', borderRadius: '8px', color: '#fff' }}
                                         formatter={(value: any, name: string) => {
-                                            if (name === 'Valor (S/.)') return [`S/.${value.toLocaleString()}`, 'Valor Total'];
+                                            if (name === 'Ingresos') return [formatCurrency(value, config), 'Valor Total'];
                                             return [`${value} unid.`, 'Stock Disponible'];
                                         }}
                                     />
@@ -594,7 +610,7 @@ export default function ReportsPage() {
                                     <Bar
                                         dataKey="cost"
                                         fill="#10b981"
-                                        name="Valor (S/.)"
+                                        name="Ingresos"
                                         radius={[4, 4, 0, 0]}
                                         barSize={40}
                                     />
@@ -611,7 +627,7 @@ export default function ReportsPage() {
                                     <CardContent className="pt-6">
                                         <p className="text-sm text-muted-foreground">Ingresos Totales</p>
                                         <p className="text-2xl font-bold text-green-600">
-                                            ${reportsData.economic.totalRevenue?.toLocaleString()}
+                                            {formatCurrency(reportsData.economic.totalRevenue, config)}
                                         </p>
                                     </CardContent>
                                 </Card>
@@ -619,7 +635,7 @@ export default function ReportsPage() {
                                     <CardContent className="pt-6">
                                         <p className="text-sm text-muted-foreground">Gastos Totales</p>
                                         <p className="text-2xl font-bold text-red-600">
-                                            ${reportsData.economic.totalExpenses?.toLocaleString()}
+                                            {formatCurrency(reportsData.economic.totalExpenses, config)}
                                         </p>
                                     </CardContent>
                                 </Card>
@@ -627,7 +643,7 @@ export default function ReportsPage() {
                                     <CardContent className="pt-6">
                                         <p className="text-sm text-muted-foreground">Beneficio Neto</p>
                                         <p className="text-2xl font-bold text-blue-600">
-                                            ${reportsData.economic.netProfit?.toLocaleString()}
+                                            {formatCurrency(reportsData.economic.netProfit, config)}
                                         </p>
                                     </CardContent>
                                 </Card>
@@ -644,8 +660,11 @@ export default function ReportsPage() {
                                 <LineChart data={reportsData.economic.monthlyBreakdown}>
                                     <CartesianGrid strokeDasharray="3 3" />
                                     <XAxis dataKey="month" />
-                                    <YAxis />
-                                    <Tooltip />
+                                    <YAxis tickFormatter={(val) => formatCurrency(val, config)} />
+                                    <Tooltip
+                                        formatter={(val: any) => [formatCurrency(val, config), 'monto']}
+                                        contentStyle={{ backgroundColor: '#18181b', borderColor: '#27272a', borderRadius: '8px', color: '#fff' }}
+                                    />
                                     <Legend payload={[{ value: 'Ingresos', type: 'line', color: '#10b981' }, { value: 'Gastos', type: 'line', color: '#ef4444' }]} />
                                     <Line type="monotone" dataKey="revenue" stroke="#10b981" strokeWidth={2} name="Ingresos" />
                                     <Line type="monotone" dataKey="expenses" stroke="#ef4444" strokeWidth={2} name="Gastos" />
@@ -692,13 +711,13 @@ export default function ReportsPage() {
                                     tick={{ fill: '#10b981', fontSize: 12 }}
                                     axisLine={false}
                                     tickLine={false}
-                                    tickFormatter={(val) => `S/.${val}`}
+                                    tickFormatter={(val: any) => formatCurrency(val, config)}
                                 />
                                 <Tooltip
                                     contentStyle={{ backgroundColor: '#18181b', borderColor: '#27272a', borderRadius: '8px', color: '#fff' }}
                                     itemStyle={{ color: '#fff' }}
                                     formatter={(value: any, name: string) => {
-                                        if (name === 'Ingresos') return [`S/.${value.toLocaleString()}`, name];
+                                        if (name === 'Ingresos') return [formatCurrency(value, config), name];
                                         return [value, name];
                                     }}
                                 />
@@ -726,7 +745,7 @@ export default function ReportsPage() {
                                             <div>
                                                 <p className="text-xs font-medium text-zinc-500 uppercase tracking-wider">Año Actual</p>
                                                 <p className="text-2xl font-bold text-emerald-500 mt-1">
-                                                    S/. {reportsData.comparison.reduce((sum: number, m: any) => sum + m.current, 0).toLocaleString()}
+                                                    {formatCurrency(reportsData.comparison.reduce((sum: number, m: any) => sum + m.current, 0), config)}
                                                 </p>
                                             </div>
                                             <div className="p-2 bg-emerald-500/10 rounded-lg">
@@ -742,7 +761,7 @@ export default function ReportsPage() {
                                             <div>
                                                 <p className="text-xs font-medium text-zinc-500 uppercase tracking-wider">Año Anterior</p>
                                                 <p className="text-2xl font-bold text-zinc-400 mt-1">
-                                                    S/. {reportsData.comparison.reduce((sum: number, m: any) => sum + m.previous, 0).toLocaleString()}
+                                                    {formatCurrency(reportsData.comparison.reduce((sum: number, m: any) => sum + m.previous, 0), config)}
                                                 </p>
                                             </div>
                                             <div className="p-2 bg-zinc-500/10 rounded-lg">
@@ -821,14 +840,14 @@ export default function ReportsPage() {
                                             axisLine={false}
                                             tickLine={false}
                                             tick={{ fill: '#71717a', fontSize: 12 }}
-                                            tickFormatter={(value) => `S/.${value >= 1000 ? (value / 1000) + 'k' : value}`}
+                                            tickFormatter={(value) => formatCurrency(value, config)}
                                         />
                                         <Tooltip
                                             cursor={{ fill: 'rgba(255,255,255,0.05)' }}
-                                            contentStyle={{ backgroundColor: '#09090b', borderColor: '#27272a', borderRadius: '12px', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.5)' }}
+                                            contentStyle={{ backgroundColor: '#18181b', borderColor: '#27272a', borderRadius: '8px', color: '#fff' }}
                                             itemStyle={{ color: '#fff' }}
                                             formatter={(value: any, name: string) => [
-                                                <span className="font-bold">S/. {value.toLocaleString()}</span>,
+                                                <span className="font-bold">{formatCurrency(value, config)}</span>,
                                                 name
                                             ]}
                                         />
@@ -865,11 +884,15 @@ export default function ReportsPage() {
                             {/* Insight Banner */}
                             <div className="p-4 bg-indigo-500/10 rounded-xl border border-indigo-500/20 backdrop-blur-sm">
                                 <div className="flex items-start gap-4">
-                                    <div className="p-2 bg-indigo-500/20 rounded-lg shrink-0">
-                                        <Brain className="h-5 w-5 text-indigo-400" />
+                                    <div className="flex items-center justify-center shrink-0">
+                                        <img
+                                            src="/assets/logoIA.png"
+                                            alt="AI Logo"
+                                            className="h-16 w-16 object-contain drop-shadow-[0_0_12px_rgba(99,102,241,0.6)]"
+                                        />
                                     </div>
                                     <div>
-                                        <p className="text-sm font-semibold text-indigo-300">Análisis Predictivo EdiCarex IA</p>
+                                        <p className="text-sm font-semibold text-indigo-300">Análisis Predictivo {(config?.hospitalName || 'EdiCarex')} IA</p>
                                         <div className="text-sm text-indigo-200/80 mt-1 italic leading-relaxed prose prose-invert max-w-none">
                                             <ReactMarkdown>
                                                 {reportsData.aiPredictions.insight || 'Generando perspectiva estratégica...'}
@@ -887,7 +910,7 @@ export default function ReportsPage() {
                                             <div>
                                                 <p className="text-xs font-medium text-zinc-500 uppercase tracking-wider">Próximo Mes Est.</p>
                                                 <p className="text-2xl font-bold text-violet-400 mt-1">
-                                                    S/. {(reportsData.aiPredictions.predictions?.[0]?.predicted || 0).toLocaleString()}
+                                                    {formatCurrency(reportsData.aiPredictions.predictions?.[0]?.predicted || 0, config)}
                                                 </p>
                                             </div>
                                             <div className="p-2 bg-violet-500/10 rounded-lg">
@@ -976,7 +999,7 @@ export default function ReportsPage() {
                                                 fontSize={12}
                                                 tickLine={false}
                                                 axisLine={false}
-                                                tickFormatter={(value) => `S/. ${value / 1000}k`}
+                                                tickFormatter={(value) => formatCurrency(value, config)}
                                             />
                                             <YAxis
                                                 yAxisId="right"
@@ -992,7 +1015,7 @@ export default function ReportsPage() {
                                                 contentStyle={{ backgroundColor: '#09090b', borderColor: '#27272a', borderRadius: '8px' }}
                                                 itemStyle={{ fontSize: '12px' }}
                                                 formatter={(value, name) => [
-                                                    name === 'predicted' ? `S/. ${value.toLocaleString()}` : `${value}%`,
+                                                    name === 'predicted' ? formatCurrency(value as number, config) : `${value}%`,
                                                     name === 'predicted' ? 'Ingreso Predicho' : 'Confianza'
                                                 ]}
                                             />

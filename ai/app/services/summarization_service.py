@@ -2,6 +2,9 @@ from app.models.schemas import SummarizationInput, SummarizationOutput
 from app.services.groq_service import GroqService
 import re
 import asyncio
+import logging
+
+logger = logging.getLogger("EdiCarexAI.Summarization")
 
 
 class SummarizationService:
@@ -42,7 +45,7 @@ class SummarizationService:
         """
 
         try:
-            result = await self.groq.execute_prompt(prompt, system_persona)
+            result = await self.groq.execute_prompt(prompt, system_persona, model=data.model, temperature=data.temperature)
             if result:
                 summary = result.get("summary", "Error en síntesis clínica.")
             else:
@@ -54,5 +57,6 @@ class SummarizationService:
         return SummarizationOutput(
             summary=summary,
             original_length=len(text),
-            summary_length=len(summary)
+            summary_length=len(summary),
+            model=result.get("model") if result else None
         )

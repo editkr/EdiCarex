@@ -26,6 +26,7 @@ import { BedsModule } from './beds/beds.module';
 import { ServicesCatalogModule } from './services-catalog/services-catalog.module';
 import { HealthController } from './health/health.controller';
 import { MaintenanceGuard } from './common/guards/maintenance.guard';
+import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
     imports: [
@@ -40,6 +41,9 @@ import { MaintenanceGuard } from './common/guards/maintenance.guard';
             ttl: parseInt(process.env.RATE_LIMIT_TTL) || 60000,
             limit: parseInt(process.env.RATE_LIMIT_MAX) || 100,
         }]),
+
+        // Task Scheduling
+        ScheduleModule.forRoot(),
 
         // Core modules
         PrismaModule,
@@ -70,6 +74,11 @@ import { MaintenanceGuard } from './common/guards/maintenance.guard';
         ServicesCatalogModule,
     ],
     controllers: [HealthController],
-    providers: [MaintenanceGuard],
+    providers: [
+        {
+            provide: APP_GUARD,
+            useClass: MaintenanceGuard,
+        },
+    ],
 })
 export class AppModule { }

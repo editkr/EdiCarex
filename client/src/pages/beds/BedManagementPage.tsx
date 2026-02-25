@@ -25,8 +25,10 @@ import BedMap from './components/BedMap'
 import BedList from './components/BedList'
 import { formatDistanceToNow } from 'date-fns'
 import { es } from 'date-fns/locale'
+import { usePermissions } from '@/hooks/usePermissions'
 
 export default function BedManagementPage() {
+    const { hasPermission } = usePermissions()
     const [searchParams] = useSearchParams()
     const initialWard = searchParams.get('ward') || 'ALL'
 
@@ -68,9 +70,11 @@ export default function BedManagementPage() {
                     <h1 className="text-3xl font-bold text-foreground">Gestión de Camas</h1>
                     <p className="text-muted-foreground">Centro de control y asignación hospitalaria en tiempo real</p>
                 </div>
-                <Button onClick={() => setIsBedModalOpen(true)} size="lg" className="shadow-md">
-                    <Plus className="mr-2 h-5 w-5" /> Nueva Cama
-                </Button>
+                {hasPermission('BEDS_CREATE') && (
+                    <Button onClick={() => setIsBedModalOpen(true)} size="lg" className="shadow-md">
+                        <Plus className="mr-2 h-5 w-5" /> Nueva Cama
+                    </Button>
+                )}
             </div>
 
             {/* KPI Cards */}

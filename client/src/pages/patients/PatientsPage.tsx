@@ -54,9 +54,12 @@ import {
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 
+import { usePermissions } from '@/hooks/usePermissions'
+
 export default function PatientsPage() {
     const navigate = useNavigate()
     const { toast } = useToast()
+    const { hasPermission } = usePermissions()
 
     // Estados
     const [searchTerm, setSearchTerm] = useState('')
@@ -432,10 +435,12 @@ export default function PatientsPage() {
                         <Upload className="h-4 w-4 mr-2" />
                         Importar
                     </Button>
-                    <Button onClick={handleAdd}>
-                        <Plus className="h-4 w-4 mr-2" />
-                        Nuevo Paciente
-                    </Button>
+                    {hasPermission('PATIENTS_CREATE') && (
+                        <Button onClick={handleAdd}>
+                            <Plus className="h-4 w-4 mr-2" />
+                            Nuevo Paciente
+                        </Button>
+                    )}
                 </div>
             </div>
 
@@ -625,31 +630,37 @@ export default function PatientsPage() {
                                             >
                                                 <Eye className="h-4 w-4" />
                                             </Button>
-                                            <Button
-                                                variant="ghost"
-                                                size="sm"
-                                                onClick={() => handleEdit(patient)}
-                                            >
-                                                <Edit className="h-4 w-4" />
-                                            </Button>
-                                            <Button
-                                                variant="ghost"
-                                                size="sm"
-                                                onClick={() => {
-                                                    setEmergencyPatientId(patient.id)
-                                                    setEmergencyModalOpen(true)
-                                                }}
-                                                className="hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30"
-                                            >
-                                                <AlertTriangle className="h-4 w-4" />
-                                            </Button>
-                                            <Button
-                                                variant="ghost"
-                                                size="sm"
-                                                onClick={() => setDeleteId(patient.id)}
-                                            >
-                                                <Trash2 className="h-4 w-4 text-red-500" />
-                                            </Button>
+                                            {hasPermission('PATIENTS_EDIT') && (
+                                                <Button
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    onClick={() => handleEdit(patient)}
+                                                >
+                                                    <Edit className="h-4 w-4" />
+                                                </Button>
+                                            )}
+                                            {hasPermission('PATIENTS_EDIT') && (
+                                                <Button
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    onClick={() => {
+                                                        setEmergencyPatientId(patient.id)
+                                                        setEmergencyModalOpen(true)
+                                                    }}
+                                                    className="hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30"
+                                                >
+                                                    <AlertTriangle className="h-4 w-4" />
+                                                </Button>
+                                            )}
+                                            {hasPermission('PATIENTS_DELETE') && (
+                                                <Button
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    onClick={() => setDeleteId(patient.id)}
+                                                >
+                                                    <Trash2 className="h-4 w-4 text-red-500" />
+                                                </Button>
+                                            )}
                                         </div>
                                     </TableCell>
                                 </TableRow>

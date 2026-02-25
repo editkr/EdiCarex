@@ -2,6 +2,7 @@ import { Outlet } from 'react-router-dom'
 import Sidebar from './Sidebar'
 import Header from './Header'
 import { useAuthStore } from '@/stores/authStore'
+import StaffAIChatBubble from './StaffAIChatBubble'
 
 export default function Layout() {
     const user = useAuthStore((state) => state.user)
@@ -30,6 +31,9 @@ export default function Layout() {
                     </main>
                 </div>
             </div>
+
+            {/* Global AI Assistant Bubble for Staff */}
+            <StaffAIChatBubble />
         </div>
     )
 }

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { patientsAPI, appointmentsAPI, emergencyAPI, laboratoryAPI, pharmacyAPI } from '@/services/api'
+import { patientsAPI, appointmentsAPI, emergencyAPI, laboratoryAPI, pharmacyAPI, aiAPI } from '@/services/api'
 import {
     Command,
     CommandEmpty,
@@ -17,7 +17,7 @@ import { cn } from '@/lib/utils'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { ArrowLeft, User, FileText, Calendar, Pill, Edit, Download, Shield, Plus, FlaskConical, AlertTriangle, Key, Loader2, Phone, Mail, MapPin, StickyNote, Paperclip, Activity, Trash2, Clock, Bed, Heart, Thermometer, Wind } from 'lucide-react'
+import { Sparkles, ArrowLeft, User, FileText, Calendar, Pill, Edit, Download, Shield, Plus, FlaskConical, AlertTriangle, Key, Loader2, Phone, Mail, MapPin, StickyNote, Paperclip, Activity, Trash2, Clock, Bed, Heart, Thermometer, Wind, FileSignature } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import {
@@ -32,6 +32,7 @@ import {
 } from "@/components/ui/alert-dialog"
 import { format } from 'date-fns'
 import { useToast } from '@/components/ui/use-toast'
+import { usePermissions } from '@/hooks/usePermissions'
 import PatientModal from '@/components/modals/PatientModal'
 import AddDiagnosisModal from '@/components/modals/AddDiagnosisModal'
 import AppointmentModal from '@/components/modals/AppointmentModal'
@@ -39,12 +40,24 @@ import EmergencyModal from '@/components/modals/EmergencyModal'
 import { AddNoteModal } from '@/components/modals/AddNoteModal'
 import { AddDocumentModal } from '@/components/modals/AddDocumentModal'
 import LabOrderModal from '@/components/modals/LabOrderModal'
+import { useOrganization } from '@/contexts/OrganizationContext'
 
+
+const MODEL_DISPLAY_NAMES: Record<string, string> = {
+    'llama-3.3-70b-versatile': 'Meta Llama 3.3 70B (Producción)',
+    'llama-3.1-8b-instant': 'Meta Llama 3.1 8B (Instantáneo)',
+    'openai/gpt-oss-120b': 'OpenAI GPT OSS 120B (Flagship)',
+    'groq/compound': 'Groq Compound (Sistema Agente)',
+    'groq/compound-mini': 'Groq Compound Mini',
+    'qwen/qwen3-32b': 'Qwen 3 32B (Preview)',
+};
 
 export default function PatientProfilePage() {
     const { id } = useParams<{ id: string }>()
     const navigate = useNavigate()
     const { toast } = useToast()
+    const { hasPermission } = usePermissions()
+    const { config } = useOrganization()
     const [activeTab, setActiveTab] = useState('general')
     const [editModalOpen, setEditModalOpen] = useState(false)
     const [addDiagnosisOpen, setAddDiagnosisOpen] = useState(false)
@@ -54,6 +67,38 @@ export default function PatientProfilePage() {
     const [showPortalModal, setShowPortalModal] = useState(false)
     const [credentials, setCredentials] = useState<{ email: string, password: string } | null>(null)
     const [addMedicationOpen, setAddMedicationOpen] = useState(false)
+
+    // AI States
+    const [summarizing, setSummarizing] = useState(false)
+    const [aiSummary, setAiSummary] = useState<string | null>(null)
+    const [aiModel, setAiModel] = useState<string | null>(null)
+    const [isSummaryModalOpen, setIsSummaryModalOpen] = useState(false)
+
+    const handleAISummarize = async () => {
+        if (!combinedHistory || combinedHistory.length === 0) {
+            toast({ title: 'Aviso', description: 'No hay suficiente historial para resumir.' })
+            return
+        }
+        try {
+            setSummarizing(true)
+            const textToSummarize = combinedHistory.map((h: any) =>
+                `Fecha: ${h.date || h.createdAt}. Tipo: ${h.type}. Notas: ${h.notes || h.description}. Tratamiento: ${h.treatment || 'N/A'}`
+            ).join('\n---\n')
+
+            const response = await aiAPI.summarize(textToSummarize)
+            setAiSummary(response.data.summary)
+            setAiModel(response.data.model)
+            setIsSummaryModalOpen(true)
+        } catch (error) {
+            toast({
+                title: 'Error de IA',
+                description: 'No se pudo generar el resumen clínico.',
+                variant: 'destructive'
+            })
+        } finally {
+            setSummarizing(false)
+        }
+    }
     const [medSearchOpen, setMedSearchOpen] = useState(false)
     const [selectedMedId, setSelectedMedId] = useState<string | null>(null)
     const [addNoteOpen, setAddNoteOpen] = useState(false)
@@ -229,7 +274,17 @@ export default function PatientProfilePage() {
                     </style>
                 </head>
                 <body>
-                    <h1>Expediente Médico Electrónico</h1>
+                    <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 2px solid #3b82f6; padding-bottom: 10px; margin-bottom: 20px;">
+                        <div>
+                            ${config?.logo ? `<img src="${config.logo}" alt="Logo" style="height: 50px;" />` : `<h1 style="margin: 0; color: #1e40af;">${config?.hospitalName || 'EdiCarex'}</h1>`}
+                            <p style="margin: 5px 0 0 0; color: #64748b; font-size: 12px;">${config?.address || ''}</p>
+                        </div>
+                        <div style="text-align: right;">
+                            <h2 style="margin: 0; color: #334155; font-size: 18px;">Expediente Médico Electrónico</h2>
+                            <p style="margin: 5px 0 0 0; color: #64748b; font-size: 12px;">Generado: ${new Date().toLocaleDateString()}</p>
+                        </div>
+                    </div>
+
                     <div class="section">
                         <h2>Datos del Paciente</h2>
                         <table>
@@ -662,10 +717,34 @@ export default function PatientProfilePage() {
                                         ))}
                                     </div>
                                 )}
-                                <Button onClick={() => setAddDiagnosisOpen(true)}>
-                                    <Plus className="h-4 w-4 mr-2" />
-                                    Agregar Registro Médico
-                                </Button>
+                                {hasPermission('MEDICAL_RECORDS_CREATE') && (
+                                    <div className="flex flex-wrap gap-2">
+                                        {config?.ai?.enabled && config?.ai?.features?.recordSummarization && (
+                                            <Button
+                                                onClick={handleAISummarize}
+                                                variant="outline"
+                                                className={cn(
+                                                    "bg-emerald-50 border-emerald-200 text-emerald-700 hover:bg-emerald-100",
+                                                    summarizing && "animate-pulse"
+                                                )}
+                                                disabled={summarizing}
+                                            >
+                                                {summarizing ? <Loader2 className="h-5 w-5 animate-spin" /> : (
+                                                    <img
+                                                        src="/assets/logoIA.png"
+                                                        alt="AI Logo"
+                                                        className="h-10 w-10 object-contain"
+                                                    />
+                                                )}
+                                                Resumen Clínico IA
+                                            </Button>
+                                        )}
+                                        <Button onClick={() => setAddDiagnosisOpen(true)}>
+                                            <Plus className="h-4 w-4 mr-2" />
+                                            Agregar Registro Médico
+                                        </Button>
+                                    </div>
+                                )}
                             </div>
                         </CardContent>
                     </Card>
@@ -675,10 +754,12 @@ export default function PatientProfilePage() {
                 <TabsContent value="appointments" className="space-y-4">
                     <div className="flex justify-between items-center mb-2">
                         <h3 className="text-lg font-semibold tracking-tight">Gestión de Citas</h3>
-                        <Button onClick={() => setCreateAppointmentOpen(true)}>
-                            <Calendar className="mr-2 h-4 w-4" />
-                            Programar Nueva Cita
-                        </Button>
+                        {hasPermission('APPOINTMENTS_CREATE') && (
+                            <Button onClick={() => setCreateAppointmentOpen(true)}>
+                                <Calendar className="mr-2 h-4 w-4" />
+                                Programar Nueva Cita
+                            </Button>
+                        )}
                     </div>
 
                     <div className="grid gap-4 md:grid-cols-2">
@@ -754,10 +835,12 @@ export default function PatientProfilePage() {
                 <TabsContent value="prescriptions">
                     <div className="flex justify-between items-center mb-4">
                         <h3 className="text-lg font-semibold tracking-tight">Recetas Médicas</h3>
-                        <Button onClick={() => setAddMedicationOpen(true)}>
-                            <Pill className="h-4 w-4 mr-2" />
-                            Prescribir Medicamento
-                        </Button>
+                        {hasPermission('PRESCRIPTIONS_CREATE') && (
+                            <Button onClick={() => setAddMedicationOpen(true)}>
+                                <Pill className="h-4 w-4 mr-2" />
+                                Prescribir Medicamento
+                            </Button>
+                        )}
                     </div>
                     <Card>
                         <CardContent className="pt-6">
@@ -960,10 +1043,12 @@ export default function PatientProfilePage() {
                         <CardHeader>
                             <div className="flex justify-between items-center">
                                 <CardTitle>Órdenes de Laboratorio</CardTitle>
-                                <Button onClick={() => setAddLabOrderOpen(true)} className="bg-red-600 hover:bg-red-700 text-white shadow-md">
-                                    <FlaskConical className="h-4 w-4 mr-2" />
-                                    Nueva Orden
-                                </Button>
+                                {hasPermission('LAB_CREATE') && (
+                                    <Button onClick={() => setAddLabOrderOpen(true)} className="bg-red-600 hover:bg-red-700 text-white shadow-md">
+                                        <FlaskConical className="h-4 w-4 mr-2" />
+                                        Nueva Orden
+                                    </Button>
+                                )}
                             </div>
                         </CardHeader>
                         <CardContent>
@@ -1005,9 +1090,11 @@ export default function PatientProfilePage() {
                                     </div>
                                     <p className="font-medium text-slate-900">No hay órdenes registradas</p>
                                     <p className="text-sm text-slate-500 mb-4">Crea una nueva solicitud de análisis para este paciente.</p>
-                                    <Button variant="outline" onClick={() => setAddLabOrderOpen(true)} className="text-blue-600 border-blue-200 hover:bg-blue-50">
-                                        Crear primera orden
-                                    </Button>
+                                    {hasPermission('LAB_CREATE') && (
+                                        <Button variant="outline" onClick={() => setAddLabOrderOpen(true)} className="text-blue-600 border-blue-200 hover:bg-blue-50">
+                                            Crear primera orden
+                                        </Button>
+                                    )}
                                 </div>
                             )}
                         </CardContent>
@@ -1022,14 +1109,16 @@ export default function PatientProfilePage() {
                                 <CardTitle>Registros de Emergencia ({emergencies.length})</CardTitle>
                                 <CardDescription>Visitas de emergencia previas</CardDescription>
                             </div>
-                            <Button
-                                onClick={() => setAddEmergencyOpen(true)}
-                                size="sm"
-                                className="bg-red-600 hover:bg-red-700 text-white shadow-sm transition-all hover:scale-105 active:scale-95"
-                            >
-                                <AlertTriangle className="h-4 w-4 mr-2" />
-                                Nueva Emergencia
-                            </Button>
+                            {hasPermission('EMERGENCY_CREATE') && (
+                                <Button
+                                    onClick={() => setAddEmergencyOpen(true)}
+                                    size="sm"
+                                    className="bg-red-600 hover:bg-red-700 text-white shadow-sm transition-all hover:scale-105 active:scale-95"
+                                >
+                                    <AlertTriangle className="h-4 w-4 mr-2" />
+                                    Nueva Emergencia
+                                </Button>
+                            )}
                         </CardHeader>
                         <CardContent>
                             {emergencies.length === 0 ? (
@@ -1110,10 +1199,12 @@ export default function PatientProfilePage() {
                                 <CardTitle>Notas del Doctor</CardTitle>
                                 <CardDescription>Notas clínicas y observaciones</CardDescription>
                             </div>
-                            <Button onClick={() => setAddNoteOpen(true)} variant="outline" size="sm">
-                                <FileText className="h-4 w-4 mr-2" />
-                                Nueva Nota
-                            </Button>
+                            {hasPermission('MEDICAL_RECORDS_CREATE') && (
+                                <Button onClick={() => setAddNoteOpen(true)} variant="outline" size="sm">
+                                    <FileText className="h-4 w-4 mr-2" />
+                                    Nueva Nota
+                                </Button>
+                            )}
                         </CardHeader>
                         <CardContent>
                             <div className="space-y-4">
@@ -1166,10 +1257,12 @@ export default function PatientProfilePage() {
                                         </div>
                                         <p className="font-medium text-slate-900">No hay documentos</p>
                                         <p className="text-sm text-slate-500 mb-4">Sube archivos médicos, recetas o resultados.</p>
-                                        <Button onClick={() => setAddDocumentOpen(true)} variant="outline">
-                                            <Paperclip className="h-4 w-4 mr-2" />
-                                            Adjuntar Archivo
-                                        </Button>
+                                        {hasPermission('MEDICAL_RECORDS_CREATE') && (
+                                            <Button onClick={() => setAddDocumentOpen(true)} variant="outline">
+                                                <Paperclip className="h-4 w-4 mr-2" />
+                                                Adjuntar Archivo
+                                            </Button>
+                                        )}
                                     </div>
                                 ) : (
                                     <div className="space-y-4">
@@ -1178,10 +1271,12 @@ export default function PatientProfilePage() {
                                                 <h3 className="font-medium">Archivos Recientes</h3>
                                                 <p className="text-sm text-muted-foreground">{documents.length} documentos encontrados</p>
                                             </div>
-                                            <Button onClick={() => setAddDocumentOpen(true)} size="sm">
-                                                <Paperclip className="h-4 w-4 mr-2" />
-                                                Nuevo Documento
-                                            </Button>
+                                            {hasPermission('MEDICAL_RECORDS_CREATE') && (
+                                                <Button onClick={() => setAddDocumentOpen(true)} size="sm">
+                                                    <Paperclip className="h-4 w-4 mr-2" />
+                                                    Nuevo Documento
+                                                </Button>
+                                            )}
                                         </div>
 
                                         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -1330,6 +1425,66 @@ export default function PatientProfilePage() {
                     refetchEmergencies()
                 }}
             />
-        </div >
+            {/* AI Summary Modal */}
+            <AlertDialog open={isSummaryModalOpen} onOpenChange={setIsSummaryModalOpen}>
+                <AlertDialogContent className="max-w-3xl bg-zinc-950 border-zinc-800 text-white">
+                    <AlertDialogHeader>
+                        <div className="flex items-center gap-3 mb-2">
+                            <div className="h-24 w-24 flex items-center justify-center p-2">
+                                <img
+                                    src="/assets/logoIA.png"
+                                    alt="AI Logo"
+                                    className="h-24 w-24 object-contain drop-shadow-[0_0_15px_rgba(16,185,129,0.5)]"
+                                />
+                            </div>
+                            <div>
+                                <AlertDialogTitle className="text-2xl font-black italic tracking-tighter flex items-center gap-3 uppercase">
+                                    Síntesis Clínica Inteligente
+                                    <Badge className="bg-emerald-500 text-white border-none text-[10px] animate-pulse">
+                                        {(aiModel && MODEL_DISPLAY_NAMES[aiModel]) || 'SENIOR AI'}
+                                    </Badge>
+                                </AlertDialogTitle>
+                                <AlertDialogDescription className="text-zinc-400">
+                                    Resumen ejecutivo del historial de <span className="text-zinc-100 font-bold">{patient?.firstName} {patient?.lastName}</span>
+                                </AlertDialogDescription>
+                            </div>
+                        </div>
+                    </AlertDialogHeader>
+
+                    <div className="py-6 overflow-y-auto max-h-[60vh]">
+                        <div
+                            className="bg-zinc-900/50 p-6 rounded-2xl border border-zinc-800 leading-relaxed text-zinc-300 font-medium whitespace-pre-wrap selection:bg-emerald-500/30"
+                            style={{ fontFamily: 'var(--font-sans)' }}
+                        >
+                            {aiSummary || 'Generando síntesis...'}
+                        </div>
+                    </div>
+
+                    <AlertDialogFooter className="border-t border-zinc-800 pt-6">
+                        <Button
+                            onClick={() => {
+                                const blob = new Blob([aiSummary || ''], { type: 'text/plain' });
+                                const url = window.URL.createObjectURL(blob);
+                                const a = document.createElement('a');
+                                a.href = url;
+                                a.download = `Resumen_IA_${patient?.lastName}.txt`;
+                                a.click();
+                            }}
+                            variant="ghost"
+                            className="text-zinc-400 hover:text-white"
+                        >
+                            <Download className="h-4 w-4 mr-2" />
+                            Descargar TXT
+                        </Button>
+                        <AlertDialogAction
+                            onClick={() => setIsSummaryModalOpen(false)}
+                            className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-8 rounded-xl shadow-lg shadow-emerald-900/20 shadow-xl"
+                        >
+                            Cerrar Resumen
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+        </div>
     )
 }

@@ -1,0 +1,3645 @@
+{
+  "appointment": [],
+  "appointmentCheckIn": [],
+  "appointmentHistory": [],
+  "attendance": [],
+  "auditLog": [
+    {
+      "id": "b04c8a3a-742c-4480-8470-dcd526e2bb3c",
+      "action": "LOGIN",
+      "resource": "auth",
+      "resourceId": null,
+      "changes": {
+        "email": "admin@edicarex.com"
+      },
+      "ipAddress": null,
+      "userAgent": null,
+      "userId": "b0ba5198-ce56-4bac-a938-ef5de24b0953",
+      "createdAt": "2026-02-15T21:26:39.869Z"
+    },
+    {
+      "id": "bbb66cac-b4cf-47d2-a8e7-d81483be001e",
+      "action": "ELIMINAR",
+      "resource": "SEGURIDAD",
+      "resourceId": "da7acab5-aad8-4ec0-95c2-b5c708fffa83",
+      "changes": {
+        "body": {},
+        "query": {},
+        "method": "DELETE"
+      },
+      "ipAddress": "::1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36",
+      "userId": "b0ba5198-ce56-4bac-a938-ef5de24b0953",
+      "createdAt": "2026-02-15T21:37:06.560Z"
+    },
+    {
+      "id": "ad6d8ef4-84f4-4893-bbd7-760d598c2468",
+      "action": "ELIMINAR",
+      "resource": "SEGURIDAD",
+      "resourceId": null,
+      "changes": {
+        "body": {},
+        "query": {},
+        "method": "POST"
+      },
+      "ipAddress": "::1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36",
+      "userId": "b0ba5198-ce56-4bac-a938-ef5de24b0953",
+      "createdAt": "2026-02-15T21:37:46.969Z"
+    },
+    {
+      "id": "e9223363-ed05-4ed3-ade0-9eb62ac34490",
+      "action": "ELIMINAR",
+      "resource": "SEGURIDAD",
+      "resourceId": null,
+      "changes": {
+        "body": {},
+        "query": {},
+        "method": "POST"
+      },
+      "ipAddress": "::1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36",
+      "userId": "b0ba5198-ce56-4bac-a938-ef5de24b0953",
+      "createdAt": "2026-02-15T21:37:53.562Z"
+    },
+    {
+      "id": "c6224639-a86a-42a8-8a4c-8d5c2877651f",
+      "action": "ELIMINAR",
+      "resource": "SEGURIDAD",
+      "resourceId": null,
+      "changes": {
+        "body": {},
+        "query": {},
+        "method": "POST"
+      },
+      "ipAddress": "::1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36",
+      "userId": "b0ba5198-ce56-4bac-a938-ef5de24b0953",
+      "createdAt": "2026-02-15T21:53:48.430Z"
+    },
+    {
+      "id": "1fd771e7-7683-48ad-8968-24e5a8852e88",
+      "action": "CREAR",
+      "resource": "SEGURIDAD",
+      "resourceId": "7f1b502e-b0d6-4d84-ba90-dc221c2f2d3b",
+      "changes": {
+        "body": {},
+        "query": {},
+        "method": "POST"
+      },
+      "ipAddress": "::1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36",
+      "userId": "b0ba5198-ce56-4bac-a938-ef5de24b0953",
+      "createdAt": "2026-02-15T21:53:52.853Z"
+    },
+    {
+      "id": "382b11a6-a83f-4c16-a78d-b36bcf91ee70",
+      "action": "CREAR",
+      "resource": "SEGURIDAD",
+      "resourceId": "dfdb7924-1003-4405-ba81-6794f33d3d71",
+      "changes": {
+        "body": {},
+        "query": {},
+        "method": "POST"
+      },
+      "ipAddress": "::1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36",
+      "userId": "b0ba5198-ce56-4bac-a938-ef5de24b0953",
+      "createdAt": "2026-02-15T21:56:06.543Z"
+    },
+    {
+      "id": "660295a8-d599-45d4-a4f4-23319a246e25",
+      "action": "ACTUALIZAR",
+      "resource": "SEGURIDAD",
+      "resourceId": "40d32107-8355-4d19-93e1-8584099ed97d",
+      "changes": {
+        "body": {
+          "ai": {
+            "model": "llama-3.3-70b-versatile",
+            "enabled": true,
+            "features": {
+              "triage": true,
+              "diagnosis": true,
+              "hrAssistant": true,
+              "pharmacyStock": true,
+              "staffAssistant": true,
+              "patientConcierge": true,
+              "documentGenerator": true,
+              "predictiveAnalytics": true,
+              "recordSummarization": true
+            }
+          },
+          "id": "40d32107-8355-4d19-93e1-8584099ed97d",
+          "logo": "/uploads/general/file-1771100752245-171341038.png",
+          "email": "contact@edicarex.com",
+          "phone": "+1 555 123 4567",
+          "address": null,
+          "billing": {
+            "taxRate": 21,
+            "currency": "PEN",
+            "invoicePrefix": "Faa"
+          },
+          "branding": {
+            "logoType": "light"
+          },
+          "createdAt": "2026-02-14T20:20:34.170Z",
+          "updatedAt": "2026-02-14T20:40:34.974Z",
+          "hospitalName": "eeee",
+          "openingHours": {
+            "friday": {
+              "open": "08:00",
+              "close": "20:00",
+              "enabled": true
+            },
+            "monday": {
+              "open": "08:00",
+              "close": "20:00",
+              "enabled": true
+            },
+            "sunday": {
+              "open": "00:00",
+              "close": "00:00",
+              "enabled": false
+            },
+            "tuesday": {
+              "open": "08:00",
+              "close": "20:00",
+              "enabled": true
+            },
+            "saturday": {
+              "open": "09:00",
+              "close": "14:00",
+              "enabled": true
+            },
+            "thursday": {
+              "open": "08:00",
+              "close": "20:00",
+              "enabled": true
+            },
+            "wednesday": {
+              "open": "08:00",
+              "close": "20:00",
+              "enabled": true
+            }
+          },
+          "maintenanceMode": false
+        },
+        "query": {},
+        "method": "PUT"
+      },
+      "ipAddress": "::1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36",
+      "userId": "b0ba5198-ce56-4bac-a938-ef5de24b0953",
+      "createdAt": "2026-02-15T21:59:19.626Z"
+    },
+    {
+      "id": "54f80f9b-10b1-4f71-81e1-8fa2243bc944",
+      "action": "ACTUALIZAR",
+      "resource": "SEGURIDAD",
+      "resourceId": "40d32107-8355-4d19-93e1-8584099ed97d",
+      "changes": {
+        "body": {
+          "ai": {
+            "model": "llama-3.3-70b-versatile",
+            "enabled": true,
+            "features": {
+              "triage": true,
+              "diagnosis": true,
+              "hrAssistant": true,
+              "pharmacyStock": true,
+              "staffAssistant": true,
+              "patientConcierge": true,
+              "documentGenerator": true,
+              "predictiveAnalytics": true,
+              "recordSummarization": true
+            }
+          },
+          "id": "40d32107-8355-4d19-93e1-8584099ed97d",
+          "logo": "/uploads/general/file-1771100752245-171341038.png",
+          "email": "contact@edicarex.com",
+          "phone": "+1 555 123 4567",
+          "address": null,
+          "billing": {
+            "taxRate": 21,
+            "currency": "PEN",
+            "invoicePrefix": "Faa"
+          },
+          "branding": {
+            "logoType": "light"
+          },
+          "createdAt": "2026-02-14T20:20:34.170Z",
+          "updatedAt": "2026-02-14T20:40:34.974Z",
+          "hospitalName": "eeee",
+          "openingHours": {
+            "friday": {
+              "open": "08:00",
+              "close": "20:00",
+              "enabled": true
+            },
+            "monday": {
+              "open": "08:00",
+              "close": "20:00",
+              "enabled": true
+            },
+            "sunday": {
+              "open": "00:00",
+              "close": "00:00",
+              "enabled": false
+            },
+            "tuesday": {
+              "open": "08:00",
+              "close": "20:00",
+              "enabled": true
+            },
+            "saturday": {
+              "open": "09:00",
+              "close": "14:00",
+              "enabled": true
+            },
+            "thursday": {
+              "open": "08:00",
+              "close": "20:00",
+              "enabled": true
+            },
+            "wednesday": {
+              "open": "08:00",
+              "close": "20:00",
+              "enabled": true
+            }
+          },
+          "maintenanceMode": false
+        },
+        "query": {},
+        "method": "PUT"
+      },
+      "ipAddress": "::1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36",
+      "userId": "b0ba5198-ce56-4bac-a938-ef5de24b0953",
+      "createdAt": "2026-02-15T21:59:20.354Z"
+    },
+    {
+      "id": "2b0ad93c-73e1-450e-acfd-be1f73446b2d",
+      "action": "ACTUALIZAR",
+      "resource": "SEGURIDAD",
+      "resourceId": "40d32107-8355-4d19-93e1-8584099ed97d",
+      "changes": {
+        "body": {
+          "ai": {
+            "model": "llama-3.3-70b-versatile",
+            "enabled": true,
+            "features": {
+              "triage": true,
+              "diagnosis": true,
+              "hrAssistant": true,
+              "pharmacyStock": true,
+              "staffAssistant": true,
+              "patientConcierge": true,
+              "documentGenerator": true,
+              "predictiveAnalytics": true,
+              "recordSummarization": true
+            }
+          },
+          "id": "40d32107-8355-4d19-93e1-8584099ed97d",
+          "logo": "/uploads/general/file-1771100752245-171341038.png",
+          "email": "contact@edicarex.com",
+          "phone": "+1 555 123 4567",
+          "address": null,
+          "billing": {
+            "taxRate": 21,
+            "currency": "PEN",
+            "invoicePrefix": "Faa"
+          },
+          "branding": {
+            "logoType": "light"
+          },
+          "createdAt": "2026-02-14T20:20:34.170Z",
+          "updatedAt": "2026-02-14T20:40:34.974Z",
+          "hospitalName": "EdiCarex",
+          "openingHours": {
+            "friday": {
+              "open": "08:00",
+              "close": "20:00",
+              "enabled": true
+            },
+            "monday": {
+              "open": "08:00",
+              "close": "20:00",
+              "enabled": true
+            },
+            "sunday": {
+              "open": "00:00",
+              "close": "00:00",
+              "enabled": false
+            },
+            "tuesday": {
+              "open": "08:00",
+              "close": "20:00",
+              "enabled": true
+            },
+            "saturday": {
+              "open": "09:00",
+              "close": "14:00",
+              "enabled": true
+            },
+            "thursday": {
+              "open": "08:00",
+              "close": "20:00",
+              "enabled": true
+            },
+            "wednesday": {
+              "open": "08:00",
+              "close": "20:00",
+              "enabled": true
+            }
+          },
+          "maintenanceMode": false
+        },
+        "query": {},
+        "method": "PUT"
+      },
+      "ipAddress": "::1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36",
+      "userId": "b0ba5198-ce56-4bac-a938-ef5de24b0953",
+      "createdAt": "2026-02-15T21:59:27.839Z"
+    },
+    {
+      "id": "60bc0cf7-aae1-4c6a-bf06-936512570003",
+      "action": "ACTUALIZAR",
+      "resource": "SEGURIDAD",
+      "resourceId": "40d32107-8355-4d19-93e1-8584099ed97d",
+      "changes": {
+        "body": {
+          "ai": {
+            "model": "llama-3.3-70b-versatile",
+            "enabled": true,
+            "features": {
+              "triage": true,
+              "diagnosis": true,
+              "hrAssistant": true,
+              "pharmacyStock": true,
+              "staffAssistant": true,
+              "patientConcierge": true,
+              "documentGenerator": true,
+              "predictiveAnalytics": true,
+              "recordSummarization": true
+            }
+          },
+          "id": "40d32107-8355-4d19-93e1-8584099ed97d",
+          "logo": "/uploads/general/file-1771100752245-171341038.png",
+          "email": "contact@edicarex.com",
+          "phone": "+1 555 123 4567",
+          "address": null,
+          "billing": {
+            "taxRate": 21,
+            "currency": "PEN",
+            "invoicePrefix": "Faa"
+          },
+          "branding": {
+            "logoType": "light"
+          },
+          "createdAt": "2026-02-14T20:20:34.170Z",
+          "updatedAt": "2026-02-14T20:40:34.974Z",
+          "hospitalName": "EdiCarex",
+          "openingHours": {
+            "friday": {
+              "open": "08:00",
+              "close": "20:00",
+              "enabled": true
+            },
+            "monday": {
+              "open": "08:00",
+              "close": "20:00",
+              "enabled": true
+            },
+            "sunday": {
+              "open": "00:00",
+              "close": "00:00",
+              "enabled": false
+            },
+            "tuesday": {
+              "open": "08:00",
+              "close": "20:00",
+              "enabled": true
+            },
+            "saturday": {
+              "open": "09:00",
+              "close": "14:00",
+              "enabled": true
+            },
+            "thursday": {
+              "open": "08:00",
+              "close": "20:00",
+              "enabled": true
+            },
+            "wednesday": {
+              "open": "08:00",
+              "close": "20:00",
+              "enabled": true
+            }
+          },
+          "maintenanceMode": false
+        },
+        "query": {},
+        "method": "PUT"
+      },
+      "ipAddress": "::1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36",
+      "userId": "b0ba5198-ce56-4bac-a938-ef5de24b0953",
+      "createdAt": "2026-02-15T21:59:28.122Z"
+    },
+    {
+      "id": "7e07ed3f-1405-4409-8cc0-d6bbae37c8de",
+      "action": "ELIMINAR",
+      "resource": "SEGURIDAD",
+      "resourceId": "bdd8def0-33e1-4c6e-9457-58f199febcc8",
+      "changes": {
+        "body": {},
+        "query": {},
+        "method": "DELETE"
+      },
+      "ipAddress": "::1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36",
+      "userId": "b0ba5198-ce56-4bac-a938-ef5de24b0953",
+      "createdAt": "2026-02-15T22:06:58.500Z"
+    },
+    {
+      "id": "fcfdf8e0-9674-4350-aacc-78c9076f64dd",
+      "action": "LOGIN",
+      "resource": "auth",
+      "resourceId": null,
+      "changes": {
+        "email": "admin@edicarex.com"
+      },
+      "ipAddress": null,
+      "userAgent": null,
+      "userId": "b0ba5198-ce56-4bac-a938-ef5de24b0953",
+      "createdAt": "2026-02-14T20:25:02.648Z"
+    },
+    {
+      "id": "04440086-394f-48cf-b061-c63873f0317e",
+      "action": "ACTUALIZAR",
+      "resource": "SEGURIDAD",
+      "resourceId": "40d32107-8355-4d19-93e1-8584099ed97d",
+      "changes": {
+        "body": {
+          "logo": "/uploads/general/file-1771100752245-171341038.png"
+        },
+        "query": {},
+        "method": "PUT"
+      },
+      "ipAddress": "::1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36",
+      "userId": "b0ba5198-ce56-4bac-a938-ef5de24b0953",
+      "createdAt": "2026-02-14T20:25:52.282Z"
+    },
+    {
+      "id": "d4b49a7e-af0f-4bed-95bf-d490ec24d9b7",
+      "action": "ACTUALIZAR",
+      "resource": "SEGURIDAD",
+      "resourceId": "40d32107-8355-4d19-93e1-8584099ed97d",
+      "changes": {
+        "body": {
+          "ai": {
+            "model": "llama-3.3-70b-versatile",
+            "enabled": true,
+            "features": {
+              "triage": true,
+              "diagnosis": true
+            }
+          },
+          "id": "40d32107-8355-4d19-93e1-8584099ed97d",
+          "logo": "/uploads/general/file-1771100752245-171341038.png",
+          "email": "contact@edicarex.com",
+          "phone": "+1 555 123 4567",
+          "address": null,
+          "billing": {
+            "taxRate": 18,
+            "currency": "PEN",
+            "invoicePrefix": "F"
+          },
+          "branding": {
+            "logoType": "light"
+          },
+          "createdAt": "2026-02-14T20:20:34.170Z",
+          "updatedAt": "2026-02-14T20:20:34.170Z",
+          "hospitalName": "EdiCarex Hospital",
+          "openingHours": {
+            "friday": {
+              "open": "08:00",
+              "close": "20:00",
+              "enabled": true
+            },
+            "monday": {
+              "open": "08:00",
+              "close": "20:00",
+              "enabled": true
+            },
+            "sunday": {
+              "open": "00:00",
+              "close": "00:00",
+              "enabled": false
+            },
+            "tuesday": {
+              "open": "08:00",
+              "close": "20:00",
+              "enabled": true
+            },
+            "saturday": {
+              "open": "09:00",
+              "close": "14:00",
+              "enabled": true
+            },
+            "thursday": {
+              "open": "08:00",
+              "close": "20:00",
+              "enabled": true
+            },
+            "wednesday": {
+              "open": "08:00",
+              "close": "20:00",
+              "enabled": true
+            }
+          },
+          "maintenanceMode": false
+        },
+        "query": {},
+        "method": "PUT"
+      },
+      "ipAddress": "::1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36",
+      "userId": "b0ba5198-ce56-4bac-a938-ef5de24b0953",
+      "createdAt": "2026-02-14T20:25:58.249Z"
+    },
+    {
+      "id": "54c65426-2404-44c8-85bd-9159039da2a6",
+      "action": "ACTUALIZAR",
+      "resource": "SEGURIDAD",
+      "resourceId": "40d32107-8355-4d19-93e1-8584099ed97d",
+      "changes": {
+        "body": {
+          "ai": {
+            "model": "llama-3.3-70b-versatile",
+            "enabled": true,
+            "features": {
+              "triage": true,
+              "diagnosis": true,
+              "hrAssistant": true,
+              "pharmacyStock": true,
+              "staffAssistant": true,
+              "patientConcierge": true,
+              "documentGenerator": true,
+              "predictiveAnalytics": true,
+              "recordSummarization": true
+            }
+          },
+          "id": "40d32107-8355-4d19-93e1-8584099ed97d",
+          "logo": "/uploads/general/file-1771100752245-171341038.png",
+          "email": "contact@edicarex.com",
+          "phone": "+1 555 123 4567",
+          "address": null,
+          "billing": {
+            "taxRate": 18,
+            "currency": "PEN",
+            "invoicePrefix": "F"
+          },
+          "branding": {
+            "logoType": "light"
+          },
+          "createdAt": "2026-02-14T20:20:34.170Z",
+          "updatedAt": "2026-02-14T20:20:34.170Z",
+          "hospitalName": "EdiCarex Hospital",
+          "openingHours": {
+            "friday": {
+              "open": "08:00",
+              "close": "20:00",
+              "enabled": true
+            },
+            "monday": {
+              "open": "08:00",
+              "close": "20:00",
+              "enabled": true
+            },
+            "sunday": {
+              "open": "00:00",
+              "close": "00:00",
+              "enabled": false
+            },
+            "tuesday": {
+              "open": "08:00",
+              "close": "20:00",
+              "enabled": true
+            },
+            "saturday": {
+              "open": "09:00",
+              "close": "14:00",
+              "enabled": true
+            },
+            "thursday": {
+              "open": "08:00",
+              "close": "20:00",
+              "enabled": true
+            },
+            "wednesday": {
+              "open": "08:00",
+              "close": "20:00",
+              "enabled": true
+            }
+          },
+          "maintenanceMode": false
+        },
+        "query": {},
+        "method": "PUT"
+      },
+      "ipAddress": "::1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36",
+      "userId": "b0ba5198-ce56-4bac-a938-ef5de24b0953",
+      "createdAt": "2026-02-14T20:26:12.833Z"
+    },
+    {
+      "id": "8bce7b10-4a49-4627-a1f4-fa79724b99f7",
+      "action": "ACTUALIZAR",
+      "resource": "SEGURIDAD",
+      "resourceId": "40d32107-8355-4d19-93e1-8584099ed97d",
+      "changes": {
+        "body": {
+          "ai": {
+            "model": "llama-3.3-70b-versatile",
+            "enabled": true,
+            "features": {
+              "triage": true,
+              "diagnosis": true,
+              "hrAssistant": true,
+              "pharmacyStock": true,
+              "staffAssistant": true,
+              "patientConcierge": true,
+              "documentGenerator": true,
+              "predictiveAnalytics": true,
+              "recordSummarization": true
+            }
+          },
+          "id": "40d32107-8355-4d19-93e1-8584099ed97d",
+          "logo": "/uploads/general/file-1771100752245-171341038.png",
+          "email": "contact@edicarex.com",
+          "phone": "+1 555 123 4567",
+          "address": null,
+          "billing": {
+            "taxRate": 18,
+            "currency": "PEN",
+            "invoicePrefix": "F"
+          },
+          "branding": {
+            "logoType": "light"
+          },
+          "createdAt": "2026-02-14T20:20:34.170Z",
+          "updatedAt": "2026-02-14T20:20:34.170Z",
+          "hospitalName": "EdiCarex Hospital",
+          "openingHours": {
+            "friday": {
+              "open": "08:00",
+              "close": "20:00",
+              "enabled": true
+            },
+            "monday": {
+              "open": "08:00",
+              "close": "20:00",
+              "enabled": true
+            },
+            "sunday": {
+              "open": "00:00",
+              "close": "00:00",
+              "enabled": false
+            },
+            "tuesday": {
+              "open": "08:00",
+              "close": "20:00",
+              "enabled": true
+            },
+            "saturday": {
+              "open": "09:00",
+              "close": "14:00",
+              "enabled": true
+            },
+            "thursday": {
+              "open": "08:00",
+              "close": "20:00",
+              "enabled": true
+            },
+            "wednesday": {
+              "open": "08:00",
+              "close": "20:00",
+              "enabled": true
+            }
+          },
+          "maintenanceMode": false
+        },
+        "query": {},
+        "method": "PUT"
+      },
+      "ipAddress": "::1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36",
+      "userId": "b0ba5198-ce56-4bac-a938-ef5de24b0953",
+      "createdAt": "2026-02-14T20:26:13.871Z"
+    },
+    {
+      "id": "8854873a-7516-48fa-88cd-44e25feed2a8",
+      "action": "ACTUALIZAR",
+      "resource": "SEGURIDAD",
+      "resourceId": "40d32107-8355-4d19-93e1-8584099ed97d",
+      "changes": {
+        "body": {
+          "ai": {
+            "model": "llama-3.3-70b-versatile",
+            "enabled": false,
+            "features": {
+              "triage": true,
+              "diagnosis": true,
+              "hrAssistant": true,
+              "pharmacyStock": true,
+              "staffAssistant": true,
+              "patientConcierge": true,
+              "documentGenerator": true,
+              "predictiveAnalytics": true,
+              "recordSummarization": true
+            }
+          },
+          "id": "40d32107-8355-4d19-93e1-8584099ed97d",
+          "logo": "/uploads/general/file-1771100752245-171341038.png",
+          "email": "contact@edicarex.com",
+          "phone": "+1 555 123 4567",
+          "address": null,
+          "billing": {
+            "taxRate": 18,
+            "currency": "PEN",
+            "invoicePrefix": "F"
+          },
+          "branding": {
+            "logoType": "light"
+          },
+          "createdAt": "2026-02-14T20:20:34.170Z",
+          "updatedAt": "2026-02-14T20:20:34.170Z",
+          "hospitalName": "EdiCarex Hospital",
+          "openingHours": {
+            "friday": {
+              "open": "08:00",
+              "close": "20:00",
+              "enabled": true
+            },
+            "monday": {
+              "open": "08:00",
+              "close": "20:00",
+              "enabled": true
+            },
+            "sunday": {
+              "open": "00:00",
+              "close": "00:00",
+              "enabled": false
+            },
+            "tuesday": {
+              "open": "08:00",
+              "close": "20:00",
+              "enabled": true
+            },
+            "saturday": {
+              "open": "09:00",
+              "close": "14:00",
+              "enabled": true
+            },
+            "thursday": {
+              "open": "08:00",
+              "close": "20:00",
+              "enabled": true
+            },
+            "wednesday": {
+              "open": "08:00",
+              "close": "20:00",
+              "enabled": true
+            }
+          },
+          "maintenanceMode": false
+        },
+        "query": {},
+        "method": "PUT"
+      },
+      "ipAddress": "::1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36",
+      "userId": "b0ba5198-ce56-4bac-a938-ef5de24b0953",
+      "createdAt": "2026-02-14T20:26:18.328Z"
+    },
+    {
+      "id": "d314129b-f01b-4101-8309-d981e96d88c6",
+      "action": "ACTUALIZAR",
+      "resource": "SEGURIDAD",
+      "resourceId": "40d32107-8355-4d19-93e1-8584099ed97d",
+      "changes": {
+        "body": {
+          "ai": {
+            "model": "llama-3.3-70b-versatile",
+            "enabled": false,
+            "features": {
+              "triage": true,
+              "diagnosis": true,
+              "hrAssistant": true,
+              "pharmacyStock": true,
+              "staffAssistant": true,
+              "patientConcierge": true,
+              "documentGenerator": true,
+              "predictiveAnalytics": true,
+              "recordSummarization": true
+            }
+          },
+          "id": "40d32107-8355-4d19-93e1-8584099ed97d",
+          "logo": "/uploads/general/file-1771100752245-171341038.png",
+          "email": "contact@edicarex.com",
+          "phone": "+1 555 123 4567",
+          "address": null,
+          "billing": {
+            "taxRate": 18,
+            "currency": "PEN",
+            "invoicePrefix": "F"
+          },
+          "branding": {
+            "logoType": "light"
+          },
+          "createdAt": "2026-02-14T20:20:34.170Z",
+          "updatedAt": "2026-02-14T20:20:34.170Z",
+          "hospitalName": "EdiCarex Hospital",
+          "openingHours": {
+            "friday": {
+              "open": "08:00",
+              "close": "20:00",
+              "enabled": true
+            },
+            "monday": {
+              "open": "08:00",
+              "close": "20:00",
+              "enabled": true
+            },
+            "sunday": {
+              "open": "00:00",
+              "close": "00:00",
+              "enabled": false
+            },
+            "tuesday": {
+              "open": "08:00",
+              "close": "20:00",
+              "enabled": true
+            },
+            "saturday": {
+              "open": "09:00",
+              "close": "14:00",
+              "enabled": true
+            },
+            "thursday": {
+              "open": "08:00",
+              "close": "20:00",
+              "enabled": true
+            },
+            "wednesday": {
+              "open": "08:00",
+              "close": "20:00",
+              "enabled": true
+            }
+          },
+          "maintenanceMode": false
+        },
+        "query": {},
+        "method": "PUT"
+      },
+      "ipAddress": "::1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36",
+      "userId": "b0ba5198-ce56-4bac-a938-ef5de24b0953",
+      "createdAt": "2026-02-14T20:26:18.692Z"
+    },
+    {
+      "id": "b2c67688-7741-4412-9964-232382672e00",
+      "action": "ACTUALIZAR",
+      "resource": "SEGURIDAD",
+      "resourceId": "40d32107-8355-4d19-93e1-8584099ed97d",
+      "changes": {
+        "body": {
+          "ai": {
+            "model": "llama-3.3-70b-versatile",
+            "enabled": true,
+            "features": {
+              "triage": true,
+              "diagnosis": true,
+              "hrAssistant": true,
+              "pharmacyStock": true,
+              "staffAssistant": true,
+              "patientConcierge": true,
+              "documentGenerator": true,
+              "predictiveAnalytics": true,
+              "recordSummarization": true
+            }
+          },
+          "id": "40d32107-8355-4d19-93e1-8584099ed97d",
+          "logo": "/uploads/general/file-1771100752245-171341038.png",
+          "email": "contact@edicarex.com",
+          "phone": "+1 555 123 4567",
+          "address": null,
+          "billing": {
+            "taxRate": 18,
+            "currency": "PEN",
+            "invoicePrefix": "F"
+          },
+          "branding": {
+            "logoType": "light"
+          },
+          "createdAt": "2026-02-14T20:20:34.170Z",
+          "updatedAt": "2026-02-14T20:20:34.170Z",
+          "hospitalName": "EdiCarex Hospital",
+          "openingHours": {
+            "friday": {
+              "open": "08:00",
+              "close": "20:00",
+              "enabled": true
+            },
+            "monday": {
+              "open": "08:00",
+              "close": "20:00",
+              "enabled": true
+            },
+            "sunday": {
+              "open": "00:00",
+              "close": "00:00",
+              "enabled": false
+            },
+            "tuesday": {
+              "open": "08:00",
+              "close": "20:00",
+              "enabled": true
+            },
+            "saturday": {
+              "open": "09:00",
+              "close": "14:00",
+              "enabled": true
+            },
+            "thursday": {
+              "open": "08:00",
+              "close": "20:00",
+              "enabled": true
+            },
+            "wednesday": {
+              "open": "08:00",
+              "close": "20:00",
+              "enabled": true
+            }
+          },
+          "maintenanceMode": false
+        },
+        "query": {},
+        "method": "PUT"
+      },
+      "ipAddress": "::1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36",
+      "userId": "b0ba5198-ce56-4bac-a938-ef5de24b0953",
+      "createdAt": "2026-02-14T20:26:21.727Z"
+    },
+    {
+      "id": "64c0900a-f043-48cc-b3cb-239e5cc1c869",
+      "action": "ACTUALIZAR",
+      "resource": "SEGURIDAD",
+      "resourceId": "40d32107-8355-4d19-93e1-8584099ed97d",
+      "changes": {
+        "body": {
+          "ai": {
+            "model": "llama-3.3-70b-versatile",
+            "enabled": true,
+            "features": {
+              "triage": true,
+              "diagnosis": true,
+              "hrAssistant": true,
+              "pharmacyStock": true,
+              "staffAssistant": true,
+              "patientConcierge": true,
+              "documentGenerator": true,
+              "predictiveAnalytics": true,
+              "recordSummarization": true
+            }
+          },
+          "id": "40d32107-8355-4d19-93e1-8584099ed97d",
+          "logo": "/uploads/general/file-1771100752245-171341038.png",
+          "email": "contact@edicarex.com",
+          "phone": "+1 555 123 4567",
+          "address": null,
+          "billing": {
+            "taxRate": 18,
+            "currency": "USD",
+            "invoicePrefix": "F"
+          },
+          "branding": {
+            "logoType": "light"
+          },
+          "createdAt": "2026-02-14T20:20:34.170Z",
+          "updatedAt": "2026-02-14T20:20:34.170Z",
+          "hospitalName": "EdiCarex Hospital",
+          "openingHours": {
+            "friday": {
+              "open": "08:00",
+              "close": "20:00",
+              "enabled": true
+            },
+            "monday": {
+              "open": "08:00",
+              "close": "20:00",
+              "enabled": true
+            },
+            "sunday": {
+              "open": "00:00",
+              "close": "00:00",
+              "enabled": false
+            },
+            "tuesday": {
+              "open": "08:00",
+              "close": "20:00",
+              "enabled": true
+            },
+            "saturday": {
+              "open": "09:00",
+              "close": "14:00",
+              "enabled": true
+            },
+            "thursday": {
+              "open": "08:00",
+              "close": "20:00",
+              "enabled": true
+            },
+            "wednesday": {
+              "open": "08:00",
+              "close": "20:00",
+              "enabled": true
+            }
+          },
+          "maintenanceMode": false
+        },
+        "query": {},
+        "method": "PUT"
+      },
+      "ipAddress": "::1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36",
+      "userId": "b0ba5198-ce56-4bac-a938-ef5de24b0953",
+      "createdAt": "2026-02-14T20:26:32.647Z"
+    },
+    {
+      "id": "91803703-85ca-49ea-a413-35ca1e22e88e",
+      "action": "ACTUALIZAR",
+      "resource": "SEGURIDAD",
+      "resourceId": "40d32107-8355-4d19-93e1-8584099ed97d",
+      "changes": {
+        "body": {
+          "ai": {
+            "model": "llama-3.3-70b-versatile",
+            "enabled": true,
+            "features": {
+              "triage": true,
+              "diagnosis": true,
+              "hrAssistant": true,
+              "pharmacyStock": true,
+              "staffAssistant": true,
+              "patientConcierge": true,
+              "documentGenerator": true,
+              "predictiveAnalytics": true,
+              "recordSummarization": true
+            }
+          },
+          "id": "40d32107-8355-4d19-93e1-8584099ed97d",
+          "logo": "/uploads/general/file-1771100752245-171341038.png",
+          "email": "contact@edicarex.com",
+          "phone": "+1 555 123 4567",
+          "address": null,
+          "billing": {
+            "taxRate": 21,
+            "currency": "USD",
+            "invoicePrefix": "F"
+          },
+          "branding": {
+            "logoType": "light"
+          },
+          "createdAt": "2026-02-14T20:20:34.170Z",
+          "updatedAt": "2026-02-14T20:20:34.170Z",
+          "hospitalName": "EdiCarex Hospital",
+          "openingHours": {
+            "friday": {
+              "open": "08:00",
+              "close": "20:00",
+              "enabled": true
+            },
+            "monday": {
+              "open": "08:00",
+              "close": "20:00",
+              "enabled": true
+            },
+            "sunday": {
+              "open": "00:00",
+              "close": "00:00",
+              "enabled": false
+            },
+            "tuesday": {
+              "open": "08:00",
+              "close": "20:00",
+              "enabled": true
+            },
+            "saturday": {
+              "open": "09:00",
+              "close": "14:00",
+              "enabled": true
+            },
+            "thursday": {
+              "open": "08:00",
+              "close": "20:00",
+              "enabled": true
+            },
+            "wednesday": {
+              "open": "08:00",
+              "close": "20:00",
+              "enabled": true
+            }
+          },
+          "maintenanceMode": false
+        },
+        "query": {},
+        "method": "PUT"
+      },
+      "ipAddress": "::1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36",
+      "userId": "b0ba5198-ce56-4bac-a938-ef5de24b0953",
+      "createdAt": "2026-02-14T20:26:35.623Z"
+    },
+    {
+      "id": "313f2fed-344c-42e7-a78f-02ec48c7c644",
+      "action": "ACTUALIZAR",
+      "resource": "SEGURIDAD",
+      "resourceId": "40d32107-8355-4d19-93e1-8584099ed97d",
+      "changes": {
+        "body": {
+          "ai": {
+            "model": "llama-3.3-70b-versatile",
+            "enabled": true,
+            "features": {
+              "triage": true,
+              "diagnosis": true,
+              "hrAssistant": true,
+              "pharmacyStock": true,
+              "staffAssistant": true,
+              "patientConcierge": true,
+              "documentGenerator": true,
+              "predictiveAnalytics": true,
+              "recordSummarization": true
+            }
+          },
+          "id": "40d32107-8355-4d19-93e1-8584099ed97d",
+          "logo": "/uploads/general/file-1771100752245-171341038.png",
+          "email": "contact@edicarex.com",
+          "phone": "+1 555 123 4567",
+          "address": null,
+          "billing": {
+            "taxRate": 21,
+            "currency": "EUR",
+            "invoicePrefix": "F"
+          },
+          "branding": {
+            "logoType": "light"
+          },
+          "createdAt": "2026-02-14T20:20:34.170Z",
+          "updatedAt": "2026-02-14T20:20:34.170Z",
+          "hospitalName": "EdiCarex Hospital",
+          "openingHours": {
+            "friday": {
+              "open": "08:00",
+              "close": "20:00",
+              "enabled": true
+            },
+            "monday": {
+              "open": "08:00",
+              "close": "20:00",
+              "enabled": true
+            },
+            "sunday": {
+              "open": "00:00",
+              "close": "00:00",
+              "enabled": false
+            },
+            "tuesday": {
+              "open": "08:00",
+              "close": "20:00",
+              "enabled": true
+            },
+            "saturday": {
+              "open": "09:00",
+              "close": "14:00",
+              "enabled": true
+            },
+            "thursday": {
+              "open": "08:00",
+              "close": "20:00",
+              "enabled": true
+            },
+            "wednesday": {
+              "open": "08:00",
+              "close": "20:00",
+              "enabled": true
+            }
+          },
+          "maintenanceMode": false
+        },
+        "query": {},
+        "method": "PUT"
+      },
+      "ipAddress": "::1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36",
+      "userId": "b0ba5198-ce56-4bac-a938-ef5de24b0953",
+      "createdAt": "2026-02-14T20:28:46.798Z"
+    },
+    {
+      "id": "e57981d0-18b3-4fcb-90d3-5bfcaa621523",
+      "action": "ACTUALIZAR",
+      "resource": "SEGURIDAD",
+      "resourceId": "40d32107-8355-4d19-93e1-8584099ed97d",
+      "changes": {
+        "body": {
+          "ai": {
+            "model": "llama-3.3-70b-versatile",
+            "enabled": true,
+            "features": {
+              "triage": true,
+              "diagnosis": true,
+              "hrAssistant": true,
+              "pharmacyStock": true,
+              "staffAssistant": true,
+              "patientConcierge": true,
+              "documentGenerator": true,
+              "predictiveAnalytics": true,
+              "recordSummarization": true
+            }
+          },
+          "id": "40d32107-8355-4d19-93e1-8584099ed97d",
+          "logo": "/uploads/general/file-1771100752245-171341038.png",
+          "email": "contact@edicarex.com",
+          "phone": "+1 555 123 4567",
+          "address": null,
+          "billing": {
+            "taxRate": 21,
+            "currency": "EUR",
+            "invoicePrefix": "F"
+          },
+          "branding": {
+            "logoType": "light"
+          },
+          "createdAt": "2026-02-14T20:20:34.170Z",
+          "updatedAt": "2026-02-14T20:20:34.170Z",
+          "hospitalName": "EdiCarex Hospital",
+          "openingHours": {
+            "friday": {
+              "open": "08:00",
+              "close": "20:00",
+              "enabled": true
+            },
+            "monday": {
+              "open": "08:00",
+              "close": "20:00",
+              "enabled": true
+            },
+            "sunday": {
+              "open": "00:00",
+              "close": "00:00",
+              "enabled": false
+            },
+            "tuesday": {
+              "open": "08:00",
+              "close": "20:00",
+              "enabled": true
+            },
+            "saturday": {
+              "open": "09:00",
+              "close": "14:00",
+              "enabled": true
+            },
+            "thursday": {
+              "open": "08:00",
+              "close": "20:00",
+              "enabled": true
+            },
+            "wednesday": {
+              "open": "08:00",
+              "close": "20:00",
+              "enabled": true
+            }
+          },
+          "maintenanceMode": false
+        },
+        "query": {},
+        "method": "PUT"
+      },
+      "ipAddress": "::1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36",
+      "userId": "b0ba5198-ce56-4bac-a938-ef5de24b0953",
+      "createdAt": "2026-02-14T20:28:47.731Z"
+    },
+    {
+      "id": "d833c5c0-42f2-4657-9c68-4805226b1f1b",
+      "action": "ACTUALIZAR",
+      "resource": "SEGURIDAD",
+      "resourceId": "40d32107-8355-4d19-93e1-8584099ed97d",
+      "changes": {
+        "body": {
+          "ai": {
+            "model": "llama-3.3-70b-versatile",
+            "enabled": true,
+            "features": {
+              "triage": true,
+              "diagnosis": true,
+              "hrAssistant": true,
+              "pharmacyStock": true,
+              "staffAssistant": true,
+              "patientConcierge": true,
+              "documentGenerator": true,
+              "predictiveAnalytics": true,
+              "recordSummarization": true
+            }
+          },
+          "id": "40d32107-8355-4d19-93e1-8584099ed97d",
+          "logo": "/uploads/general/file-1771100752245-171341038.png",
+          "email": "contact@edicarex.com",
+          "phone": "+1 555 123 4567",
+          "address": null,
+          "billing": {
+            "taxRate": 21,
+            "currency": "PEN",
+            "invoicePrefix": "F"
+          },
+          "branding": {
+            "logoType": "light"
+          },
+          "createdAt": "2026-02-14T20:20:34.170Z",
+          "updatedAt": "2026-02-14T20:20:34.170Z",
+          "hospitalName": "EdiCarex Hospital",
+          "openingHours": {
+            "friday": {
+              "open": "08:00",
+              "close": "20:00",
+              "enabled": true
+            },
+            "monday": {
+              "open": "08:00",
+              "close": "20:00",
+              "enabled": true
+            },
+            "sunday": {
+              "open": "00:00",
+              "close": "00:00",
+              "enabled": false
+            },
+            "tuesday": {
+              "open": "08:00",
+              "close": "20:00",
+              "enabled": true
+            },
+            "saturday": {
+              "open": "09:00",
+              "close": "14:00",
+              "enabled": true
+            },
+            "thursday": {
+              "open": "08:00",
+              "close": "20:00",
+              "enabled": true
+            },
+            "wednesday": {
+              "open": "08:00",
+              "close": "20:00",
+              "enabled": true
+            }
+          },
+          "maintenanceMode": false
+        },
+        "query": {},
+        "method": "PUT"
+      },
+      "ipAddress": "::1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36",
+      "userId": "b0ba5198-ce56-4bac-a938-ef5de24b0953",
+      "createdAt": "2026-02-14T20:29:27.127Z"
+    },
+    {
+      "id": "335fa2e6-4d76-40e2-b19b-b7ab25b15f34",
+      "action": "ACTUALIZAR",
+      "resource": "SEGURIDAD",
+      "resourceId": "40d32107-8355-4d19-93e1-8584099ed97d",
+      "changes": {
+        "body": {
+          "ai": {
+            "model": "llama-3.3-70b-versatile",
+            "enabled": true,
+            "features": {
+              "triage": true,
+              "diagnosis": true,
+              "hrAssistant": true,
+              "pharmacyStock": true,
+              "staffAssistant": true,
+              "patientConcierge": true,
+              "documentGenerator": true,
+              "predictiveAnalytics": true,
+              "recordSummarization": true
+            }
+          },
+          "id": "40d32107-8355-4d19-93e1-8584099ed97d",
+          "logo": "/uploads/general/file-1771100752245-171341038.png",
+          "email": "contact@edicarex.com",
+          "phone": "+1 555 123 4567",
+          "address": null,
+          "billing": {
+            "taxRate": 21,
+            "currency": "PEN",
+            "invoicePrefix": "F"
+          },
+          "branding": {
+            "logoType": "light"
+          },
+          "createdAt": "2026-02-14T20:20:34.170Z",
+          "updatedAt": "2026-02-14T20:20:34.170Z",
+          "hospitalName": "EdiCarex Hospital",
+          "openingHours": {
+            "friday": {
+              "open": "08:00",
+              "close": "20:00",
+              "enabled": true
+            },
+            "monday": {
+              "open": "08:00",
+              "close": "20:00",
+              "enabled": true
+            },
+            "sunday": {
+              "open": "00:00",
+              "close": "00:00",
+              "enabled": false
+            },
+            "tuesday": {
+              "open": "08:00",
+              "close": "20:00",
+              "enabled": true
+            },
+            "saturday": {
+              "open": "09:00",
+              "close": "14:00",
+              "enabled": true
+            },
+            "thursday": {
+              "open": "08:00",
+              "close": "20:00",
+              "enabled": true
+            },
+            "wednesday": {
+              "open": "08:00",
+              "close": "20:00",
+              "enabled": true
+            }
+          },
+          "maintenanceMode": false
+        },
+        "query": {},
+        "method": "PUT"
+      },
+      "ipAddress": "::1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36",
+      "userId": "b0ba5198-ce56-4bac-a938-ef5de24b0953",
+      "createdAt": "2026-02-14T20:29:27.937Z"
+    },
+    {
+      "id": "35ce5158-7019-45fb-8f74-d69e585a359d",
+      "action": "ACTUALIZAR",
+      "resource": "SEGURIDAD",
+      "resourceId": "40d32107-8355-4d19-93e1-8584099ed97d",
+      "changes": {
+        "body": {
+          "ai": {
+            "model": "llama-3.3-70b-versatile",
+            "enabled": true,
+            "features": {
+              "triage": true,
+              "diagnosis": true,
+              "hrAssistant": true,
+              "pharmacyStock": true,
+              "staffAssistant": true,
+              "patientConcierge": true,
+              "documentGenerator": true,
+              "predictiveAnalytics": true,
+              "recordSummarization": true
+            }
+          },
+          "id": "40d32107-8355-4d19-93e1-8584099ed97d",
+          "logo": "/uploads/general/file-1771100752245-171341038.png",
+          "email": "contact@edicarex.com",
+          "phone": "+1 555 123 4567",
+          "address": null,
+          "billing": {
+            "taxRate": 21,
+            "currency": "PEN",
+            "invoicePrefix": "F"
+          },
+          "branding": {
+            "logoType": "light"
+          },
+          "createdAt": "2026-02-14T20:20:34.170Z",
+          "updatedAt": "2026-02-14T20:20:34.170Z",
+          "hospitalName": "EdiCarex",
+          "openingHours": {
+            "friday": {
+              "open": "08:00",
+              "close": "20:00",
+              "enabled": true
+            },
+            "monday": {
+              "open": "08:00",
+              "close": "20:00",
+              "enabled": true
+            },
+            "sunday": {
+              "open": "00:00",
+              "close": "00:00",
+              "enabled": false
+            },
+            "tuesday": {
+              "open": "08:00",
+              "close": "20:00",
+              "enabled": true
+            },
+            "saturday": {
+              "open": "09:00",
+              "close": "14:00",
+              "enabled": true
+            },
+            "thursday": {
+              "open": "08:00",
+              "close": "20:00",
+              "enabled": true
+            },
+            "wednesday": {
+              "open": "08:00",
+              "close": "20:00",
+              "enabled": true
+            }
+          },
+          "maintenanceMode": false
+        },
+        "query": {},
+        "method": "PUT"
+      },
+      "ipAddress": "::1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36",
+      "userId": "b0ba5198-ce56-4bac-a938-ef5de24b0953",
+      "createdAt": "2026-02-14T20:34:56.009Z"
+    },
+    {
+      "id": "9f1ddaae-1ba2-4272-8b5d-1bd29c7ae5b8",
+      "action": "ACTUALIZAR",
+      "resource": "SEGURIDAD",
+      "resourceId": "40d32107-8355-4d19-93e1-8584099ed97d",
+      "changes": {
+        "body": {
+          "ai": {
+            "model": "llama-3.3-70b-versatile",
+            "enabled": true,
+            "features": {
+              "triage": true,
+              "diagnosis": true,
+              "hrAssistant": true,
+              "pharmacyStock": true,
+              "staffAssistant": true,
+              "patientConcierge": true,
+              "documentGenerator": true,
+              "predictiveAnalytics": true,
+              "recordSummarization": true
+            }
+          },
+          "id": "40d32107-8355-4d19-93e1-8584099ed97d",
+          "logo": "/uploads/general/file-1771100752245-171341038.png",
+          "email": "contact@edicarex.com",
+          "phone": "+1 555 123 4567",
+          "address": null,
+          "billing": {
+            "taxRate": 21,
+            "currency": "PEN",
+            "invoicePrefix": "F"
+          },
+          "branding": {
+            "logoType": "light"
+          },
+          "createdAt": "2026-02-14T20:20:34.170Z",
+          "updatedAt": "2026-02-14T20:20:34.170Z",
+          "hospitalName": "EdiCarex",
+          "openingHours": {
+            "friday": {
+              "open": "08:00",
+              "close": "20:00",
+              "enabled": true
+            },
+            "monday": {
+              "open": "08:00",
+              "close": "20:00",
+              "enabled": true
+            },
+            "sunday": {
+              "open": "00:00",
+              "close": "00:00",
+              "enabled": false
+            },
+            "tuesday": {
+              "open": "08:00",
+              "close": "20:00",
+              "enabled": true
+            },
+            "saturday": {
+              "open": "09:00",
+              "close": "14:00",
+              "enabled": true
+            },
+            "thursday": {
+              "open": "08:00",
+              "close": "20:00",
+              "enabled": true
+            },
+            "wednesday": {
+              "open": "08:00",
+              "close": "20:00",
+              "enabled": true
+            }
+          },
+          "maintenanceMode": false
+        },
+        "query": {},
+        "method": "PUT"
+      },
+      "ipAddress": "::1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36",
+      "userId": "b0ba5198-ce56-4bac-a938-ef5de24b0953",
+      "createdAt": "2026-02-14T20:34:56.059Z"
+    },
+    {
+      "id": "f12dd0c2-0b20-4d7b-955b-6ae1da5191ad",
+      "action": "ACTUALIZAR",
+      "resource": "SEGURIDAD",
+      "resourceId": "40d32107-8355-4d19-93e1-8584099ed97d",
+      "changes": {
+        "body": {
+          "ai": {
+            "model": "llama-3.3-70b-versatile",
+            "enabled": true,
+            "features": {
+              "triage": true,
+              "diagnosis": true,
+              "hrAssistant": true,
+              "pharmacyStock": true,
+              "staffAssistant": true,
+              "patientConcierge": true,
+              "documentGenerator": true,
+              "predictiveAnalytics": true,
+              "recordSummarization": true
+            }
+          },
+          "id": "40d32107-8355-4d19-93e1-8584099ed97d",
+          "logo": "/uploads/general/file-1771100752245-171341038.png",
+          "email": "contact@edicarex.com",
+          "phone": "+1 555 123 4567",
+          "address": null,
+          "billing": {
+            "taxRate": 21,
+            "currency": "PEN",
+            "invoicePrefix": "Faa"
+          },
+          "branding": {
+            "logoType": "light"
+          },
+          "createdAt": "2026-02-14T20:20:34.170Z",
+          "updatedAt": "2026-02-14T20:20:34.170Z",
+          "hospitalName": "EdiCarex",
+          "openingHours": {
+            "friday": {
+              "open": "08:00",
+              "close": "20:00",
+              "enabled": true
+            },
+            "monday": {
+              "open": "08:00",
+              "close": "20:00",
+              "enabled": true
+            },
+            "sunday": {
+              "open": "00:00",
+              "close": "00:00",
+              "enabled": false
+            },
+            "tuesday": {
+              "open": "08:00",
+              "close": "20:00",
+              "enabled": true
+            },
+            "saturday": {
+              "open": "09:00",
+              "close": "14:00",
+              "enabled": true
+            },
+            "thursday": {
+              "open": "08:00",
+              "close": "20:00",
+              "enabled": true
+            },
+            "wednesday": {
+              "open": "08:00",
+              "close": "20:00",
+              "enabled": true
+            }
+          },
+          "maintenanceMode": false
+        },
+        "query": {},
+        "method": "PUT"
+      },
+      "ipAddress": "::1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36",
+      "userId": "b0ba5198-ce56-4bac-a938-ef5de24b0953",
+      "createdAt": "2026-02-14T20:36:07.997Z"
+    },
+    {
+      "id": "c96b6267-6ca7-4f50-9ef8-c1396cac9ca0",
+      "action": "ACTUALIZAR",
+      "resource": "SEGURIDAD",
+      "resourceId": "40d32107-8355-4d19-93e1-8584099ed97d",
+      "changes": {
+        "body": {
+          "ai": {
+            "model": "llama-3.3-70b-versatile",
+            "enabled": true,
+            "features": {
+              "triage": true,
+              "diagnosis": true,
+              "hrAssistant": true,
+              "pharmacyStock": true,
+              "staffAssistant": true,
+              "patientConcierge": true,
+              "documentGenerator": true,
+              "predictiveAnalytics": true,
+              "recordSummarization": true
+            }
+          },
+          "id": "40d32107-8355-4d19-93e1-8584099ed97d",
+          "logo": "/uploads/general/file-1771100752245-171341038.png",
+          "email": "contact@edicarex.com",
+          "phone": "+1 555 123 4567",
+          "address": null,
+          "billing": {
+            "taxRate": 21,
+            "currency": "PEN",
+            "invoicePrefix": "Faa"
+          },
+          "branding": {
+            "logoType": "light"
+          },
+          "createdAt": "2026-02-14T20:20:34.170Z",
+          "updatedAt": "2026-02-14T20:20:34.170Z",
+          "hospitalName": "EdiCarex",
+          "openingHours": {
+            "friday": {
+              "open": "08:00",
+              "close": "20:00",
+              "enabled": true
+            },
+            "monday": {
+              "open": "08:00",
+              "close": "20:00",
+              "enabled": true
+            },
+            "sunday": {
+              "open": "00:00",
+              "close": "00:00",
+              "enabled": false
+            },
+            "tuesday": {
+              "open": "08:00",
+              "close": "20:00",
+              "enabled": true
+            },
+            "saturday": {
+              "open": "09:00",
+              "close": "14:00",
+              "enabled": true
+            },
+            "thursday": {
+              "open": "08:00",
+              "close": "20:00",
+              "enabled": true
+            },
+            "wednesday": {
+              "open": "08:00",
+              "close": "20:00",
+              "enabled": true
+            }
+          },
+          "maintenanceMode": false
+        },
+        "query": {},
+        "method": "PUT"
+      },
+      "ipAddress": "::1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36",
+      "userId": "b0ba5198-ce56-4bac-a938-ef5de24b0953",
+      "createdAt": "2026-02-14T20:36:08.434Z"
+    },
+    {
+      "id": "bd7206ee-71b1-433b-a2a8-d43195a45385",
+      "action": "ACTUALIZAR",
+      "resource": "SEGURIDAD",
+      "resourceId": "40d32107-8355-4d19-93e1-8584099ed97d",
+      "changes": {
+        "body": {
+          "maintenanceMode": true
+        },
+        "query": {},
+        "method": "PUT"
+      },
+      "ipAddress": "::1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36",
+      "userId": "b0ba5198-ce56-4bac-a938-ef5de24b0953",
+      "createdAt": "2026-02-14T20:39:22.637Z"
+    },
+    {
+      "id": "e2bdb964-0a92-4826-9b6a-9064d0172f39",
+      "action": "ACTUALIZAR",
+      "resource": "SEGURIDAD",
+      "resourceId": "40d32107-8355-4d19-93e1-8584099ed97d",
+      "changes": {
+        "body": {
+          "maintenanceMode": false
+        },
+        "query": {},
+        "method": "PUT"
+      },
+      "ipAddress": "::1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36",
+      "userId": "b0ba5198-ce56-4bac-a938-ef5de24b0953",
+      "createdAt": "2026-02-14T20:40:34.982Z"
+    },
+    {
+      "id": "4b414df3-3b98-40b8-93a2-1d060e5b0413",
+      "action": "CREAR",
+      "resource": "SEGURIDAD",
+      "resourceId": "bdd8def0-33e1-4c6e-9457-58f199febcc8",
+      "changes": {
+        "body": {},
+        "query": {},
+        "method": "POST"
+      },
+      "ipAddress": "::1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36",
+      "userId": "b0ba5198-ce56-4bac-a938-ef5de24b0953",
+      "createdAt": "2026-02-14T20:42:59.912Z"
+    },
+    {
+      "id": "01cbe634-1485-4e27-a497-330df4d26a0d",
+      "action": "RESTAURAR",
+      "resource": "SEGURIDAD",
+      "resourceId": "0f0cb277-d673-42c6-99dd-6c65d3f73277",
+      "changes": {
+        "body": {},
+        "query": {},
+        "method": "POST"
+      },
+      "ipAddress": "::1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36",
+      "userId": "b0ba5198-ce56-4bac-a938-ef5de24b0953",
+      "createdAt": "2026-02-14T21:02:01.771Z"
+    }
+  ],
+  "bed": [
+    {
+      "id": "af501c54-d3b7-45ca-9774-4a719b596962",
+      "number": "UCI-02",
+      "ward": "UCI",
+      "type": "Cama Hospitalaria",
+      "status": "AVAILABLE",
+      "notes": null,
+      "createdAt": "2026-02-14T20:24:33.487Z",
+      "updatedAt": "2026-02-14T20:24:33.487Z",
+      "admissionDate": null,
+      "estimatedDischarge": null,
+      "diagnosis": null,
+      "specialty": null,
+      "patientId": null
+    },
+    {
+      "id": "c94a7d05-7f5c-4ef6-97d9-02266ce5c59f",
+      "number": "UCI-03",
+      "ward": "UCI",
+      "type": "Cama Hospitalaria",
+      "status": "AVAILABLE",
+      "notes": null,
+      "createdAt": "2026-02-14T20:24:33.489Z",
+      "updatedAt": "2026-02-14T20:24:33.489Z",
+      "admissionDate": null,
+      "estimatedDischarge": null,
+      "diagnosis": null,
+      "specialty": null,
+      "patientId": null
+    },
+    {
+      "id": "c47569b3-e15d-48f4-81b6-fcd863412f19",
+      "number": "UCI-04",
+      "ward": "UCI",
+      "type": "Cama Hospitalaria",
+      "status": "AVAILABLE",
+      "notes": null,
+      "createdAt": "2026-02-14T20:24:33.491Z",
+      "updatedAt": "2026-02-14T20:24:33.491Z",
+      "admissionDate": null,
+      "estimatedDischarge": null,
+      "diagnosis": null,
+      "specialty": null,
+      "patientId": null
+    },
+    {
+      "id": "ceab6566-d1a4-444c-b4e7-2d4c487aa49e",
+      "number": "UCI-05",
+      "ward": "UCI",
+      "type": "Cama Hospitalaria",
+      "status": "AVAILABLE",
+      "notes": null,
+      "createdAt": "2026-02-14T20:24:33.493Z",
+      "updatedAt": "2026-02-14T20:24:33.493Z",
+      "admissionDate": null,
+      "estimatedDischarge": null,
+      "diagnosis": null,
+      "specialty": null,
+      "patientId": null
+    },
+    {
+      "id": "a08a9957-63be-4139-b822-ae3bea7bafa7",
+      "number": "ER-02",
+      "ward": "Emergencia",
+      "type": "Camilla",
+      "status": "AVAILABLE",
+      "notes": null,
+      "createdAt": "2026-02-14T20:24:33.497Z",
+      "updatedAt": "2026-02-14T20:24:33.497Z",
+      "admissionDate": null,
+      "estimatedDischarge": null,
+      "diagnosis": null,
+      "specialty": null,
+      "patientId": null
+    },
+    {
+      "id": "279136ad-b9aa-4741-aa9c-1856c54fffba",
+      "number": "ER-04",
+      "ward": "Emergencia",
+      "type": "Camilla",
+      "status": "AVAILABLE",
+      "notes": null,
+      "createdAt": "2026-02-14T20:24:33.500Z",
+      "updatedAt": "2026-02-14T20:24:33.500Z",
+      "admissionDate": null,
+      "estimatedDischarge": null,
+      "diagnosis": null,
+      "specialty": null,
+      "patientId": null
+    },
+    {
+      "id": "48aa968c-6b83-48db-968a-b007d266a047",
+      "number": "ER-05",
+      "ward": "Emergencia",
+      "type": "Camilla",
+      "status": "AVAILABLE",
+      "notes": null,
+      "createdAt": "2026-02-14T20:24:33.501Z",
+      "updatedAt": "2026-02-14T20:24:33.501Z",
+      "admissionDate": null,
+      "estimatedDischarge": null,
+      "diagnosis": null,
+      "specialty": null,
+      "patientId": null
+    },
+    {
+      "id": "13ad19b5-cb79-4fbb-9b04-fa8860571ee2",
+      "number": "ER-06",
+      "ward": "Emergencia",
+      "type": "Camilla",
+      "status": "AVAILABLE",
+      "notes": null,
+      "createdAt": "2026-02-14T20:24:33.502Z",
+      "updatedAt": "2026-02-14T20:24:33.502Z",
+      "admissionDate": null,
+      "estimatedDischarge": null,
+      "diagnosis": null,
+      "specialty": null,
+      "patientId": null
+    },
+    {
+      "id": "cbaec9cb-4f77-4517-8ae9-29bc95561b8c",
+      "number": "ER-07",
+      "ward": "Emergencia",
+      "type": "Camilla",
+      "status": "AVAILABLE",
+      "notes": null,
+      "createdAt": "2026-02-14T20:24:33.504Z",
+      "updatedAt": "2026-02-14T20:24:33.504Z",
+      "admissionDate": null,
+      "estimatedDischarge": null,
+      "diagnosis": null,
+      "specialty": null,
+      "patientId": null
+    },
+    {
+      "id": "f5be2354-19ab-4355-b00b-622426e1df3c",
+      "number": "ER-08",
+      "ward": "Emergencia",
+      "type": "Camilla",
+      "status": "AVAILABLE",
+      "notes": null,
+      "createdAt": "2026-02-14T20:24:33.507Z",
+      "updatedAt": "2026-02-14T20:24:33.507Z",
+      "admissionDate": null,
+      "estimatedDischarge": null,
+      "diagnosis": null,
+      "specialty": null,
+      "patientId": null
+    },
+    {
+      "id": "3e251efe-481b-41cb-8868-4756280ef545",
+      "number": "ER-09",
+      "ward": "Emergencia",
+      "type": "Camilla",
+      "status": "AVAILABLE",
+      "notes": null,
+      "createdAt": "2026-02-14T20:24:33.508Z",
+      "updatedAt": "2026-02-14T20:24:33.508Z",
+      "admissionDate": null,
+      "estimatedDischarge": null,
+      "diagnosis": null,
+      "specialty": null,
+      "patientId": null
+    },
+    {
+      "id": "67087e48-6e10-4e29-99cf-1e87a835c336",
+      "number": "ER-10",
+      "ward": "Emergencia",
+      "type": "Camilla",
+      "status": "AVAILABLE",
+      "notes": null,
+      "createdAt": "2026-02-14T20:24:33.509Z",
+      "updatedAt": "2026-02-14T20:24:33.509Z",
+      "admissionDate": null,
+      "estimatedDischarge": null,
+      "diagnosis": null,
+      "specialty": null,
+      "patientId": null
+    },
+    {
+      "id": "4e8b9fdc-d5a0-4937-b3f5-e2a5fde09e7c",
+      "number": "GEN-01",
+      "ward": "General",
+      "type": "Camilla",
+      "status": "AVAILABLE",
+      "notes": null,
+      "createdAt": "2026-02-14T20:24:33.510Z",
+      "updatedAt": "2026-02-14T20:24:33.510Z",
+      "admissionDate": null,
+      "estimatedDischarge": null,
+      "diagnosis": null,
+      "specialty": null,
+      "patientId": null
+    },
+    {
+      "id": "e082c929-4c54-4003-a03c-ef72880d96ee",
+      "number": "GEN-03",
+      "ward": "General",
+      "type": "Camilla",
+      "status": "AVAILABLE",
+      "notes": null,
+      "createdAt": "2026-02-14T20:24:33.512Z",
+      "updatedAt": "2026-02-14T20:24:33.512Z",
+      "admissionDate": null,
+      "estimatedDischarge": null,
+      "diagnosis": null,
+      "specialty": null,
+      "patientId": null
+    },
+    {
+      "id": "2fabb017-e4a7-406c-9e98-f5cf76f4fb48",
+      "number": "GEN-04",
+      "ward": "General",
+      "type": "Camilla",
+      "status": "AVAILABLE",
+      "notes": null,
+      "createdAt": "2026-02-14T20:24:33.513Z",
+      "updatedAt": "2026-02-14T20:24:33.513Z",
+      "admissionDate": null,
+      "estimatedDischarge": null,
+      "diagnosis": null,
+      "specialty": null,
+      "patientId": null
+    },
+    {
+      "id": "a2b938ea-7a8c-4070-9895-7f7460e0f6dd",
+      "number": "GEN-05",
+      "ward": "General",
+      "type": "Camilla",
+      "status": "AVAILABLE",
+      "notes": null,
+      "createdAt": "2026-02-14T20:24:33.514Z",
+      "updatedAt": "2026-02-14T20:24:33.514Z",
+      "admissionDate": null,
+      "estimatedDischarge": null,
+      "diagnosis": null,
+      "specialty": null,
+      "patientId": null
+    },
+    {
+      "id": "437e7821-7a67-4b50-90e3-0d7b9e6ae6cd",
+      "number": "GEN-06",
+      "ward": "General",
+      "type": "Camilla",
+      "status": "AVAILABLE",
+      "notes": null,
+      "createdAt": "2026-02-14T20:24:33.515Z",
+      "updatedAt": "2026-02-14T20:24:33.515Z",
+      "admissionDate": null,
+      "estimatedDischarge": null,
+      "diagnosis": null,
+      "specialty": null,
+      "patientId": null
+    },
+    {
+      "id": "63b26a62-720a-440a-be95-698d0733dee0",
+      "number": "GEN-08",
+      "ward": "General",
+      "type": "Camilla",
+      "status": "AVAILABLE",
+      "notes": null,
+      "createdAt": "2026-02-14T20:24:33.517Z",
+      "updatedAt": "2026-02-14T20:24:33.517Z",
+      "admissionDate": null,
+      "estimatedDischarge": null,
+      "diagnosis": null,
+      "specialty": null,
+      "patientId": null
+    },
+    {
+      "id": "51d644e4-9c03-4efe-97e1-8be7f3b9b47f",
+      "number": "UCI-01",
+      "ward": "UCI",
+      "type": "Cama Hospitalaria",
+      "status": "OCCUPIED",
+      "notes": "Occupied by Case f4cf0aac-a7a5-46c9-b986-f10676e435a2",
+      "createdAt": "2026-02-14T20:24:33.483Z",
+      "updatedAt": "2026-02-14T20:24:33.530Z",
+      "admissionDate": null,
+      "estimatedDischarge": null,
+      "diagnosis": null,
+      "specialty": null,
+      "patientId": null
+    },
+    {
+      "id": "de2e6a87-6d41-4529-90b5-662ca25068d6",
+      "number": "ER-01",
+      "ward": "Emergencia",
+      "type": "Camilla",
+      "status": "OCCUPIED",
+      "notes": "Occupied by Case e874a3c2-af99-4008-a64e-9e0604c84be1",
+      "createdAt": "2026-02-14T20:24:33.496Z",
+      "updatedAt": "2026-02-14T20:24:33.532Z",
+      "admissionDate": null,
+      "estimatedDischarge": null,
+      "diagnosis": null,
+      "specialty": null,
+      "patientId": null
+    },
+    {
+      "id": "ad13fa74-bb77-45ad-9930-ec4a99304bb4",
+      "number": "ER-03",
+      "ward": "Emergencia",
+      "type": "Camilla",
+      "status": "OCCUPIED",
+      "notes": "Occupied by Case 16d1a949-37d8-4ed2-ac9f-0f4ec6d39900",
+      "createdAt": "2026-02-14T20:24:33.499Z",
+      "updatedAt": "2026-02-14T20:24:33.534Z",
+      "admissionDate": null,
+      "estimatedDischarge": null,
+      "diagnosis": null,
+      "specialty": null,
+      "patientId": null
+    },
+    {
+      "id": "34ccbf9a-3a2e-46b5-bf59-29888c218bdd",
+      "number": "GEN-02",
+      "ward": "General",
+      "type": "Camilla",
+      "status": "OCCUPIED",
+      "notes": "Occupied by Case 600460c7-5f80-40e6-865d-1132357b04ca",
+      "createdAt": "2026-02-14T20:24:33.511Z",
+      "updatedAt": "2026-02-14T20:24:33.535Z",
+      "admissionDate": null,
+      "estimatedDischarge": null,
+      "diagnosis": null,
+      "specialty": null,
+      "patientId": null
+    },
+    {
+      "id": "b0a731ee-0e3f-4e9b-b9d4-946e3ab60104",
+      "number": "GEN-07",
+      "ward": "General",
+      "type": "Camilla",
+      "status": "OCCUPIED",
+      "notes": "Occupied by Case fca5a328-deaf-4bb9-b70f-e92fc7348fc1",
+      "createdAt": "2026-02-14T20:24:33.516Z",
+      "updatedAt": "2026-02-14T20:24:33.537Z",
+      "admissionDate": null,
+      "estimatedDischarge": null,
+      "diagnosis": null,
+      "specialty": null,
+      "patientId": null
+    },
+    {
+      "id": "f9085650-9de6-42fd-988f-0243425d0146",
+      "number": "GEN-09",
+      "ward": "General",
+      "type": "Camilla",
+      "status": "OCCUPIED",
+      "notes": "Occupied by Case ddf52da7-3e02-47a2-b145-c4002c309f96",
+      "createdAt": "2026-02-14T20:24:33.518Z",
+      "updatedAt": "2026-02-14T20:24:33.539Z",
+      "admissionDate": null,
+      "estimatedDischarge": null,
+      "diagnosis": null,
+      "specialty": null,
+      "patientId": null
+    },
+    {
+      "id": "ac1b4c5f-880c-4a73-8f99-8f594dd047ee",
+      "number": "GEN-10",
+      "ward": "General",
+      "type": "Camilla",
+      "status": "OCCUPIED",
+      "notes": "Occupied by Case 336b078d-c21d-4652-a69b-c2588863a765",
+      "createdAt": "2026-02-14T20:24:33.520Z",
+      "updatedAt": "2026-02-14T20:24:33.540Z",
+      "admissionDate": null,
+      "estimatedDischarge": null,
+      "diagnosis": null,
+      "specialty": null,
+      "patientId": null
+    }
+  ],
+  "bedActivity": [],
+  "doctor": [],
+  "doctorDocument": [],
+  "doctorSchedule": [],
+  "emergencyAttachment": [],
+  "emergencyCase": [
+    {
+      "id": "f4cf0aac-a7a5-46c9-b986-f10676e435a2",
+      "patientName": "Paciente 236",
+      "patientAge": 25,
+      "patientId": null,
+      "admissionDate": "2026-02-14T20:24:33.521Z",
+      "triageLevel": 1,
+      "chiefComplaint": "Fiebre Alta",
+      "diagnosis": "Fiebre Alta",
+      "vitalSigns": {
+        "bp": "120/80",
+        "hr": 85.00888672964999,
+        "spo2": 97.94765547687348,
+        "temp": 37.4086011691335
+      },
+      "bedId": null,
+      "bedNumber": "Unknown",
+      "doctorId": null,
+      "doctorName": "Dr. Smith",
+      "status": "ADMITTED",
+      "notes": null,
+      "dischargedAt": null,
+      "createdAt": "2026-02-14T20:24:33.523Z",
+      "updatedAt": "2026-02-14T20:24:33.523Z"
+    },
+    {
+      "id": "e874a3c2-af99-4008-a64e-9e0604c84be1",
+      "patientName": "Paciente 290",
+      "patientAge": 62,
+      "patientId": null,
+      "admissionDate": "2026-02-14T20:24:33.530Z",
+      "triageLevel": 1,
+      "chiefComplaint": "Esguince Tobillo",
+      "diagnosis": "Esguince Tobillo",
+      "vitalSigns": {
+        "bp": "120/80",
+        "hr": 90.62254534774178,
+        "spo2": 95.90969737335126,
+        "temp": 37.09262611551012
+      },
+      "bedId": null,
+      "bedNumber": "Unknown",
+      "doctorId": null,
+      "doctorName": "Dr. Smith",
+      "status": "ADMITTED",
+      "notes": null,
+      "dischargedAt": null,
+      "createdAt": "2026-02-14T20:24:33.531Z",
+      "updatedAt": "2026-02-14T20:24:33.531Z"
+    },
+    {
+      "id": "16d1a949-37d8-4ed2-ac9f-0f4ec6d39900",
+      "patientName": "Paciente 273",
+      "patientAge": 65,
+      "patientId": null,
+      "admissionDate": "2026-02-14T20:24:33.532Z",
+      "triageLevel": 3,
+      "chiefComplaint": "Cefalea Intensa",
+      "diagnosis": "Cefalea Intensa",
+      "vitalSigns": {
+        "bp": "120/80",
+        "hr": 99.0242921957048,
+        "spo2": 98.57379755997276,
+        "temp": 37.64222045160343
+      },
+      "bedId": null,
+      "bedNumber": "Unknown",
+      "doctorId": null,
+      "doctorName": "Dr. Smith",
+      "status": "ADMITTED",
+      "notes": null,
+      "dischargedAt": null,
+      "createdAt": "2026-02-14T20:24:33.533Z",
+      "updatedAt": "2026-02-14T20:24:33.533Z"
+    },
+    {
+      "id": "600460c7-5f80-40e6-865d-1132357b04ca",
+      "patientName": "Paciente 703",
+      "patientAge": 64,
+      "patientId": null,
+      "admissionDate": "2026-02-14T20:24:33.533Z",
+      "triageLevel": 3,
+      "chiefComplaint": "Cefalea Intensa",
+      "diagnosis": "Cefalea Intensa",
+      "vitalSigns": {
+        "bp": "120/80",
+        "hr": 81.98127607424115,
+        "spo2": 96.50555487838096,
+        "temp": 37.0843571178448
+      },
+      "bedId": null,
+      "bedNumber": "Unknown",
+      "doctorId": null,
+      "doctorName": "Dr. Smith",
+      "status": "ADMITTED",
+      "notes": null,
+      "dischargedAt": null,
+      "createdAt": "2026-02-14T20:24:33.534Z",
+      "updatedAt": "2026-02-14T20:24:33.534Z"
+    },
+    {
+      "id": "fca5a328-deaf-4bb9-b70f-e92fc7348fc1",
+      "patientName": "Paciente 520",
+      "patientAge": 58,
+      "patientId": null,
+      "admissionDate": "2026-02-14T20:24:33.535Z",
+      "triageLevel": 2,
+      "chiefComplaint": "Dolor Torácico",
+      "diagnosis": "Dolor Torácico",
+      "vitalSigns": {
+        "bp": "120/80",
+        "hr": 98.82868192135584,
+        "spo2": 98.41909570617565,
+        "temp": 37.30539883048184
+      },
+      "bedId": null,
+      "bedNumber": "Unknown",
+      "doctorId": null,
+      "doctorName": "Dr. Smith",
+      "status": "ADMITTED",
+      "notes": null,
+      "dischargedAt": null,
+      "createdAt": "2026-02-14T20:24:33.536Z",
+      "updatedAt": "2026-02-14T20:24:33.536Z"
+    },
+    {
+      "id": "ddf52da7-3e02-47a2-b145-c4002c309f96",
+      "patientName": "Paciente 116",
+      "patientAge": 41,
+      "patientId": null,
+      "admissionDate": "2026-02-14T20:24:33.537Z",
+      "triageLevel": 3,
+      "chiefComplaint": "Fiebre Alta",
+      "diagnosis": "Fiebre Alta",
+      "vitalSigns": {
+        "bp": "120/80",
+        "hr": 80.90163817167856,
+        "spo2": 96.13806693734243,
+        "temp": 37.10078518928715
+      },
+      "bedId": null,
+      "bedNumber": "Unknown",
+      "doctorId": null,
+      "doctorName": "Dr. Smith",
+      "status": "ADMITTED",
+      "notes": null,
+      "dischargedAt": null,
+      "createdAt": "2026-02-14T20:24:33.538Z",
+      "updatedAt": "2026-02-14T20:24:33.538Z"
+    },
+    {
+      "id": "336b078d-c21d-4652-a69b-c2588863a765",
+      "patientName": "Paciente 243",
+      "patientAge": 62,
+      "patientId": null,
+      "admissionDate": "2026-02-14T20:24:33.538Z",
+      "triageLevel": 3,
+      "chiefComplaint": "Esguince Tobillo",
+      "diagnosis": "Esguince Tobillo",
+      "vitalSigns": {
+        "bp": "120/80",
+        "hr": 85.77566812274254,
+        "spo2": 96.04343261021124,
+        "temp": 37.75841643949258
+      },
+      "bedId": null,
+      "bedNumber": "Unknown",
+      "doctorId": null,
+      "doctorName": "Dr. Smith",
+      "status": "ADMITTED",
+      "notes": null,
+      "dischargedAt": null,
+      "createdAt": "2026-02-14T20:24:33.539Z",
+      "updatedAt": "2026-02-14T20:24:33.539Z"
+    }
+  ],
+  "emergencyMedication": [],
+  "emergencyProcedure": [],
+  "emergencyVitalSign": [],
+  "employee": [
+    {
+      "id": "94c9285f-81d1-4f64-8489-b05bfbaccbde",
+      "name": "Dr. John Smith",
+      "photo": "https://api.dicebear.com/7.x/avataaars/svg?seed=John",
+      "role": "Doctor",
+      "area": "Cardiología",
+      "department": "Medical",
+      "email": "john.smith@edicarex.com",
+      "phone": null,
+      "documentId": null,
+      "birthDate": null,
+      "gender": null,
+      "salary": "8500",
+      "bonus": "0",
+      "contract": "Tiempo Completo",
+      "hireDate": "2020-01-15T00:00:00.000Z",
+      "isActive": true,
+      "status": "ACTIVE",
+      "address": null,
+      "emergencyContact": null,
+      "emergencyPhone": null,
+      "bankAccount": null,
+      "notes": null,
+      "createdAt": "2026-02-14T20:24:33.199Z",
+      "updatedAt": "2026-02-14T20:24:33.199Z",
+      "deletedAt": null
+    },
+    {
+      "id": "ee1dba3c-fbe9-4995-83ba-860b46901876",
+      "name": "Dra. Sarah Johnson",
+      "photo": "https://api.dicebear.com/7.x/avataaars/svg?seed=Sarah",
+      "role": "Doctor",
+      "area": "Pediatría",
+      "department": "Medical",
+      "email": "sarah.johnson@edicarex.com",
+      "phone": null,
+      "documentId": null,
+      "birthDate": null,
+      "gender": null,
+      "salary": "7800",
+      "bonus": "0",
+      "contract": "Tiempo Completo",
+      "hireDate": "2021-03-10T00:00:00.000Z",
+      "isActive": true,
+      "status": "ACTIVE",
+      "address": null,
+      "emergencyContact": null,
+      "emergencyPhone": null,
+      "bankAccount": null,
+      "notes": null,
+      "createdAt": "2026-02-14T20:24:33.278Z",
+      "updatedAt": "2026-02-14T20:24:33.278Z",
+      "deletedAt": null
+    },
+    {
+      "id": "d2259db7-cdfe-4d65-b0c1-0d0355800d23",
+      "name": "Enf. Mike Williams",
+      "photo": "https://api.dicebear.com/7.x/avataaars/svg?seed=Mike",
+      "role": "Nurse",
+      "area": "Emergencia",
+      "department": "Emergency",
+      "email": "mike.williams@edicarex.com",
+      "phone": null,
+      "documentId": null,
+      "birthDate": null,
+      "gender": null,
+      "salary": "4500",
+      "bonus": "0",
+      "contract": "Tiempo Completo",
+      "hireDate": "2022-06-01T00:00:00.000Z",
+      "isActive": true,
+      "status": "ACTIVE",
+      "address": null,
+      "emergencyContact": null,
+      "emergencyPhone": null,
+      "bankAccount": null,
+      "notes": null,
+      "createdAt": "2026-02-14T20:24:33.347Z",
+      "updatedAt": "2026-02-14T20:24:33.347Z",
+      "deletedAt": null
+    },
+    {
+      "id": "72d8793e-e5fc-4fcc-8806-b76dd9b4ad9e",
+      "name": "Emma Brown",
+      "photo": "https://api.dicebear.com/7.x/avataaars/svg?seed=Emma",
+      "role": "Admin",
+      "area": "Administración",
+      "department": "Administrative",
+      "email": "emma.brown@edicarex.com",
+      "phone": null,
+      "documentId": null,
+      "birthDate": null,
+      "gender": null,
+      "salary": "3200",
+      "bonus": "0",
+      "contract": "Medio Tiempo",
+      "hireDate": "2023-01-20T00:00:00.000Z",
+      "isActive": true,
+      "status": "ACTIVE",
+      "address": null,
+      "emergencyContact": null,
+      "emergencyPhone": null,
+      "bankAccount": null,
+      "notes": null,
+      "createdAt": "2026-02-14T20:24:33.420Z",
+      "updatedAt": "2026-02-14T20:24:33.420Z",
+      "deletedAt": null
+    }
+  ],
+  "employeeShift": [],
+  "fileStorage": [],
+  "invoice": [
+    {
+      "id": "19d04528-bf4e-45cb-99fd-be9552aba660",
+      "invoiceNumber": "Faa-1771101382897",
+      "invoiceDate": "2026-02-14T00:00:00.000Z",
+      "dueDate": null,
+      "subtotal": "0.5",
+      "tax": "0.11",
+      "discount": "0",
+      "total": "0.61",
+      "status": "PAID",
+      "currency": "PEN",
+      "notes": null,
+      "paymentMethod": "Efectivo",
+      "paymentDate": "2026-02-14T20:36:22.879Z",
+      "destinationAccountId": null,
+      "operationNumber": null,
+      "createdAt": "2026-02-14T20:36:22.900Z",
+      "updatedAt": "2026-02-14T20:36:22.900Z",
+      "deletedAt": null,
+      "patientId": "99003f05-25a2-49d2-ba88-1a617070c1bf",
+      "doctorId": null,
+      "appointmentId": null
+    }
+  ],
+  "invoiceItem": [
+    {
+      "id": "3a3ca645-d702-4086-af51-ac468ad5fdaa",
+      "description": "Paracetamol 500mg",
+      "quantity": 1,
+      "unitPrice": "0.5",
+      "total": "0.5",
+      "invoiceId": "19d04528-bf4e-45cb-99fd-be9552aba660"
+    }
+  ],
+  "labOrder": [],
+  "labResult": [],
+  "labTest": [
+    {
+      "id": "b9204e6a-8501-45d5-b4ae-7488be5f4c5b",
+      "name": "Hemograma Completo",
+      "category": "Hematología",
+      "description": null,
+      "normalRange": "4.5-5.5 M/uL",
+      "unit": "M/uL",
+      "price": "0",
+      "isActive": true,
+      "createdAt": "2026-02-14T20:27:00.073Z",
+      "updatedAt": "2026-02-14T20:27:00.073Z"
+    },
+    {
+      "id": "770fab07-7519-4d81-81c0-de03057b6f0c",
+      "name": "Hemoglobina Glicosilada (HbA1c)",
+      "category": "Hematología",
+      "description": null,
+      "normalRange": "< 5.7%",
+      "unit": "%",
+      "price": "0",
+      "isActive": true,
+      "createdAt": "2026-02-14T20:27:00.073Z",
+      "updatedAt": "2026-02-14T20:27:00.073Z"
+    },
+    {
+      "id": "810ab03c-a92b-4cfe-b53c-0cc5c01f0bb2",
+      "name": "Velocidad de Sedimentación (VSG)",
+      "category": "Hematología",
+      "description": null,
+      "normalRange": "0-20 mm/h",
+      "unit": "mm/h",
+      "price": "0",
+      "isActive": true,
+      "createdAt": "2026-02-14T20:27:00.073Z",
+      "updatedAt": "2026-02-14T20:27:00.073Z"
+    },
+    {
+      "id": "69900953-0f10-48b3-a88e-df24a2d327e0",
+      "name": "Grupo Sanguíneo y Factor Rh",
+      "category": "Hematología",
+      "description": null,
+      "normalRange": "N/A",
+      "unit": "",
+      "price": "0",
+      "isActive": true,
+      "createdAt": "2026-02-14T20:27:00.073Z",
+      "updatedAt": "2026-02-14T20:27:00.073Z"
+    },
+    {
+      "id": "4b39e330-ce32-4ae9-b27d-0a2ef8e476cd",
+      "name": "Tiempo de Protrombina (TP)",
+      "category": "Hematología",
+      "description": null,
+      "normalRange": "11-13.5 s",
+      "unit": "s",
+      "price": "0",
+      "isActive": true,
+      "createdAt": "2026-02-14T20:27:00.073Z",
+      "updatedAt": "2026-02-14T20:27:00.073Z"
+    },
+    {
+      "id": "ca3b4fa9-630e-49dd-84e8-8e3434dea77d",
+      "name": "Glucosa Basal",
+      "category": "Bioquímica",
+      "description": null,
+      "normalRange": "70-100 mg/dL",
+      "unit": "mg/dL",
+      "price": "0",
+      "isActive": true,
+      "createdAt": "2026-02-14T20:27:00.073Z",
+      "updatedAt": "2026-02-14T20:27:00.073Z"
+    },
+    {
+      "id": "21d8ba5b-168e-4cac-85a4-58e5faf63bf7",
+      "name": "Perfil Lipídico Completo",
+      "category": "Bioquímica",
+      "description": null,
+      "normalRange": "Varía",
+      "unit": "mg/dL",
+      "price": "0",
+      "isActive": true,
+      "createdAt": "2026-02-14T20:27:00.073Z",
+      "updatedAt": "2026-02-14T20:27:00.073Z"
+    },
+    {
+      "id": "31558a43-6958-4e91-a116-c02876f40c83",
+      "name": "Colesterol Total",
+      "category": "Bioquímica",
+      "description": null,
+      "normalRange": "<200 mg/dL",
+      "unit": "mg/dL",
+      "price": "0",
+      "isActive": true,
+      "createdAt": "2026-02-14T20:27:00.073Z",
+      "updatedAt": "2026-02-14T20:27:00.073Z"
+    },
+    {
+      "id": "e7fe0c44-2a16-4293-a85b-7ee0fb5e72bb",
+      "name": "Triglicéridos",
+      "category": "Bioquímica",
+      "description": null,
+      "normalRange": "<150 mg/dL",
+      "unit": "mg/dL",
+      "price": "0",
+      "isActive": true,
+      "createdAt": "2026-02-14T20:27:00.073Z",
+      "updatedAt": "2026-02-14T20:27:00.073Z"
+    },
+    {
+      "id": "d05b4b0f-3878-4d22-a383-cda7ad74d8d7",
+      "name": "Urea",
+      "category": "Bioquímica",
+      "description": null,
+      "normalRange": "7-20 mg/dL",
+      "unit": "mg/dL",
+      "price": "0",
+      "isActive": true,
+      "createdAt": "2026-02-14T20:27:00.073Z",
+      "updatedAt": "2026-02-14T20:27:00.073Z"
+    },
+    {
+      "id": "f082a118-183c-403f-836a-514c63def498",
+      "name": "Creatinina Sérica",
+      "category": "Bioquímica",
+      "description": null,
+      "normalRange": "0.7-1.3 mg/dL",
+      "unit": "mg/dL",
+      "price": "0",
+      "isActive": true,
+      "createdAt": "2026-02-14T20:27:00.073Z",
+      "updatedAt": "2026-02-14T20:27:00.073Z"
+    },
+    {
+      "id": "ce5e5302-90de-480b-9b3c-c12111fab321",
+      "name": "Ácido Úrico",
+      "category": "Bioquímica",
+      "description": null,
+      "normalRange": "3.5-7.2 mg/dL",
+      "unit": "mg/dL",
+      "price": "0",
+      "isActive": true,
+      "createdAt": "2026-02-14T20:27:00.073Z",
+      "updatedAt": "2026-02-14T20:27:00.073Z"
+    },
+    {
+      "id": "3ca90db5-a267-4934-9165-22374f02d456",
+      "name": "Bilirrubina Total y Fraccionada",
+      "category": "Bioquímica",
+      "description": null,
+      "normalRange": "0.1-1.2 mg/dL",
+      "unit": "mg/dL",
+      "price": "0",
+      "isActive": true,
+      "createdAt": "2026-02-14T20:27:00.073Z",
+      "updatedAt": "2026-02-14T20:27:00.073Z"
+    },
+    {
+      "id": "c5e5637f-ab6f-4a8b-900a-7c577e8c9171",
+      "name": "Perfil Hepático (TGO/TGP/GGT)",
+      "category": "Bioquímica",
+      "description": null,
+      "normalRange": "Varía",
+      "unit": "U/L",
+      "price": "0",
+      "isActive": true,
+      "createdAt": "2026-02-14T20:27:00.073Z",
+      "updatedAt": "2026-02-14T20:27:00.073Z"
+    },
+    {
+      "id": "64cf0c2d-eb66-467e-8c73-d189cd8e54bc",
+      "name": "Proteína C Reactiva (PCR)",
+      "category": "Inmunología",
+      "description": null,
+      "normalRange": "<10 mg/L",
+      "unit": "mg/L",
+      "price": "0",
+      "isActive": true,
+      "createdAt": "2026-02-14T20:27:00.073Z",
+      "updatedAt": "2026-02-14T20:27:00.073Z"
+    },
+    {
+      "id": "7f46bcf0-ef44-4c8e-9071-46fb510b6f46",
+      "name": "Factor Reumatoide",
+      "category": "Inmunología",
+      "description": null,
+      "normalRange": "<14 IU/mL",
+      "unit": "IU/mL",
+      "price": "0",
+      "isActive": true,
+      "createdAt": "2026-02-14T20:27:00.073Z",
+      "updatedAt": "2026-02-14T20:27:00.073Z"
+    },
+    {
+      "id": "73787670-a302-4f03-8c1f-4bd9360e83c4",
+      "name": "Prueba de Embarazo (HCG)",
+      "category": "Inmunología",
+      "description": null,
+      "normalRange": "Negativo",
+      "unit": "",
+      "price": "0",
+      "isActive": true,
+      "createdAt": "2026-02-14T20:27:00.073Z",
+      "updatedAt": "2026-02-14T20:27:00.073Z"
+    },
+    {
+      "id": "5d0ce653-3c21-4bd2-8329-6693f5dc2cf7",
+      "name": "Perfil Tiroideo (TSH/T3/T4)",
+      "category": "Inmunología",
+      "description": null,
+      "normalRange": "Varía",
+      "unit": "uIU/mL",
+      "price": "0",
+      "isActive": true,
+      "createdAt": "2026-02-14T20:27:00.073Z",
+      "updatedAt": "2026-02-14T20:27:00.073Z"
+    },
+    {
+      "id": "b0e83f39-7e97-43d6-b51c-6e701ec4aa93",
+      "name": "Antígeno Prostático (PSA)",
+      "category": "Inmunología",
+      "description": null,
+      "normalRange": "<4.0 ng/mL",
+      "unit": "ng/mL",
+      "price": "0",
+      "isActive": true,
+      "createdAt": "2026-02-14T20:27:00.073Z",
+      "updatedAt": "2026-02-14T20:27:00.073Z"
+    },
+    {
+      "id": "05fabfb7-0e98-4295-98f2-b7e1f18db50e",
+      "name": "Prueba de VIH (Elisa)",
+      "category": "Inmunología",
+      "description": null,
+      "normalRange": "No Reactivo",
+      "unit": "",
+      "price": "0",
+      "isActive": true,
+      "createdAt": "2026-02-14T20:27:00.073Z",
+      "updatedAt": "2026-02-14T20:27:00.073Z"
+    },
+    {
+      "id": "e1789478-90af-49e9-bd13-b6de5eb823cb",
+      "name": "Examen Completo de Orina",
+      "category": "Uroanálisis",
+      "description": null,
+      "normalRange": "Negativo",
+      "unit": "N/A",
+      "price": "0",
+      "isActive": true,
+      "createdAt": "2026-02-14T20:27:00.073Z",
+      "updatedAt": "2026-02-14T20:27:00.073Z"
+    },
+    {
+      "id": "6bc1cd3c-6bfb-46a0-8cf3-59686aa9e6dd",
+      "name": "Examen Parasitológico Simple",
+      "category": "Parasitología",
+      "description": null,
+      "normalRange": "Negativo",
+      "unit": "N/A",
+      "price": "0",
+      "isActive": true,
+      "createdAt": "2026-02-14T20:27:00.073Z",
+      "updatedAt": "2026-02-14T20:27:00.073Z"
+    },
+    {
+      "id": "765965ff-9a48-4fa6-b944-b1be0f22af67",
+      "name": "Coprocultivo",
+      "category": "Microbiología",
+      "description": null,
+      "normalRange": "Negativo",
+      "unit": "N/A",
+      "price": "0",
+      "isActive": true,
+      "createdAt": "2026-02-14T20:27:00.073Z",
+      "updatedAt": "2026-02-14T20:27:00.073Z"
+    },
+    {
+      "id": "768af8a3-6990-416f-8eb4-f20b9aa2e715",
+      "name": "Urocultivo con Antibiograma",
+      "category": "Microbiología",
+      "description": null,
+      "normalRange": "Negativo",
+      "unit": "N/A",
+      "price": "0",
+      "isActive": true,
+      "createdAt": "2026-02-14T20:27:00.073Z",
+      "updatedAt": "2026-02-14T20:27:00.073Z"
+    },
+    {
+      "id": "a30ff876-a7a2-4517-ad34-cfd5d02a9f75",
+      "name": "Cultivo de Secreción Faríngea",
+      "category": "Microbiología",
+      "description": null,
+      "normalRange": "Negativo",
+      "unit": "N/A",
+      "price": "0",
+      "isActive": true,
+      "createdAt": "2026-02-14T20:27:00.073Z",
+      "updatedAt": "2026-02-14T20:27:00.073Z"
+    },
+    {
+      "id": "90f620f1-b56f-4975-ac6b-85e6f4850a08",
+      "name": "Toxicología Básica",
+      "category": "Toxicología",
+      "description": null,
+      "normalRange": "Negativo",
+      "unit": "mg/L",
+      "price": "0",
+      "isActive": true,
+      "createdAt": "2026-02-14T20:27:00.073Z",
+      "updatedAt": "2026-02-14T20:27:00.073Z"
+    }
+  ],
+  "medicalRecord": [],
+  "medication": [
+    {
+      "id": "e880c6de-7cb1-49f2-8942-79b6f9f4c120",
+      "name": "Paracetamol 500mg",
+      "genericName": null,
+      "category": null,
+      "description": "Generic description",
+      "dosageForm": "TABLET",
+      "strength": null,
+      "manufacturer": "Generic Pharma",
+      "isActive": true,
+      "createdAt": "2026-02-14T20:24:33.544Z",
+      "updatedAt": "2026-02-14T20:24:33.544Z",
+      "deletedAt": null
+    },
+    {
+      "id": "fecc42bb-15f8-4665-a6fc-197e36c569fb",
+      "name": "Amoxicilina 500mg",
+      "genericName": null,
+      "category": null,
+      "description": "Generic description",
+      "dosageForm": "TABLET",
+      "strength": null,
+      "manufacturer": "Generic Pharma",
+      "isActive": true,
+      "createdAt": "2026-02-14T20:24:33.551Z",
+      "updatedAt": "2026-02-14T20:24:33.551Z",
+      "deletedAt": null
+    },
+    {
+      "id": "1f565bb2-dc37-4a05-8282-5e5d43f1b260",
+      "name": "Ibuprofeno 400mg",
+      "genericName": null,
+      "category": null,
+      "description": "Generic description",
+      "dosageForm": "TABLET",
+      "strength": null,
+      "manufacturer": "Generic Pharma",
+      "isActive": true,
+      "createdAt": "2026-02-14T20:24:33.552Z",
+      "updatedAt": "2026-02-14T20:24:33.552Z",
+      "deletedAt": null
+    },
+    {
+      "id": "08db64e5-c990-4930-9e95-d1958fc9bfc6",
+      "name": "Omeprazol 20mg",
+      "genericName": null,
+      "category": null,
+      "description": "Generic description",
+      "dosageForm": "TABLET",
+      "strength": null,
+      "manufacturer": "Generic Pharma",
+      "isActive": true,
+      "createdAt": "2026-02-14T20:24:33.554Z",
+      "updatedAt": "2026-02-14T20:24:33.554Z",
+      "deletedAt": null
+    },
+    {
+      "id": "0091079e-a793-49be-9cba-639975e60960",
+      "name": "Loratadina 10mg",
+      "genericName": null,
+      "category": null,
+      "description": "Generic description",
+      "dosageForm": "TABLET",
+      "strength": null,
+      "manufacturer": "Generic Pharma",
+      "isActive": true,
+      "createdAt": "2026-02-14T20:24:33.557Z",
+      "updatedAt": "2026-02-14T20:24:33.557Z",
+      "deletedAt": null
+    }
+  ],
+  "message": [],
+  "notification": [],
+  "notificationLog": [],
+  "notificationPreference": [],
+  "notificationTemplate": [],
+  "organizationConfig": [
+    {
+      "id": "40d32107-8355-4d19-93e1-8584099ed97d",
+      "hospitalName": "EdiCarex",
+      "email": "contact@edicarex.com",
+      "phone": "+1 555 123 4567",
+      "address": null,
+      "logo": "/uploads/general/file-1771100752245-171341038.png",
+      "branding": {
+        "logoType": "light"
+      },
+      "openingHours": {
+        "friday": {
+          "open": "08:00",
+          "close": "20:00",
+          "enabled": true
+        },
+        "monday": {
+          "open": "08:00",
+          "close": "20:00",
+          "enabled": true
+        },
+        "sunday": {
+          "open": "00:00",
+          "close": "00:00",
+          "enabled": false
+        },
+        "tuesday": {
+          "open": "08:00",
+          "close": "20:00",
+          "enabled": true
+        },
+        "saturday": {
+          "open": "09:00",
+          "close": "14:00",
+          "enabled": true
+        },
+        "thursday": {
+          "open": "08:00",
+          "close": "20:00",
+          "enabled": true
+        },
+        "wednesday": {
+          "open": "08:00",
+          "close": "20:00",
+          "enabled": true
+        }
+      },
+      "billing": {
+        "taxRate": 21,
+        "currency": "PEN",
+        "invoicePrefix": "Faa"
+      },
+      "ai": {
+        "model": "llama-3.3-70b-versatile",
+        "enabled": true,
+        "features": {
+          "triage": true,
+          "diagnosis": true,
+          "hrAssistant": true,
+          "pharmacyStock": true,
+          "staffAssistant": true,
+          "patientConcierge": true,
+          "documentGenerator": true,
+          "predictiveAnalytics": true,
+          "recordSummarization": true
+        }
+      },
+      "maintenanceMode": false,
+      "createdAt": "2026-02-14T20:20:34.170Z",
+      "updatedAt": "2026-02-14T20:40:34.974Z"
+    }
+  ],
+  "passwordResetToken": [],
+  "patient": [
+    {
+      "id": "99003f05-25a2-49d2-ba88-1a617070c1bf",
+      "firstName": "John",
+      "lastName": "Doe",
+      "documentNumber": null,
+      "dateOfBirth": "1990-05-15T00:00:00.000Z",
+      "gender": "MALE",
+      "bloodType": "A+",
+      "phone": "+1234567891",
+      "email": "john.doe@example.com",
+      "address": "123 Main St",
+      "city": "New York",
+      "state": "NY",
+      "zipCode": "10001",
+      "emergencyContact": null,
+      "emergencyPhone": null,
+      "insuranceNumber": null,
+      "insuranceProvider": null,
+      "allergies": null,
+      "chronicConditions": null,
+      "notes": null,
+      "photo": null,
+      "status": "ACTIVE",
+      "createdAt": "2026-02-14T20:24:33.128Z",
+      "updatedAt": "2026-02-14T20:24:33.190Z",
+      "deletedAt": null,
+      "userId": "31cd5f48-2692-4f02-bd7f-f6a17e5f1422"
+    },
+    {
+      "id": "7e091dd3-da9e-426d-bf01-8b1f6b638456",
+      "firstName": "Jane",
+      "lastName": "Smith",
+      "documentNumber": null,
+      "dateOfBirth": "1985-08-22T00:00:00.000Z",
+      "gender": "FEMALE",
+      "bloodType": "O+",
+      "phone": "+1234567892",
+      "email": "jane.smith@example.com",
+      "address": "456 Oak Ave",
+      "city": "Los Angeles",
+      "state": "CA",
+      "zipCode": "90001",
+      "emergencyContact": null,
+      "emergencyPhone": null,
+      "insuranceNumber": null,
+      "insuranceProvider": null,
+      "allergies": null,
+      "chronicConditions": null,
+      "notes": null,
+      "photo": null,
+      "status": "ACTIVE",
+      "createdAt": "2026-02-14T20:24:33.198Z",
+      "updatedAt": "2026-02-14T20:24:33.198Z",
+      "deletedAt": null,
+      "userId": null
+    }
+  ],
+  "patientAllergy": [],
+  "patientDiagnosis": [],
+  "patientDocument": [],
+  "patientFamilyMember": [],
+  "patientMedication": [],
+  "patientVitalSign": [],
+  "payroll": [
+    {
+      "id": "26233252-b39e-47fa-83c3-f6e0319c7fb8",
+      "periodStart": "2026-02-01T05:00:00.000Z",
+      "periodEnd": "2026-02-28T05:00:00.000Z",
+      "baseSalary": "8500",
+      "bonuses": "19",
+      "deductions": "1989",
+      "netSalary": "6530",
+      "status": "DRAFT",
+      "paidDate": null,
+      "createdAt": "2026-02-14T20:24:33.213Z",
+      "updatedAt": "2026-02-14T20:24:33.213Z",
+      "employeeId": "94c9285f-81d1-4f64-8489-b05bfbaccbde"
+    },
+    {
+      "id": "e795a4c2-3689-49f5-a22c-8402cca4133b",
+      "periodStart": "2026-02-01T05:00:00.000Z",
+      "periodEnd": "2026-02-28T05:00:00.000Z",
+      "baseSalary": "7800",
+      "bonuses": "274",
+      "deductions": "1882",
+      "netSalary": "6192",
+      "status": "DRAFT",
+      "paidDate": null,
+      "createdAt": "2026-02-14T20:24:33.283Z",
+      "updatedAt": "2026-02-14T20:24:33.283Z",
+      "employeeId": "ee1dba3c-fbe9-4995-83ba-860b46901876"
+    },
+    {
+      "id": "ecb6ba57-56b1-4f02-b947-998b5a438f21",
+      "periodStart": "2026-02-01T05:00:00.000Z",
+      "periodEnd": "2026-02-28T05:00:00.000Z",
+      "baseSalary": "4500",
+      "bonuses": "416",
+      "deductions": "1066",
+      "netSalary": "3850",
+      "status": "DRAFT",
+      "paidDate": null,
+      "createdAt": "2026-02-14T20:24:33.353Z",
+      "updatedAt": "2026-02-14T20:24:33.353Z",
+      "employeeId": "d2259db7-cdfe-4d65-b0c1-0d0355800d23"
+    },
+    {
+      "id": "40a62376-f715-48dd-8a85-37571e0c328c",
+      "periodStart": "2026-02-01T05:00:00.000Z",
+      "periodEnd": "2026-02-28T05:00:00.000Z",
+      "baseSalary": "3200",
+      "bonuses": "111",
+      "deductions": "835",
+      "netSalary": "2476",
+      "status": "DRAFT",
+      "paidDate": null,
+      "createdAt": "2026-02-14T20:24:33.422Z",
+      "updatedAt": "2026-02-14T20:24:33.422Z",
+      "employeeId": "72d8793e-e5fc-4fcc-8806-b76dd9b4ad9e"
+    }
+  ],
+  "permission": [],
+  "pharmacyMovement": [
+    {
+      "id": "ec43d62b-7b25-4f27-83a4-83e371df10a9",
+      "movementType": "OUT",
+      "quantity": 1,
+      "reason": "VENTA_FACTURA",
+      "referenceNumber": "19d04528-bf4e-45cb-99fd-be9552aba660",
+      "performedBy": "Sistema Facturación",
+      "notes": "Venta por factura 19d04528-bf4e-45cb-99fd-be9552aba660: Paracetamol 500mg",
+      "resultingStock": 999,
+      "unitPrice": null,
+      "createdAt": "2026-02-14T20:36:22.925Z",
+      "medicationId": "e880c6de-7cb1-49f2-8942-79b6f9f4c120"
+    }
+  ],
+  "pharmacyOrder": [],
+  "pharmacyStock": [
+    {
+      "id": "5ad865e6-7b94-48e2-9905-08be3589a1da",
+      "quantity": 500,
+      "minStockLevel": 100,
+      "maxStockLevel": 2000,
+      "unitPrice": "0.1",
+      "sellingPrice": "1.2",
+      "expirationDate": "2027-02-14T20:24:33.550Z",
+      "batchNumber": "BAT-817",
+      "location": "Shelf A",
+      "lastRestockDate": null,
+      "createdAt": "2026-02-14T20:24:33.551Z",
+      "updatedAt": "2026-02-14T20:24:33.551Z",
+      "medicationId": "fecc42bb-15f8-4665-a6fc-197e36c569fb"
+    },
+    {
+      "id": "69deee74-47fe-4ba3-a5b7-15fa86bc251b",
+      "quantity": 800,
+      "minStockLevel": 100,
+      "maxStockLevel": 2000,
+      "unitPrice": "0.08",
+      "sellingPrice": "0.8",
+      "expirationDate": "2027-02-14T20:24:33.551Z",
+      "batchNumber": "BAT-602",
+      "location": "Shelf A",
+      "lastRestockDate": null,
+      "createdAt": "2026-02-14T20:24:33.552Z",
+      "updatedAt": "2026-02-14T20:24:33.552Z",
+      "medicationId": "1f565bb2-dc37-4a05-8282-5e5d43f1b260"
+    },
+    {
+      "id": "07e18acb-f92f-4c6f-8453-16306d89055d",
+      "quantity": 600,
+      "minStockLevel": 100,
+      "maxStockLevel": 2000,
+      "unitPrice": "0.15",
+      "sellingPrice": "1.5",
+      "expirationDate": "2027-02-14T20:24:33.553Z",
+      "batchNumber": "BAT-700",
+      "location": "Shelf A",
+      "lastRestockDate": null,
+      "createdAt": "2026-02-14T20:24:33.554Z",
+      "updatedAt": "2026-02-14T20:24:33.554Z",
+      "medicationId": "08db64e5-c990-4930-9e95-d1958fc9bfc6"
+    },
+    {
+      "id": "c8bd7077-519f-455e-9b01-cb49c83b992c",
+      "quantity": 400,
+      "minStockLevel": 100,
+      "maxStockLevel": 2000,
+      "unitPrice": "0.05",
+      "sellingPrice": "1",
+      "expirationDate": "2027-02-14T20:24:33.556Z",
+      "batchNumber": "BAT-381",
+      "location": "Shelf A",
+      "lastRestockDate": null,
+      "createdAt": "2026-02-14T20:24:33.557Z",
+      "updatedAt": "2026-02-14T20:24:33.557Z",
+      "medicationId": "0091079e-a793-49be-9cba-639975e60960"
+    },
+    {
+      "id": "5280eb74-9c77-4956-a626-55696b7db1f3",
+      "quantity": 999,
+      "minStockLevel": 100,
+      "maxStockLevel": 2000,
+      "unitPrice": "0.05",
+      "sellingPrice": "0.5",
+      "expirationDate": "2027-02-14T20:24:33.543Z",
+      "batchNumber": "BAT-73",
+      "location": "Shelf A",
+      "lastRestockDate": null,
+      "createdAt": "2026-02-14T20:24:33.544Z",
+      "updatedAt": "2026-02-14T20:36:22.921Z",
+      "medicationId": "e880c6de-7cb1-49f2-8942-79b6f9f4c120"
+    }
+  ],
+  "role": [
+    {
+      "id": "a69b2584-c845-41cb-805a-bdc1926a5055",
+      "name": "Admin",
+      "description": "System administrator with full access",
+      "isSystem": true,
+      "createdAt": "2026-02-14T20:24:32.962Z",
+      "updatedAt": "2026-02-14T20:24:32.962Z"
+    },
+    {
+      "id": "8e9c03f4-4d58-45e3-97fd-601571ff1f71",
+      "name": "Doctor",
+      "description": "Medical doctor",
+      "isSystem": true,
+      "createdAt": "2026-02-14T20:24:33.028Z",
+      "updatedAt": "2026-02-14T20:24:33.028Z"
+    },
+    {
+      "id": "8e5c0034-2ba5-4962-8ffd-e4381ae557b5",
+      "name": "Nurse",
+      "description": "Nursing staff",
+      "isSystem": true,
+      "createdAt": "2026-02-14T20:24:33.030Z",
+      "updatedAt": "2026-02-14T20:24:33.030Z"
+    },
+    {
+      "id": "a123555d-ef7c-4e9b-9c3c-9532686ded15",
+      "name": "Patient",
+      "description": "Patient with portal access",
+      "isSystem": true,
+      "createdAt": "2026-02-14T20:24:33.031Z",
+      "updatedAt": "2026-02-14T20:24:33.031Z"
+    },
+    {
+      "id": "75474f06-40c0-4af6-abd8-1307dc27d8fb",
+      "name": "Receptionist",
+      "description": "Front desk and admission",
+      "isSystem": true,
+      "createdAt": "2026-02-14T20:24:33.033Z",
+      "updatedAt": "2026-02-14T20:24:33.033Z"
+    },
+    {
+      "id": "b2746814-3897-4efc-83b1-e3e1ed3ad43d",
+      "name": "Lab",
+      "description": "Laboratory staff",
+      "isSystem": true,
+      "createdAt": "2026-02-14T20:24:33.034Z",
+      "updatedAt": "2026-02-14T20:24:33.034Z"
+    },
+    {
+      "id": "aeedb365-2808-4fc1-abc6-fb2deec46682",
+      "name": "Pharmacy",
+      "description": "Pharmacy staff",
+      "isSystem": true,
+      "createdAt": "2026-02-14T20:24:33.036Z",
+      "updatedAt": "2026-02-14T20:24:33.036Z"
+    },
+    {
+      "id": "5593a2a7-44f2-40cc-bb79-120fa566ae7b",
+      "name": "Billing",
+      "description": "Billing and finance",
+      "isSystem": true,
+      "createdAt": "2026-02-14T20:24:33.037Z",
+      "updatedAt": "2026-02-14T20:24:33.037Z"
+    },
+    {
+      "id": "8bbcbfb5-5da8-46c3-b416-dea91d49577e",
+      "name": "HR",
+      "description": "Human Resources",
+      "isSystem": true,
+      "createdAt": "2026-02-14T20:24:33.038Z",
+      "updatedAt": "2026-02-14T20:24:33.038Z"
+    },
+    {
+      "id": "74c475c8-847d-4825-aa0d-add32bceff60",
+      "name": "Management",
+      "description": "Hospital management / Director",
+      "isSystem": true,
+      "createdAt": "2026-02-14T20:24:33.039Z",
+      "updatedAt": "2026-02-14T20:24:33.039Z"
+    },
+    {
+      "id": "ec0588d3-6369-4a63-9fe5-3a627340b66e",
+      "name": "Audit",
+      "description": "Auditor / IT Support",
+      "isSystem": true,
+      "createdAt": "2026-02-14T20:24:33.041Z",
+      "updatedAt": "2026-02-14T20:24:33.041Z"
+    }
+  ],
+  "rolePermission": [],
+  "serviceCatalog": [],
+  "specialty": [
+    {
+      "id": "adc8df19-31ba-4a5f-8c93-ffec6fc2bc51",
+      "name": "Cardiología",
+      "description": "Corazón y sistema cardiovascular",
+      "createdAt": "2026-02-14T20:24:33.114Z",
+      "updatedAt": "2026-02-14T20:24:33.114Z"
+    },
+    {
+      "id": "ffc84f8c-8119-438e-a6a4-966932834814",
+      "name": "Neurología",
+      "description": "Cerebro y sistema nervioso",
+      "createdAt": "2026-02-14T20:24:33.119Z",
+      "updatedAt": "2026-02-14T20:24:33.119Z"
+    },
+    {
+      "id": "1b2bb809-f6b9-4fa7-aefc-1808cbe6c703",
+      "name": "Pediatría",
+      "description": "Niños e infantes",
+      "createdAt": "2026-02-14T20:24:33.120Z",
+      "updatedAt": "2026-02-14T20:24:33.120Z"
+    },
+    {
+      "id": "66f3e99e-44d5-41ff-a6a1-f590749d3e1f",
+      "name": "Ortopedia",
+      "description": "Huesos y articulaciones",
+      "createdAt": "2026-02-14T20:24:33.122Z",
+      "updatedAt": "2026-02-14T20:24:33.122Z"
+    },
+    {
+      "id": "e1e9dc95-0985-4cb5-ab31-7d6693c11c84",
+      "name": "Medicina General",
+      "description": "Atención médica general",
+      "createdAt": "2026-02-14T20:24:33.123Z",
+      "updatedAt": "2026-02-14T20:24:33.123Z"
+    },
+    {
+      "id": "a81c84d0-d829-4e53-a44d-f2db174c9fa8",
+      "name": "Cirugía",
+      "description": "Procedimientos quirúrgicos",
+      "createdAt": "2026-02-14T20:24:33.124Z",
+      "updatedAt": "2026-02-14T20:24:33.124Z"
+    },
+    {
+      "id": "dd06d1a1-0d17-44e4-85e5-76aff1da6857",
+      "name": "Dermatología",
+      "description": "Piel y dermatología",
+      "createdAt": "2026-02-14T20:24:33.125Z",
+      "updatedAt": "2026-02-14T20:24:33.125Z"
+    },
+    {
+      "id": "60e7c49b-3f41-45c0-91b7-6361abc63fec",
+      "name": "Emergencias",
+      "description": "Atención de urgencias",
+      "createdAt": "2026-02-14T20:24:33.125Z",
+      "updatedAt": "2026-02-14T20:24:33.125Z"
+    }
+  ],
+  "systemConfig": [],
+  "tokenBlacklist": [],
+  "user": [
+    {
+      "id": "b0ba5198-ce56-4bac-a938-ef5de24b0953",
+      "email": "admin@edicarex.com",
+      "password": "$2b$10$4iB7d7n9v7TwdqqhmAuMneJG1B97R3tsi4HyJv4eOByzeGRIuR8RO",
+      "firstName": "Admin",
+      "lastName": "User",
+      "phone": "+1234567890",
+      "address": null,
+      "avatar": null,
+      "isActive": true,
+      "createdAt": "2026-02-14T20:24:33.102Z",
+      "updatedAt": "2026-02-14T20:24:33.102Z",
+      "deletedAt": null,
+      "preferences": {
+        "permissions": [
+          "ALL"
+        ]
+      },
+      "roleId": "a69b2584-c845-41cb-805a-bdc1926a5055"
+    },
+    {
+      "id": "31cd5f48-2692-4f02-bd7f-f6a17e5f1422",
+      "email": "john.doe@example.com",
+      "password": "$2b$10$A1rhEkYGk5iH16e9LN6NJezuymNqU.A5ki5vnVnEUKn.Z8VL6MCPK",
+      "firstName": "John",
+      "lastName": "Doe",
+      "phone": "+1234567891",
+      "address": null,
+      "avatar": null,
+      "isActive": true,
+      "createdAt": "2026-02-14T20:24:33.190Z",
+      "updatedAt": "2026-02-14T20:24:33.190Z",
+      "deletedAt": null,
+      "preferences": null,
+      "roleId": "a123555d-ef7c-4e9b-9c3c-9532686ded15"
+    },
+    {
+      "id": "f5c32288-cc8a-4070-8a66-db4c1c9cea2d",
+      "email": "john.smith@edicarex.com",
+      "password": "$2b$10$4pI1ARCGmYbRc29N8K7my.yfWufAbYx.8oMZg5yOU.q2RzpNIieqS",
+      "firstName": "John",
+      "lastName": "Smith",
+      "phone": "+1234556677",
+      "address": null,
+      "avatar": null,
+      "isActive": true,
+      "createdAt": "2026-02-14T20:24:33.273Z",
+      "updatedAt": "2026-02-14T20:24:33.273Z",
+      "deletedAt": null,
+      "preferences": {
+        "hireDate": "2020-01-15T00:00:00.000Z",
+        "department": "Medical",
+        "permissions": [
+          "DASHBOARD",
+          "PATIENTS_VIEW",
+          "PATIENTS_EDIT",
+          "MEDICAL_RECORDS_VIEW",
+          "MEDICAL_RECORDS_CREATE",
+          "MEDICAL_RECORDS_EDIT",
+          "PRESCRIPTIONS_CREATE",
+          "PRESCRIPTIONS_VIEW",
+          "APPOINTMENTS_VIEW",
+          "APPOINTMENTS_EDIT",
+          "EMERGENCY_VIEW",
+          "EMERGENCY_EDIT",
+          "EMERGENCY_DISCHARGE",
+          "BEDS_VIEW",
+          "BEDS_ASSIGN",
+          "LAB_VIEW",
+          "LAB_CREATE",
+          "LAB_RESULTS",
+          "PHARMACY_VIEW",
+          "REPORTS_VIEW",
+          "AI_USE",
+          "MESSAGES_VIEW",
+          "MESSAGES_SEND"
+        ]
+      },
+      "roleId": "8e9c03f4-4d58-45e3-97fd-601571ff1f71"
+    },
+    {
+      "id": "0a409a16-0121-437c-affe-1e291a0378b8",
+      "email": "sarah.johnson@edicarex.com",
+      "password": "$2b$10$MWyK9sShJuB10qtbzyJdkuq7VDY7if2EWLzLN6L4dbOflIXkWqgCW",
+      "firstName": "Sarah",
+      "lastName": "Johnson",
+      "phone": "+1234556677",
+      "address": null,
+      "avatar": null,
+      "isActive": true,
+      "createdAt": "2026-02-14T20:24:33.343Z",
+      "updatedAt": "2026-02-14T20:24:33.343Z",
+      "deletedAt": null,
+      "preferences": {
+        "hireDate": "2021-03-10T00:00:00.000Z",
+        "department": "Medical",
+        "permissions": [
+          "DASHBOARD",
+          "PATIENTS_VIEW",
+          "PATIENTS_EDIT",
+          "MEDICAL_RECORDS_VIEW",
+          "MEDICAL_RECORDS_CREATE",
+          "MEDICAL_RECORDS_EDIT",
+          "PRESCRIPTIONS_CREATE",
+          "PRESCRIPTIONS_VIEW",
+          "APPOINTMENTS_VIEW",
+          "APPOINTMENTS_EDIT",
+          "EMERGENCY_VIEW",
+          "EMERGENCY_EDIT",
+          "EMERGENCY_DISCHARGE",
+          "BEDS_VIEW",
+          "BEDS_ASSIGN",
+          "LAB_VIEW",
+          "LAB_CREATE",
+          "LAB_RESULTS",
+          "PHARMACY_VIEW",
+          "REPORTS_VIEW",
+          "AI_USE",
+          "MESSAGES_VIEW",
+          "MESSAGES_SEND"
+        ]
+      },
+      "roleId": "8e9c03f4-4d58-45e3-97fd-601571ff1f71"
+    },
+    {
+      "id": "29f16de8-535a-4383-b53b-bdcc47d240bb",
+      "email": "mike.williams@edicarex.com",
+      "password": "$2b$10$nVSPpotm6oux.9bnoL/f3ODIehsf2X7i.6QAN7U02mZQqNiWamswO",
+      "firstName": "Mike",
+      "lastName": "Williams",
+      "phone": "+1234556677",
+      "address": null,
+      "avatar": null,
+      "isActive": true,
+      "createdAt": "2026-02-14T20:24:33.414Z",
+      "updatedAt": "2026-02-14T20:24:33.414Z",
+      "deletedAt": null,
+      "preferences": {
+        "hireDate": "2022-06-01T00:00:00.000Z",
+        "department": "Emergency",
+        "permissions": [
+          "DASHBOARD",
+          "PATIENTS_VIEW",
+          "PATIENTS_EDIT",
+          "MEDICAL_RECORDS_VIEW",
+          "MEDICAL_RECORDS_EDIT",
+          "PRESCRIPTIONS_VIEW",
+          "APPOINTMENTS_VIEW",
+          "EMERGENCY_VIEW",
+          "EMERGENCY_EDIT",
+          "EMERGENCY_DISCHARGE",
+          "BEDS_VIEW",
+          "BEDS_EDIT",
+          "BEDS_ASSIGN",
+          "PHARMACY_VIEW",
+          "PHARMACY_DISPENSE",
+          "LAB_VIEW",
+          "MESSAGES_VIEW",
+          "MESSAGES_SEND"
+        ]
+      },
+      "roleId": "8e5c0034-2ba5-4962-8ffd-e4381ae557b5"
+    },
+    {
+      "id": "573cbea0-9a66-4a8c-bafc-4b3adae6ca2f",
+      "email": "emma.brown@edicarex.com",
+      "password": "$2b$10$YetyU1DI28e3Sd53ONKa4uN6AfQ1ToViw.V2t8yVFJc6BTiG/pwNm",
+      "firstName": "Emma",
+      "lastName": "Brown",
+      "phone": "+1234556677",
+      "address": null,
+      "avatar": null,
+      "isActive": true,
+      "createdAt": "2026-02-14T20:24:33.481Z",
+      "updatedAt": "2026-02-14T20:24:33.481Z",
+      "deletedAt": null,
+      "preferences": {
+        "hireDate": "2023-01-20T00:00:00.000Z",
+        "department": "Administrative",
+        "permissions": [
+          "ALL"
+        ]
+      },
+      "roleId": "a69b2584-c845-41cb-805a-bdc1926a5055"
+    }
+  ]
+}

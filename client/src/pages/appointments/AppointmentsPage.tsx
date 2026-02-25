@@ -39,9 +39,11 @@ import {
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import DoctorCalendar from '@/components/calendar/DoctorCalendar'
+import { usePermissions } from '@/hooks/usePermissions'
 
 export default function AppointmentsPage() {
     const navigate = useNavigate()
+    const { hasPermission } = usePermissions()
     const [searchTerm, setSearchTerm] = useState('')
     const [appointments, setAppointments] = useState<any[]>([])
     const [patients, setPatients] = useState<any[]>([])
@@ -304,10 +306,12 @@ export default function AppointmentsPage() {
                         <Download className="h-4 w-4 mr-2" />
                         PDF
                     </Button>
-                    <Button onClick={handleAdd}>
-                        <Plus className="h-4 w-4 mr-2" />
-                        Nueva Cita
-                    </Button>
+                    {hasPermission('APPOINTMENTS_CREATE') && (
+                        <Button onClick={handleAdd}>
+                            <Plus className="h-4 w-4 mr-2" />
+                            Nueva Cita
+                        </Button>
+                    )}
                 </div>
             </div>
 
@@ -558,23 +562,27 @@ export default function AppointmentsPage() {
                                                         >
                                                             <Eye className="h-4 w-4" />
                                                         </Button>
-                                                        <Button
-                                                            variant="ghost"
-                                                            size="sm"
-                                                            onClick={() => handleEdit(apt)}
-                                                            title="Editar"
-                                                        >
-                                                            <Edit className="h-4 w-4" />
-                                                        </Button>
-                                                        <Button
-                                                            variant="ghost"
-                                                            size="sm"
-                                                            onClick={() => setDeleteId(apt.id)}
-                                                            className="text-red-500 hover:text-red-700"
-                                                            title="Eliminar"
-                                                        >
-                                                            <Trash2 className="h-4 w-4" />
-                                                        </Button>
+                                                        {hasPermission('APPOINTMENTS_EDIT') && (
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="sm"
+                                                                onClick={() => handleEdit(apt)}
+                                                                title="Editar"
+                                                            >
+                                                                <Edit className="h-4 w-4" />
+                                                            </Button>
+                                                        )}
+                                                        {hasPermission('APPOINTMENTS_DELETE') && (
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="sm"
+                                                                onClick={() => setDeleteId(apt.id)}
+                                                                className="text-red-500 hover:text-red-700"
+                                                                title="Eliminar"
+                                                            >
+                                                                <Trash2 className="h-4 w-4" />
+                                                            </Button>
+                                                        )}
                                                     </div>
                                                 </TableCell>
                                             </TableRow>

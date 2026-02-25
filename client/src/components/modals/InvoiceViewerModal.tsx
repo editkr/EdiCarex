@@ -28,6 +28,7 @@ import { useRef } from 'react'
 import { generateInvoicePDF } from '@/utils/pdfGenerator'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
+import { useOrganization } from '@/contexts/OrganizationContext'
 
 interface InvoiceViewerModalProps {
     open: boolean
@@ -36,10 +37,12 @@ interface InvoiceViewerModalProps {
 }
 
 export function InvoiceViewerModal({ open, onOpenChange, invoice }: InvoiceViewerModalProps) {
+    const { config } = useOrganization()
+
     if (!invoice) return null
 
     const handleDownload = () => {
-        generateInvoicePDF(invoice)
+        generateInvoicePDF(invoice, config)
     }
 
     const getStatusBadge = (status: string) => {
@@ -98,26 +101,26 @@ export function InvoiceViewerModal({ open, onOpenChange, invoice }: InvoiceViewe
                                     <div className="mt-6 text-zinc-400 text-xs space-y-1">
                                         <div className="flex items-center gap-2">
                                             <Building2 className="h-3 w-3" />
-                                            <span className="font-bold text-zinc-300">CLÍNICA EDICAREX S.A.C.</span>
+                                            <span className="font-bold text-zinc-300">{(config?.hospitalName || 'CLÍNICA EDICAREX').toUpperCase()}</span>
                                         </div>
                                         <div className="flex items-center gap-2">
                                             <MapPin className="h-3 w-3" />
-                                            <span>Av. Principal 123, Lima, Perú</span>
+                                            <span>{config?.address || 'Av. Principal 123, Lima, Perú'}</span>
                                         </div>
                                         <div className="flex items-center gap-2">
                                             <Phone className="h-3 w-3" />
-                                            <span>(01) 555-0000</span>
+                                            <span>{config?.phone || '(01) 555-0000'}</span>
                                         </div>
                                         <div className="flex items-center gap-2">
                                             <Mail className="h-3 w-3" />
-                                            <span>facturacion@edicarex.com</span>
+                                            <span>{config?.email || 'facturacion@edicarex.com'}</span>
                                         </div>
                                     </div>
                                 </div>
 
                                 <div className="text-right">
                                     <div className="bg-zinc-900/50 border border-zinc-800 rounded-lg p-4 text-center min-w-[200px]">
-                                        <p className="text-xs text-zinc-500 uppercase tracking-widest font-bold mb-1">RUC: 20601234567</p>
+                                        <p className="text-xs text-zinc-500 uppercase tracking-widest font-bold mb-1">RUC: {config?.billing?.taxId || '20601234567'}</p>
                                         <p className="text-xl font-mono font-bold text-white mb-1">{invoice.invoiceNumber || 'F001-00000000'}</p>
                                         <div className="flex justify-center mt-2">
                                             {getStatusBadge(invoice.status)}
@@ -162,7 +165,7 @@ export function InvoiceViewerModal({ open, onOpenChange, invoice }: InvoiceViewe
                                         </div>
                                         <div className="flex justify-between">
                                             <span className="text-zinc-500">Moneda:</span>
-                                            <span className="text-zinc-300">Soles (PEN)</span>
+                                            <span className="text-zinc-300">{config?.billing?.currency === 'USD' ? 'Dólares (USD)' : config?.billing?.currency === 'EUR' ? 'Euros (EUR)' : 'Soles (PEN)'}</span>
                                         </div>
                                         {invoice.operationNumber && (
                                             <div className="flex justify-between">
@@ -194,8 +197,8 @@ export function InvoiceViewerModal({ open, onOpenChange, invoice }: InvoiceViewe
                                                         <span className="text-[10px] text-zinc-600 uppercase">{item.type || 'SERVICIO'}</span>
                                                     </td>
                                                     <td className="px-4 py-3 text-center text-zinc-400 font-mono">{item.quantity}</td>
-                                                    <td className="px-4 py-3 text-right text-zinc-400 font-mono">{formatCurrency(item.unitPrice)}</td>
-                                                    <td className="px-4 py-3 text-right font-bold text-zinc-200 font-mono">{formatCurrency(item.quantity * item.unitPrice)}</td>
+                                                    <td className="px-4 py-3 text-right text-zinc-400 font-mono">{formatCurrency(item.unitPrice, config)}</td>
+                                                    <td className="px-4 py-3 text-right font-bold text-zinc-200 font-mono">{formatCurrency(item.quantity * item.unitPrice, config)}</td>
                                                 </tr>
                                             ))}
                                         </tbody>
@@ -208,20 +211,20 @@ export function InvoiceViewerModal({ open, onOpenChange, invoice }: InvoiceViewe
                                 <div className="w-64 space-y-2">
                                     <div className="flex justify-between text-sm text-zinc-500">
                                         <span>Subtotal</span>
-                                        <span className="font-mono">{formatCurrency(invoice.subtotal)}</span>
+                                        <span className="font-mono">{formatCurrency(invoice.subtotal, config)}</span>
                                     </div>
                                     <div className="flex justify-between text-sm text-zinc-500">
-                                        <span>I.G.V. (18%)</span>
-                                        <span className="font-mono">{formatCurrency(invoice.tax)}</span>
+                                        <span>{config?.billing?.taxLabel || 'Tax'} ({config?.billing?.taxRate || 18}%)</span>
+                                        <span className="font-mono">{formatCurrency(invoice.tax, config)}</span>
                                     </div>
                                     <div className="flex justify-between text-sm text-zinc-500">
                                         <span>Descuento</span>
-                                        <span className="font-mono text-red-400">- {formatCurrency(invoice.discount || 0)}</span>
+                                        <span className="font-mono text-red-400">- {formatCurrency(invoice.discount || 0, config)}</span>
                                     </div>
                                     <Separator className="bg-zinc-800 my-2" />
                                     <div className="flex justify-between text-lg font-black text-white items-center">
                                         <span className="text-xs uppercase tracking-wider text-emerald-500">Total a Pagar</span>
-                                        <span>{formatCurrency(invoice.total)}</span>
+                                        <span>{formatCurrency(invoice.total, config)}</span>
                                     </div>
                                 </div>
                             </div>

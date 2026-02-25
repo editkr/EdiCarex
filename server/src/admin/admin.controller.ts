@@ -1,10 +1,10 @@
-import { Controller, Get, Post, Put, Delete, Body, Param, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Body, Param, Query, UseGuards, Res } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { AdminService } from './admin.service';
 import { CreateConfigDto, UpdateConfigDto } from './dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { AuditInterceptor } from '../common/interceptors/audit.interceptor';
-import { Audit } from '../common/decorators/audit.decorator';
+import { Audit, Public } from '../common/decorators';
 import { UseInterceptors } from '@nestjs/common';
 
 @ApiTags('Admin')
@@ -53,6 +53,7 @@ export class AdminController {
         return this.adminService.getServicesByCategory();
     }
 
+    @Public()
     @Get('organization')
     @ApiOperation({ summary: 'Get organization configuration' })
     getOrganizationConfig() {
@@ -84,6 +85,33 @@ export class AdminController {
     @ApiOperation({ summary: 'Restore from backup' })
     restoreBackup(@Param('id') id: string) {
         return this.adminService.restoreBackup(id);
+    }
+
+    @Get('backups/:filename/download')
+    @ApiOperation({ summary: 'Download backup file' })
+    async downloadBackup(@Param('filename') filename: string, @Res() res) {
+        const filePath = await this.adminService.getBackupFile(filename);
+        return res.download(filePath);
+    }
+
+    @Delete('backups/:id')
+    @Audit('ELIMINAR', 'SEGURIDAD')
+    @ApiOperation({ summary: 'Delete backup' })
+    deleteBackup(@Param('id') id: string) {
+        return this.adminService.deleteBackup(id);
+    }
+
+    @Post('backups/cleanup')
+    @Audit('ELIMINAR', 'SEGURIDAD')
+    @ApiOperation({ summary: 'Cleanup old backups (30 days retention)' })
+    cleanupBackups() {
+        return this.adminService.cleanupOldBackups();
+    }
+
+    @Get('backups/:filename/verify')
+    @ApiOperation({ summary: 'Verify backup integrity using SHA-256' })
+    verifyBackup(@Param('filename') filename: string) {
+        return this.adminService.verifyBackupIntegrity(filename);
     }
 
     @Get('system/stats')

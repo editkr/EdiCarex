@@ -74,8 +74,10 @@ import { hrAPI } from '@/services/api'
 import { useToast } from '@/components/ui/use-toast'
 import { format, differenceInHours, differenceInMinutes } from 'date-fns'
 import { es } from 'date-fns/locale'
+import { useOrganization } from '@/contexts/OrganizationContext'
 import { Calendar } from '@/components/ui/calendar'
 import { useNavigate, Link } from 'react-router-dom'
+import { formatCurrency } from '@/utils/financialUtils'
 import {
     BarChart,
     Bar,
@@ -112,6 +114,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 
 export default function HRPage() {
+    const { config } = useOrganization()
     const navigate = useNavigate()
     const [searchTerm, setSearchTerm] = useState('')
     // Modals and Data State
@@ -356,7 +359,7 @@ export default function HRPage() {
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-bold text-blue-600">
-                            S/ {stats.totalPayroll.toLocaleString()}
+                            {formatCurrency(stats.totalPayroll, config)}
                         </div>
                         <p className="text-xs text-muted-foreground">
                             Nómina mensual
@@ -635,7 +638,7 @@ export default function HRPage() {
                             <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
                                 <div className="text-center">
                                     <p className="text-xs text-muted-foreground mb-1">Total Planilla</p>
-                                    <p className="text-2xl font-bold text-green-600">S/ {hrData.payroll.reduce((acc: number, p: any) => acc + (Number(p.netSalary) || 0), 0).toLocaleString()}</p>
+                                    <p className="text-2xl font-bold text-green-600">{formatCurrency(hrData.payroll.reduce((acc: number, p: any) => acc + (Number(p.netSalary) || 0), 0), config)}</p>
                                 </div>
                                 <div className="text-center">
                                     <p className="text-xs text-muted-foreground mb-1">Boletas</p>
@@ -693,10 +696,10 @@ export default function HRPage() {
                                                 </div>
                                             </TableCell>
                                             <TableCell className="font-medium">{typeof record.period === 'string' ? record.period : format(new Date(record.period || record.createdAt || Date.now()), 'MMM yyyy', { locale: es })}</TableCell>
-                                            <TableCell className="font-mono text-sm">S/ {Number(record.baseSalary || 0).toLocaleString()}</TableCell>
-                                            <TableCell className="font-mono text-sm text-green-600">+S/ {Number(record.bonuses || 0).toLocaleString()}</TableCell>
-                                            <TableCell className="font-mono text-sm text-red-600">-S/ {Number(record.deductions || 0).toLocaleString()}</TableCell>
-                                            <TableCell className="font-mono text-sm font-semibold">S/ {Number(record.netSalary || 0).toLocaleString()}</TableCell>
+                                            <TableCell className="font-mono text-sm">{formatCurrency(record.baseSalary || 0, config)}</TableCell>
+                                            <TableCell className="font-mono text-sm text-green-600">+{formatCurrency(record.bonuses || 0, config)}</TableCell>
+                                            <TableCell className="font-mono text-sm text-red-600">-{formatCurrency(record.deductions || 0, config)}</TableCell>
+                                            <TableCell className="font-mono text-sm font-semibold">{formatCurrency(record.netSalary || 0, config)}</TableCell>
                                             <TableCell>
                                                 <Badge className={`text-xs font-semibold ${record.status === 'PAID' ? 'bg-green-100 text-green-700' : record.status === 'PENDING' ? 'bg-orange-100 text-orange-700' : 'bg-blue-100 text-blue-700'}`}>
                                                     {record.status === 'PAID' ? 'Pagado' : record.status === 'PENDING' ? 'Pendiente' : 'Procesando'}
@@ -889,7 +892,7 @@ export default function HRPage() {
                                         <body>
                                             <div class="header">
                                                 <div class="title">BOLETA DE PAGO</div>
-                                                <div class="subtitle">EdiCarex Hospital - Recursos Humanos</div>
+                                                <div class="subtitle">${config?.hospitalName || 'EdiCarex Hospital'} - Recursos Humanos</div>
                                             </div>
                                             <div class="employee">
                                                 <div>

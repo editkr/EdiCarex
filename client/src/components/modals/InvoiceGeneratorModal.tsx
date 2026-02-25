@@ -12,6 +12,7 @@ import { Receipt, Search, Plus, Trash2, QrCode, Loader2, DollarSign, Wallet, Cre
 import QRCode from 'qrcode'
 import { cn } from '@/lib/utils'
 import { formatCurrency, PAYMENT_METHODS, COMPANY_ACCOUNTS } from '@/utils/financialUtils'
+import { useOrganization } from '@/contexts/OrganizationContext'
 
 interface InvoiceGeneratorProps {
     open: boolean
@@ -47,6 +48,7 @@ const CATALOG = {
 
 export default function InvoiceGeneratorModal({ open, onOpenChange, onSuccess }: InvoiceGeneratorProps) {
     const { toast } = useToast()
+    const { config } = useOrganization()
     const [loading, setLoading] = useState(false)
     const [patients, setPatients] = useState<any[]>([])
     const [qrCodeUrl, setQrCodeUrl] = useState('')
@@ -99,11 +101,12 @@ export default function InvoiceGeneratorModal({ open, onOpenChange, onSuccess }:
             .reduce((sum, m) => sum + m.price, 0)
 
         const subtotal = servicesTotal + proceduresTotal + medicationsTotal
-        const tax = subtotal * 0.18 // IGV Perú 18%
+        const taxRate = (config?.billing?.taxRate || 18) / 100
+        const tax = subtotal * taxRate
         const total = subtotal + tax - discount
 
         return { subtotal, tax, total }
-    }, [selectedServices, selectedProcedures, selectedMedications, discount])
+    }, [selectedServices, selectedProcedures, selectedMedications, discount, config])
 
     useEffect(() => {
         if (totals.total > 0 && selectedPatientId && (paymentMethod === PAYMENT_METHODS.YAPE || paymentMethod === PAYMENT_METHODS.PLIN)) {
@@ -116,11 +119,11 @@ export default function InvoiceGeneratorModal({ open, onOpenChange, onSuccess }:
     const generateQR = async () => {
         try {
             const qrData = JSON.stringify({
-                empresa: "EdiCarex Clinic SAC",
+                empresa: config?.hospitalName || 'EdiCarex Clinic SAC',
                 ruc: "20601234567",
                 fecha: new Date().toISOString().split('T')[0],
                 total: totals.total.toFixed(2),
-                moneda: "PEN",
+                moneda: config?.billing?.currency || "PEN",
                 metodo: paymentMethod
             })
             const url = await QRCode.toDataURL(qrData, { width: 150, margin: 1 })
@@ -155,7 +158,7 @@ export default function InvoiceGeneratorModal({ open, onOpenChange, onSuccess }:
                 tax: totals.tax,
                 discount,
                 total: totals.total,
-                currency: 'PEN',
+                currency: config?.billing?.currency || 'PEN',
                 status: 'PAID', // Venta POS es cobro inmediato
                 paymentMethod,
                 invoiceDate: new Date().toISOString(),
@@ -242,7 +245,7 @@ export default function InvoiceGeneratorModal({ open, onOpenChange, onSuccess }:
                                                 )}
                                             >
                                                 <span className={cn("text-sm font-medium", selectedServices.includes(item.id) ? "text-emerald-400" : "text-zinc-300")}>{item.name}</span>
-                                                <span className="text-sm font-bold text-white">{formatCurrency(item.price)}</span>
+                                                <span className="text-sm font-bold text-white">{formatCurrency(item.price, config)}</span>
                                             </div>
                                         ))}
                                     </div>
@@ -265,7 +268,7 @@ export default function InvoiceGeneratorModal({ open, onOpenChange, onSuccess }:
                                                 )}
                                             >
                                                 <span className={cn("text-sm font-medium", selectedProcedures.includes(item.id) ? "text-indigo-400" : "text-zinc-300")}>{item.name}</span>
-                                                <span className="text-sm font-bold text-white">{formatCurrency(item.price)}</span>
+                                                <span className="text-sm font-bold text-white">{formatCurrency(item.price, config)}</span>
                                             </div>
                                         ))}
                                     </div>
@@ -288,7 +291,7 @@ export default function InvoiceGeneratorModal({ open, onOpenChange, onSuccess }:
                                                 )}
                                             >
                                                 <span className={cn("text-sm font-medium", selectedMedications.includes(item.id) ? "text-amber-400" : "text-zinc-300")}>{item.name}</span>
-                                                <span className="text-sm font-bold text-white">{formatCurrency(item.price)}</span>
+                                                <span className="text-sm font-bold text-white">{formatCurrency(item.price, config)}</span>
                                             </div>
                                         ))}
                                     </div>
@@ -307,16 +310,16 @@ export default function InvoiceGeneratorModal({ open, onOpenChange, onSuccess }:
                                 <div className="bg-black border border-zinc-800 rounded-lg p-5 space-y-3">
                                     <div className="flex justify-between text-zinc-400 text-sm">
                                         <span>Subtotal</span>
-                                        <span>{formatCurrency(totals.subtotal)}</span>
+                                        <span>{formatCurrency(totals.subtotal, config)}</span>
                                     </div>
                                     <div className="flex justify-between text-zinc-400 text-sm">
-                                        <span>IGV (18%)</span>
-                                        <span>{formatCurrency(totals.tax)}</span>
+                                        <span>Impuestos ({config?.billing?.taxRate || 18}%)</span>
+                                        <span>{formatCurrency(totals.tax, config)}</span>
                                     </div>
                                     <div className="flex justify-between items-center text-zinc-400 text-sm pt-2 border-t border-zinc-800/50">
                                         <span>Descuento</span>
                                         <div className="flex items-end gap-1">
-                                            <span className="text-xs mb-1">S/.</span>
+                                            <span className="text-xs mb-1">{config?.billing?.currency === 'USD' ? '$' : config?.billing?.currency === 'EUR' ? '€' : 'S/.'}</span>
                                             <Input
                                                 type="number"
                                                 min="0"
@@ -329,7 +332,7 @@ export default function InvoiceGeneratorModal({ open, onOpenChange, onSuccess }:
                                     <div className="pt-4 border-t border-zinc-800">
                                         <div className="flex justify-between items-baseline">
                                             <span className="text-base font-bold text-white uppercase">Total a Pagar</span>
-                                            <span className="text-3xl font-black text-emerald-500">{formatCurrency(totals.total)}</span>
+                                            <span className="text-3xl font-black text-emerald-500">{formatCurrency(totals.total, config)}</span>
                                         </div>
                                     </div>
                                 </div>
@@ -411,7 +414,7 @@ export default function InvoiceGeneratorModal({ open, onOpenChange, onSuccess }:
                                     </>
                                 ) : (
                                     <>
-                                        <Receipt className="mr-2 h-5 w-5" /> Registrar Venta {formatCurrency(totals.total)}
+                                        <Receipt className="mr-2 h-5 w-5" /> Registrar Venta {formatCurrency(totals.total, config)}
                                     </>
                                 )}
                             </Button>

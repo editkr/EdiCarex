@@ -29,6 +29,7 @@ import { appointmentsAPI } from '@/services/api'
 import { useToast } from '@/components/ui/use-toast'
 import { format, differenceInMinutes } from 'date-fns'
 import { es } from 'date-fns/locale'
+import { usePermissions } from '@/hooks/usePermissions'
 
 interface WaitingPatient {
     id: string
@@ -44,6 +45,7 @@ interface WaitingPatient {
 
 export default function WaitingRoomPage() {
     const { toast } = useToast()
+    const { hasPermission } = usePermissions()
     const [loading, setLoading] = useState(true)
     const [searchTerm, setSearchTerm] = useState('')
     const [waitingPatients, setWaitingPatients] = useState<WaitingPatient[]>([])
@@ -228,15 +230,17 @@ export default function WaitingRoomPage() {
 
                 <Card className="bg-primary text-primary-foreground">
                     <CardContent className="flex flex-col items-center justify-center h-full pt-6">
-                        <Button
-                            variant="secondary"
-                            size="lg"
-                            className="w-full h-12 text-lg font-semibold shadow-md"
-                            onClick={() => setShowCheckIn(true)}
-                        >
-                            <UserPlus className="h-5 w-5 mr-2" />
-                            Nuevo Check-in
-                        </Button>
+                        {hasPermission('APPOINTMENTS_EDIT') && (
+                            <Button
+                                variant="secondary"
+                                size="lg"
+                                className="w-full h-12 text-lg font-semibold shadow-md"
+                                onClick={() => setShowCheckIn(true)}
+                            >
+                                <UserPlus className="h-5 w-5 mr-2" />
+                                Nuevo Check-in
+                            </Button>
+                        )}
                         <p className="text-xs text-primary-foreground/80 mt-3 text-center">
                             {pendingCheckIn.length} citas pendientes por registrar
                         </p>
@@ -304,22 +308,26 @@ export default function WaitingRoomPage() {
                                     </div>
 
                                     <div className="grid gap-2">
-                                        <Button
-                                            className="w-full bg-primary hover:bg-primary/90 shadow-sm"
-                                            size="lg"
-                                            onClick={() => handleCallPatient(patient)}
-                                        >
-                                            <UserCheck className="h-5 w-5 mr-2" />
-                                            FINALIZAR ESPERA
-                                        </Button>
-                                        <Button
-                                            variant="ghost"
-                                            className="w-full text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-                                            size="sm"
-                                            onClick={() => handleNoShow(patient)}
-                                        >
-                                            No se presentó
-                                        </Button>
+                                        {hasPermission('APPOINTMENTS_EDIT') && (
+                                            <Button
+                                                className="w-full bg-primary hover:bg-primary/90 shadow-sm"
+                                                size="lg"
+                                                onClick={() => handleCallPatient(patient)}
+                                            >
+                                                <UserCheck className="h-5 w-5 mr-2" />
+                                                FINALIZAR ESPERA
+                                            </Button>
+                                        )}
+                                        {hasPermission('APPOINTMENTS_EDIT') && (
+                                            <Button
+                                                variant="ghost"
+                                                className="w-full text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                                                size="sm"
+                                                onClick={() => handleNoShow(patient)}
+                                            >
+                                                No se presentó
+                                            </Button>
+                                        )}
                                     </div>
                                 </CardContent>
                             </Card>
@@ -370,9 +378,11 @@ export default function WaitingRoomPage() {
                                                 </p>
                                             </div>
                                         </div>
-                                        <Button onClick={() => handleCheckIn(apt)} className="opacity-0 group-hover:opacity-100 transition-opacity">
-                                            Check-in
-                                        </Button>
+                                        {hasPermission('APPOINTMENTS_EDIT') && (
+                                            <Button onClick={() => handleCheckIn(apt)} className="opacity-0 group-hover:opacity-100 transition-opacity">
+                                                Check-in
+                                            </Button>
+                                        )}
                                     </div>
                                 ))
                             ) : (

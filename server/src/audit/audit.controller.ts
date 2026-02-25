@@ -1,4 +1,4 @@
-import { Controller, Get, Query, Param, UseGuards } from '@nestjs/common';
+import { Controller, Get, Query, Param, UseGuards, Patch, Delete, Body } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { AuditService } from './audit.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -55,5 +55,20 @@ export class AuditController {
         @Param('id') id: string,
     ) {
         return this.auditService.getHistory(resource, id);
+    }
+
+    @Patch(':id')
+    @ApiOperation({ summary: 'Update an audit log (e.g. rename chat)' })
+    async update(
+        @Param('id') id: string,
+        @Body() data: { changes?: any }
+    ) {
+        return this.auditService.updateLog(id, data);
+    }
+
+    @Delete(':id')
+    @ApiOperation({ summary: 'Delete an audit log' })
+    async remove(@Param('id') id: string) {
+        return this.auditService.deleteLog(id);
     }
 }

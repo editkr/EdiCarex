@@ -26,6 +26,7 @@ import {
 } from 'lucide-react'
 import { format, isToday, startOfWeek, endOfWeek, eachDayOfInterval, addDays } from 'date-fns'
 import { useToast } from '@/components/ui/use-toast'
+import { usePermissions } from '@/hooks/usePermissions'
 import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
 import DoctorCalendar from '@/components/calendar/DoctorCalendar'
 import DoctorModal from '@/components/modals/DoctorModal'
@@ -34,6 +35,7 @@ export default function DoctorProfilePage() {
     const { id } = useParams<{ id: string }>()
     const navigate = useNavigate()
     const { toast } = useToast()
+    const { hasPermission } = usePermissions()
     const [activeTab, setActiveTab] = useState('general')
     const [isModalOpen, setIsModalOpen] = useState(false)
     const [documents, setDocuments] = useState<any[]>([])
@@ -223,10 +225,12 @@ export default function DoctorProfilePage() {
                     </div>
                 </div>
                 <div className="flex gap-2">
-                    <Button variant="outline" onClick={() => setIsModalOpen(true)}>
-                        <Edit className="h-4 w-4 mr-2" />
-                        Editar Perfil
-                    </Button>
+                    {hasPermission('DOCTORS_EDIT') && (
+                        <Button variant="outline" onClick={() => setIsModalOpen(true)}>
+                            <Edit className="h-4 w-4 mr-2" />
+                            Editar Perfil
+                        </Button>
+                    )}
                 </div>
             </div>
 
@@ -571,28 +575,30 @@ export default function DoctorProfilePage() {
                         <CardContent>
                             <div className="space-y-4">
                                 {/* Upload Area */}
-                                <div className="flex flex-col items-center justify-center py-6 text-center space-y-3 border-2 border-dashed rounded-xl bg-slate-50">
-                                    <div className="h-12 w-12 rounded-full bg-white flex items-center justify-center shadow-sm">
-                                        <Upload className="h-6 w-6 text-indigo-500" />
+                                {hasPermission('DOCTORS_EDIT') && (
+                                    <div className="flex flex-col items-center justify-center py-6 text-center space-y-3 border-2 border-dashed rounded-xl bg-slate-50">
+                                        <div className="h-12 w-12 rounded-full bg-white flex items-center justify-center shadow-sm">
+                                            <Upload className="h-6 w-6 text-indigo-500" />
+                                        </div>
+                                        <div className="space-y-1">
+                                            <h3 className="font-medium text-slate-900">Subir nuevo documento</h3>
+                                            <p className="text-sm text-muted-foreground max-w-xs mx-auto">
+                                                PDF, Word, Excel o Imágenes (Max 10MB)
+                                            </p>
+                                        </div>
+                                        <div className="relative">
+                                            <Button variant="outline" className="mt-2 relative z-10">
+                                                Seleccionar Archivo
+                                            </Button>
+                                            <input
+                                                type="file"
+                                                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20"
+                                                onChange={handleFileUpload}
+                                                accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png"
+                                            />
+                                        </div>
                                     </div>
-                                    <div className="space-y-1">
-                                        <h3 className="font-medium text-slate-900">Subir nuevo documento</h3>
-                                        <p className="text-sm text-muted-foreground max-w-xs mx-auto">
-                                            PDF, Word, Excel o Imágenes (Max 10MB)
-                                        </p>
-                                    </div>
-                                    <div className="relative">
-                                        <Button variant="outline" className="mt-2 relative z-10">
-                                            Seleccionar Archivo
-                                        </Button>
-                                        <input
-                                            type="file"
-                                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20"
-                                            onChange={handleFileUpload}
-                                            accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png"
-                                        />
-                                    </div>
-                                </div>
+                                )}
 
                                 {/* Documents List */}
                                 <div className="space-y-2">
@@ -619,9 +625,11 @@ export default function DoctorProfilePage() {
                                                     }}>
                                                         <File className="h-4 w-4" />
                                                     </Button>
-                                                    <Button variant="ghost" size="icon" className="h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-50" onClick={() => handleDeleteDocument(doc.id)}>
-                                                        <Trash className="h-4 w-4" />
-                                                    </Button>
+                                                    {hasPermission('DOCTORS_EDIT') && (
+                                                        <Button variant="ghost" size="icon" className="h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-50" onClick={() => handleDeleteDocument(doc.id)}>
+                                                            <Trash className="h-4 w-4" />
+                                                        </Button>
+                                                    )}
                                                 </div>
                                             </div>
                                         ))
@@ -636,7 +644,7 @@ export default function DoctorProfilePage() {
                 <TabsContent value="hours">
                     <Card>
                         <CardHeader>
-                            <CardTitle>Horario de Atención</CardTitle>
+                            <CardTitle>Horario de Consulta</CardTitle>
                             <CardDescription>Jornada laboral configurada</CardDescription>
                         </CardHeader>
                         <CardContent>

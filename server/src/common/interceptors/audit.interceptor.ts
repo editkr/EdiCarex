@@ -30,6 +30,7 @@ export class AuditInterceptor implements NestInterceptor {
             return next.handle();
         }
 
+        const start = performance.now();
         const request = context.switchToHttp().getRequest();
         const { user, ip, method, body, params, query } = request;
         const userAgent = request.get('user-agent') || '';
@@ -41,21 +42,26 @@ export class AuditInterceptor implements NestInterceptor {
                         return; // Cannot log without user
                     }
 
+                    const duration = Math.round(performance.now() - start);
+
                     // Calculate details/changes
                     let resourceId = params.id || (data && data.id) || null;
+                    const model = body?.model || (data && data.model) || null;
+
                     let details = {
                         method,
                         query,
                         body: method !== 'GET' ? body : undefined, // Don't log body for GET usually
-                        // We could potentially diff 'data' (response) with 'body' if we wanted strictly 'changes'
-                        // For now, logging the payload as 'changes'
+                        response: auditMetadata.resource === 'AI' ? data : undefined, // Capture AI response specifically
+                        duration, // Real inference/execution time in ms
+                        model, // Capture AI model for senior metrics visibility
                     };
 
                     await this.auditService.createLog({
                         userId: user.id,
                         action: auditMetadata.action,
                         resource: auditMetadata.resource,
-                        resourceId: resourceId,
+                        resourceId: resourceId?.toString(),
                         changes: details,
                         ipAddress: ip,
                         userAgent: userAgent,

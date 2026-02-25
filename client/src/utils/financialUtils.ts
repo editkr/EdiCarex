@@ -1,13 +1,15 @@
 
-export const CURRENCY = 'PEN';
-export const CURRENCY_SYMBOL = 'S/.';
 
-export const formatCurrency = (amount: number | string) => {
+export const formatCurrency = (amount: number | string, config?: any) => {
     const num = Number(amount);
-    if (isNaN(num)) return `${CURRENCY_SYMBOL} 0.00`;
-    return new Intl.NumberFormat('es-PE', {
+    if (isNaN(num)) return `${config?.billing?.currency === 'USD' ? '$' : config?.billing?.currency === 'EUR' ? '€' : 'S/.'} 0.00`;
+
+    const currency = config?.billing?.currency || 'PEN';
+    const locale = currency === 'USD' ? 'en-US' : currency === 'EUR' ? 'de-DE' : 'es-PE';
+
+    return new Intl.NumberFormat(locale, {
         style: 'currency',
-        currency: CURRENCY,
+        currency: currency,
         minimumFractionDigits: 2
     }).format(num);
 };

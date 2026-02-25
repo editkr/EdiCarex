@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { useAuthStore } from '@/stores/authStore'
 import { Label } from '@/components/ui/label'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Switch } from '@/components/ui/switch'
@@ -39,6 +40,7 @@ export default function SettingsPage() {
     const [loading, setLoading] = useState(true)
     const [saving, setSaving] = useState(false)
     const { toast } = useToast()
+    const { user, setUser } = useAuthStore()
     const { theme, setTheme } = useTheme()
 
     // Account Settings
@@ -157,6 +159,17 @@ export default function SettingsPage() {
                 email: accountData.email,
                 avatar: accountData.avatar,
             })
+
+            // Actualizar estado global inmediatamente
+            if (user) {
+                setUser({
+                    ...user,
+                    firstName,
+                    lastName,
+                    email: accountData.email,
+                    avatar: accountData.avatar
+                })
+            }
 
             toast({
                 title: '✅ Cuenta Actualizada',

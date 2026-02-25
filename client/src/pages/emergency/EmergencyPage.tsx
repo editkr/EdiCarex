@@ -36,7 +36,6 @@ import {
     Thermometer,
     Droplet,
     Wind,
-    Brain,
     LogOut,
     Search,
     Filter,
@@ -54,9 +53,14 @@ import { useToast } from '@/components/ui/use-toast'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
 import EmergencyModal from '@/components/modals/EmergencyModal'
+import { usePermissions } from '@/hooks/usePermissions'
+import { useOrganization } from '@/contexts/OrganizationContext'
 
 export default function EmergencyPage() {
     const navigate = useNavigate()
+    const { hasPermission } = usePermissions()
+    const { config } = useOrganization()
+    const aiConfig = config?.ai as any
     const [dashboard, setDashboard] = useState<any>(null)
     const [criticalPatients, setCriticalPatients] = useState<any[]>([])
     const [wardStats, setWardStats] = useState<any[]>([])
@@ -148,22 +152,24 @@ export default function EmergencyPage() {
         setAnalyzingTriage(true)
 
         try {
-            const response = await aiAPI.triage({ symptoms })
+            const response = await aiAPI.triage({
+                symptoms,
+                age: 35, // Default age for quick evaluation
+                vitalSigns: {}
+            })
             const data = response.data
 
             const colors: Record<number, { bg: string; text: string; label: string }> = {
-                1: { bg: 'bg-red-100', text: 'text-red-800', label: 'RESUCITACIÓN (CRÍTICO)' },
-                2: { bg: 'bg-orange-100', text: 'text-orange-800', label: 'EMERGENCIA' },
-                3: { bg: 'bg-yellow-100', text: 'text-yellow-800', label: 'URGENCIA' },
-                4: { bg: 'bg-green-100', text: 'text-green-800', label: 'URGENCIA MENOR' },
-                5: { bg: 'bg-blue-100', text: 'text-blue-800', label: 'NO URGENTE' },
+                1: { bg: 'bg-red-100', text: 'text-red-800', label: 'EMERGENCIA (ROJO)' },
+                2: { bg: 'bg-orange-100', text: 'text-orange-800', label: 'MUY URGENTE (NARANJA)' },
+                3: { bg: 'bg-yellow-100', text: 'text-yellow-800', label: 'URGENTE (AMARILLO)' },
+                4: { bg: 'bg-green-100', text: 'text-green-800', label: 'ESTÁNDAR (VERDE)' },
+                5: { bg: 'bg-blue-100', text: 'text-blue-800', label: 'NO URGENTE (AZUL)' },
             }
 
             setTriageResult({
-                priority: data.priority,
-                waitTime: data.waitTime,
-                color: colors[data.priority] || colors[3],
-                recommendations: data.recommendations,
+                ...data,
+                color: colors[data.priority] || colors[3]
             })
         } catch (error) {
             toast({
@@ -214,18 +220,27 @@ export default function EmergencyPage() {
                     <Button
                         variant="outline"
                         onClick={() => setTriageOpen(true)}
-                        className="bg-zinc-900 border-zinc-800 hover:bg-zinc-800 text-zinc-300"
+                        className="bg-zinc-900 border-zinc-800 hover:bg-zinc-800 text-zinc-300 h-12 px-6"
+                        disabled={!aiConfig?.enabled || !aiConfig?.features?.triage}
                     >
-                        <Brain className="h-4 w-4 mr-2" />
-                        Evaluación IA
+                        <div className="mr-4 flex items-center justify-center">
+                            <img
+                                src="/assets/logoIA.png"
+                                alt="AI Logo"
+                                className="h-10 w-10 object-contain"
+                            />
+                        </div>
+                        {aiConfig?.enabled && aiConfig?.features?.triage ? 'Evaluación IA' : 'IA Desactivada'}
                     </Button>
-                    <Button
-                        onClick={() => setAdmissionOpen(true)}
-                        className="bg-red-600 hover:bg-red-700 text-white shadow-lg shadow-red-900/20"
-                    >
-                        <Plus className="h-4 w-4 mr-2" />
-                        Nueva Admisión
-                    </Button>
+                    {hasPermission('EMERGENCY_CREATE') && (
+                        <Button
+                            onClick={() => setAdmissionOpen(true)}
+                            className="bg-red-600 hover:bg-red-700 text-white shadow-lg shadow-red-900/20"
+                        >
+                            <Plus className="h-4 w-4 mr-2" />
+                            Nueva Admisión
+                        </Button>
+                    )}
                 </div>
             </div>
 
@@ -290,9 +305,17 @@ export default function EmergencyPage() {
                     <CardHeader>
                         <div className="flex justify-between items-center">
                             <div>
-                                <CardTitle className="flex items-center gap-2">
-                                    <Brain className="h-5 w-5 text-primary" />
-                                    Sistema de Evaluación con IA
+                                <CardTitle className="flex items-center gap-4">
+                                    <div className="flex items-center justify-center p-2">
+                                        <img
+                                            src="/assets/logoIA.png"
+                                            alt="AI Logo"
+                                            className="h-20 w-20 object-contain drop-shadow-[0_0_20px_rgba(20,184,166,0.6)]"
+                                        />
+                                    </div>
+                                    <div className="flex flex-col">
+                                        <span className="text-2xl font-black italic tracking-tighter uppercase">Sistema de Evaluación con IA</span>
+                                    </div>
                                 </CardTitle>
                                 <CardDescription>
                                     Ingrese los síntomas del paciente para evaluación automática de prioridad
@@ -319,15 +342,21 @@ export default function EmergencyPage() {
                             />
                         </div>
 
-                        <Button onClick={analyzeTriage} disabled={analyzingTriage} className="w-full">
+                        <Button onClick={analyzeTriage} disabled={analyzingTriage} className="w-full h-14 text-lg font-bold uppercase tracking-tight">
                             {analyzingTriage ? (
                                 <>
-                                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                    <Loader2 className="h-6 w-6 mr-3 animate-spin" />
                                     Analizando...
                                 </>
                             ) : (
                                 <>
-                                    <Brain className="h-4 w-4 mr-2" />
+                                    <div className="mr-4 flex items-center justify-center">
+                                        <img
+                                            src="/assets/logoIA.png"
+                                            alt="AI Logo"
+                                            className="h-10 w-10 object-contain drop-shadow-[0_0_8px_rgba(255,255,255,0.3)]"
+                                        />
+                                    </div>
                                     Analizar con IA
                                 </>
                             )}
@@ -499,17 +528,19 @@ export default function EmergencyPage() {
                                                 </TableCell>
                                                 <TableCell className="text-right">
                                                     <div className="flex justify-end gap-1">
-                                                        <Button
-                                                            variant="ghost"
-                                                            size="sm"
-                                                            onClick={() => {
-                                                                setEditingCase(patient)
-                                                                setAdmissionOpen(true)
-                                                            }}
-                                                            title="Editar Caso"
-                                                        >
-                                                            <Pencil className="h-4 w-4 text-blue-500" />
-                                                        </Button>
+                                                        {hasPermission('EMERGENCY_EDIT') && (
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="sm"
+                                                                onClick={() => {
+                                                                    setEditingCase(patient)
+                                                                    setAdmissionOpen(true)
+                                                                }}
+                                                                title="Editar Caso"
+                                                            >
+                                                                <Pencil className="h-4 w-4 text-blue-500" />
+                                                            </Button>
+                                                        )}
                                                         <Button
                                                             variant="ghost"
                                                             size="sm"
@@ -518,20 +549,22 @@ export default function EmergencyPage() {
                                                         >
                                                             <Eye className="h-4 w-4" />
                                                         </Button>
-                                                        <Button
-                                                            variant="ghost"
-                                                            size="sm"
-                                                            disabled={dischargingId === patient.id}
-                                                            className="text-orange-500 hover:text-orange-600 hover:bg-orange-500/10"
-                                                            onClick={() => setConfirmPatient(patient)}
-                                                            title="Dar de Alta"
-                                                        >
-                                                            {dischargingId === patient.id ? (
-                                                                <Loader2 className="h-4 w-4 animate-spin" />
-                                                            ) : (
-                                                                <LogOut className="h-4 w-4" />
-                                                            )}
-                                                        </Button>
+                                                        {hasPermission('EMERGENCY_EDIT') && (
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="sm"
+                                                                disabled={dischargingId === patient.id}
+                                                                className="text-orange-500 hover:text-orange-600 hover:bg-orange-500/10"
+                                                                onClick={() => setConfirmPatient(patient)}
+                                                                title="Dar de Alta"
+                                                            >
+                                                                {dischargingId === patient.id ? (
+                                                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                                                ) : (
+                                                                    <LogOut className="h-4 w-4" />
+                                                                )}
+                                                            </Button>
+                                                        )}
                                                     </div>
                                                 </TableCell>
                                             </TableRow>

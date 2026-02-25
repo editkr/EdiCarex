@@ -16,11 +16,14 @@ import { CreatePatientDto, UpdatePatientDto, SearchPatientsDto } from './dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { MaintenanceGuard } from '../common/guards/maintenance.guard';
 import { AuditInterceptor } from '../common/interceptors/audit.interceptor';
-import { Audit } from '../common/decorators/audit.decorator';
+import { Audit } from '../common/decorators';
+
+import { PermissionsGuard } from '../auth/guards/permissions.guard';
+import { RequirePermission } from '../auth/decorators/permissions.decorator';
 
 @ApiTags('Patients')
 @ApiBearerAuth()
-@UseGuards(JwtAuthGuard, MaintenanceGuard)
+@UseGuards(JwtAuthGuard, MaintenanceGuard, PermissionsGuard)
 @UseInterceptors(AuditInterceptor)
 @Controller('patients')
 export class PatientsController {
@@ -28,6 +31,7 @@ export class PatientsController {
 
     @Post()
     @ApiOperation({ summary: 'Create new patient' })
+    @RequirePermission('PATIENTS_CREATE')
     @Audit('CREATE_PATIENT', 'patients')
     create(@Body() createPatientDto: CreatePatientDto) {
         return this.patientsService.create(createPatientDto);
@@ -35,6 +39,7 @@ export class PatientsController {
 
     @Post('import')
     @ApiOperation({ summary: 'Import multiple patients' })
+    @RequirePermission('PATIENTS_CREATE')
     @Audit('IMPORT_PATIENTS', 'patients')
     import(@Body() patients: CreatePatientDto[]) {
         return this.patientsService.importPatients(patients);
@@ -42,6 +47,7 @@ export class PatientsController {
 
     @Post(':id/enable-portal')
     @ApiOperation({ summary: 'Enable portal access for patient' })
+    @RequirePermission('PATIENTS_EDIT')
     @Audit('ENABLE_PORTAL', 'patients')
     enablePortal(@Param('id') id: string) {
         return this.patientsService.enablePortalAccess(id);
@@ -49,6 +55,7 @@ export class PatientsController {
 
     @Get()
     @ApiOperation({ summary: 'Get all patients with search and filters' })
+    @RequirePermission('PATIENTS_VIEW')
     @ApiQuery({ name: 'page', required: false, type: Number })
     @ApiQuery({ name: 'limit', required: false, type: Number })
     @ApiQuery({ name: 'query', required: false, type: String })
@@ -71,6 +78,7 @@ export class PatientsController {
 
     @Get(':id')
     @ApiOperation({ summary: 'Get patient by ID with complete history' })
+    @RequirePermission('PATIENTS_VIEW')
     @Audit('VIEW_PATIENT', 'patients')
     findOne(@Param('id') id: string) {
         return this.patientsService.findOne(id);
@@ -78,6 +86,7 @@ export class PatientsController {
 
     @Get(':id/medical-history')
     @ApiOperation({ summary: 'Get patient medical history' })
+    @RequirePermission('MEDICAL_RECORDS_VIEW')
     @Audit('VIEW_MEDICAL_HISTORY', 'patients')
     getMedicalHistory(@Param('id') id: string) {
         return this.patientsService.getMedicalHistory(id);
@@ -85,6 +94,7 @@ export class PatientsController {
 
     @Patch(':id')
     @ApiOperation({ summary: 'Update patient' })
+    @RequirePermission('PATIENTS_EDIT')
     @Audit('UPDATE_PATIENT', 'patients')
     update(@Param('id') id: string, @Body() updatePatientDto: UpdatePatientDto) {
         return this.patientsService.update(id, updatePatientDto);
@@ -92,6 +102,7 @@ export class PatientsController {
 
     @Delete(':id')
     @ApiOperation({ summary: 'Delete patient (soft delete)' })
+    @RequirePermission('PATIENTS_DELETE')
     @Audit('DELETE_PATIENT', 'patients')
     remove(@Param('id') id: string) {
         return this.patientsService.remove(id);

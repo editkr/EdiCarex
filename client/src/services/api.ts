@@ -29,9 +29,13 @@ api.interceptors.response.use(
 
         // 401 Unauthorized - Kick to login
         if (status === 401 && !isLoginRequest) {
-            localStorage.removeItem('token')
-            useAuthStore.getState().logout()
-            window.location.href = '/login'
+            const currentPath = window.location.pathname
+            // Only redirect if we are not already on a login-related page to avoid loops
+            if (currentPath !== '/login' && !currentPath.startsWith('/attendance/login') && !currentPath.startsWith('/patient-portal/login')) {
+                localStorage.removeItem('token')
+                useAuthStore.getState().logout()
+                window.location.href = '/login'
+            }
         }
 
         // 503 Service Unavailable - Check for Maintenance Mode
@@ -39,7 +43,8 @@ api.interceptors.response.use(
         if (status === 503 && errorData?.code === 'MAINTENANCE_MODE_ACTIVE') {
             // Only redirect if we are not already on the maintenance page
             if (window.location.pathname !== '/maintenance') {
-                window.location.href = '/maintenance'
+                const returnUrl = encodeURIComponent(window.location.pathname + window.location.search);
+                window.location.href = `/maintenance?returnUrl=${returnUrl}`
             }
         }
 
@@ -241,8 +246,16 @@ export const adminAPI = {
     getBackups: () => api.get('/admin/backups'),
     createBackup: () => api.post('/admin/backups'),
     restoreBackup: (id: string) => api.post(`/admin/backups/${id}/restore`),
+    downloadBackup: (filename: string) => {
+        const token = useAuthStore.getState().token || localStorage.getItem('token');
+        const url = `${API_URL}/api/v1/admin/backups/${filename}/download?token=${token}`;
+        window.open(url, '_blank');
+    },
     getSystemStats: () => api.get('/admin/system/stats'),
     getSystemHealth: () => api.get('/admin/system/health'),
+    deleteBackup: (id: string) => api.delete(`/admin/backups/${id}`),
+    cleanupBackups: () => api.post('/admin/backups/cleanup'),
+    verifyBackup: (filename: string) => api.get(`/admin/backups/${filename}/verify`),
 }
 
 // ============================================
@@ -252,6 +265,8 @@ export const auditAPI = {
     getAll: (params?: any) => api.get('/audit', { params }),
     getStats: () => api.get('/audit/stats'),
     getHistory: (resource: string, id: string) => api.get(`/audit/history/${resource}/${id}`),
+    update: (id: string, data: { changes?: any }) => api.patch(`/audit/${id}`, data),
+    delete: (id: string) => api.delete(`/audit/${id}`),
 }
 
 // ============================================
@@ -381,6 +396,9 @@ export const aiAPI = {
     predictDemand: (medicationId: string) =>
         api.post('/ai/pharmacy/demand', { medication_id: medicationId }),
     chat: (data: { message: string; context?: string }) => api.post('/ai/chat', data),
+    generateText: (data: { template_type: string; patient_data: any; additional_notes?: string }) =>
+        api.post('/ai/text/generate', data),
+    predictGrowth: (data: any) => api.post('/ai/analytics/growth', data),
 }
 
 // ============================================

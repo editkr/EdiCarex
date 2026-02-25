@@ -8,10 +8,14 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { Heart, Loader2 } from 'lucide-react'
 import { authAPI } from '@/services/api'
 import { useToast } from '@/components/ui/use-toast'
+import { useOrganization } from '@/contexts/OrganizationContext'
+import { cn } from '@/lib/utils'
+import { InstitutionalFooter } from '@/components/InstitutionalFooter'
 
 export default function PatientLoginPage() {
     const navigate = useNavigate()
     const { toast } = useToast()
+    const { config } = useOrganization()
     const [loading, setLoading] = useState(false)
     const [formData, setFormData] = useState({
         email: '',
@@ -60,14 +64,21 @@ export default function PatientLoginPage() {
             <Card className="w-full max-w-md mx-4 relative z-10 shadow-2xl">
                 <CardHeader className="text-center space-y-4">
                     <div className="mx-auto w-24 h-24">
-                        <img src="/assets/logo-edicarex.png" alt="EdiCarex" className="w-full h-full object-contain" />
+                        <img
+                            src={config?.logo || "/assets/logo-edicarex.png"}
+                            alt={config?.hospitalName || "EdiCarex"}
+                            className={cn(
+                                "w-full h-full object-contain transition-all",
+                                config?.branding?.logoType === 'light' && "invert brightness-0"
+                            )}
+                        />
                     </div>
                     <div>
                         <CardTitle className="text-2xl font-bold text-gray-800">
                             Portal del Paciente
                         </CardTitle>
                         <CardDescription>
-                            EdiCarex Hospital - Acceso seguro a su información médica
+                            {config?.hospitalName || "EdiCarex Hospital"} - Acceso seguro a su información médica
                         </CardDescription>
                     </div>
                 </CardHeader>
@@ -148,6 +159,7 @@ export default function PatientLoginPage() {
                     </div>
                 </CardContent>
             </Card>
+            <InstitutionalFooter variant="light" />
         </div>
     )
 }

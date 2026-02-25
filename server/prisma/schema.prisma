@@ -181,6 +181,8 @@ model BackupLog {
   type      String // FULL, PARTIAL
   size      String
   status    String // PENDING, COMPLETED, FAILED
+  checksum  String? // [PRO] SHA-256 integrity hash
+  details   Json?   // [PRO] Technicall details (counts, schema version)
   url       String?
   createdAt DateTime @default(now())
 
@@ -792,6 +794,7 @@ model Invoice {
   discount             Decimal   @default(0) @db.Decimal(10, 2)
   total                Decimal   @db.Decimal(10, 2)
   status               String    @default("PENDING") // PENDING, PAID, PARTIALLY_PAID, OVERDUE, CANCELLED
+  currency             String    @default("PEN")
   notes                String?
   
   // Payment-related fields

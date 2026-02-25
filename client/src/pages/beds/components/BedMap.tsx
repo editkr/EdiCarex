@@ -16,6 +16,7 @@ import { useToast } from '@/components/ui/use-toast'
 import BedAssignmentDialog from './BedAssignmentDialog'
 import { formatDistanceToNow } from 'date-fns'
 import { es } from 'date-fns/locale'
+import { usePermissions } from '@/hooks/usePermissions'
 
 interface BedMapProps {
     filterWard: string
@@ -26,6 +27,7 @@ interface BedMapProps {
 
 export default function BedMap({ filterWard, filterStatus, searchQuery, onEditBed }: BedMapProps) {
     const { beds, deleteBed, dischargePatient, setBedStatus } = useBedStore()
+    const { hasPermission } = usePermissions()
     const { toast } = useToast()
     const [assignDialogOpen, setAssignDialogOpen] = useState(false)
     const [selectedBedId, setSelectedBedId] = useState<string | null>(null)
@@ -120,7 +122,7 @@ export default function BedMap({ filterWard, filterStatus, searchQuery, onEditBe
                                     </DropdownMenuTrigger>
                                     <DropdownMenuContent align="end" className="w-56">
                                         <DropdownMenuLabel>Acciones de Cama</DropdownMenuLabel>
-                                        {bed.status === 'AVAILABLE' && (
+                                        {bed.status === 'AVAILABLE' && hasPermission('BEDS_ASSIGN') && (
                                             <DropdownMenuItem onClick={() => {
                                                 setSelectedBedId(bed.id)
                                                 setAssignDialogOpen(true)
@@ -128,7 +130,7 @@ export default function BedMap({ filterWard, filterStatus, searchQuery, onEditBe
                                                 <UserPlus className="mr-2 h-4 w-4" /> Asignar Paciente
                                             </DropdownMenuItem>
                                         )}
-                                        {bed.status === 'OCCUPIED' && (
+                                        {bed.status === 'OCCUPIED' && hasPermission('BEDS_EDIT') && (
                                             <DropdownMenuItem onClick={() => {
                                                 dischargePatient(bed.id)
                                                 toast({ title: 'Paciente dado de alta', description: 'La cama ahora está en limpieza.' })
@@ -138,28 +140,36 @@ export default function BedMap({ filterWard, filterStatus, searchQuery, onEditBe
                                         )}
                                         <DropdownMenuSeparator />
 
-                                        <DropdownMenuItem onClick={() => onEditBed(bed)}>
-                                            <Settings className="mr-2 h-4 w-4" /> Editar Detalles
-                                        </DropdownMenuItem>
+                                        {hasPermission('BEDS_EDIT') && (
+                                            <DropdownMenuItem onClick={() => onEditBed(bed)}>
+                                                <Settings className="mr-2 h-4 w-4" /> Editar Detalles
+                                            </DropdownMenuItem>
+                                        )}
 
                                         <DropdownMenuSeparator />
-                                        <DropdownMenuLabel className="text-xs text-muted-foreground">Cambiar Estado</DropdownMenuLabel>
-                                        <DropdownMenuItem onClick={() => setBedStatus(bed.id, 'AVAILABLE')}>
-                                            <CheckCircle2 className="mr-2 h-4 w-4 text-emerald-500" /> Disponible
-                                        </DropdownMenuItem>
-                                        <DropdownMenuItem onClick={() => setBedStatus(bed.id, 'CLEANING')}>
-                                            <Activity className="mr-2 h-4 w-4 text-amber-500" /> Limpieza
-                                        </DropdownMenuItem>
-                                        <DropdownMenuItem onClick={() => setBedStatus(bed.id, 'MAINTENANCE')}>
-                                            <Settings className="mr-2 h-4 w-4 text-slate-500" /> Mantenimiento
-                                        </DropdownMenuItem>
-                                        <DropdownMenuItem onClick={() => setBedStatus(bed.id, 'RESERVED')}>
-                                            <CalendarClock className="mr-2 h-4 w-4 text-blue-500" /> Reservada
-                                        </DropdownMenuItem>
+                                        {hasPermission('BEDS_EDIT') && (
+                                            <>
+                                                <DropdownMenuLabel className="text-xs text-muted-foreground">Cambiar Estado</DropdownMenuLabel>
+                                                <DropdownMenuItem onClick={() => setBedStatus(bed.id, 'AVAILABLE')}>
+                                                    <CheckCircle2 className="mr-2 h-4 w-4 text-emerald-500" /> Disponible
+                                                </DropdownMenuItem>
+                                                <DropdownMenuItem onClick={() => setBedStatus(bed.id, 'CLEANING')}>
+                                                    <Activity className="mr-2 h-4 w-4 text-amber-500" /> Limpieza
+                                                </DropdownMenuItem>
+                                                <DropdownMenuItem onClick={() => setBedStatus(bed.id, 'MAINTENANCE')}>
+                                                    <Settings className="mr-2 h-4 w-4 text-slate-500" /> Mantenimiento
+                                                </DropdownMenuItem>
+                                                <DropdownMenuItem onClick={() => setBedStatus(bed.id, 'RESERVED')}>
+                                                    <CalendarClock className="mr-2 h-4 w-4 text-blue-500" /> Reservada
+                                                </DropdownMenuItem>
+                                            </>
+                                        )}
                                         <DropdownMenuSeparator />
-                                        <DropdownMenuItem className="text-destructive focus:text-destructive focus:bg-destructive/10" onClick={() => deleteBed(bed.id)}>
-                                            <Trash2 className="mr-2 h-4 w-4" /> Eliminar Cama
-                                        </DropdownMenuItem>
+                                        {hasPermission('BEDS_DELETE') && (
+                                            <DropdownMenuItem className="text-destructive focus:text-destructive focus:bg-destructive/10" onClick={() => deleteBed(bed.id)}>
+                                                <Trash2 className="mr-2 h-4 w-4" /> Eliminar Cama
+                                            </DropdownMenuItem>
+                                        )}
                                     </DropdownMenuContent>
                                 </DropdownMenu>
                             </CardHeader>

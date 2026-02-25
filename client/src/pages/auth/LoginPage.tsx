@@ -5,10 +5,13 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
 import { useAuthStore } from '@/stores/authStore'
 import { authAPI } from '@/services/api'
+import { useOrganization } from '@/contexts/OrganizationContext'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Activity } from 'lucide-react'
+import { cn } from '@/lib/utils'
+import { InstitutionalFooter } from '@/components/InstitutionalFooter'
 
 const loginSchema = z.object({
     email: z.string().email('Correo electrónico inválido'),
@@ -18,6 +21,7 @@ const loginSchema = z.object({
 type LoginForm = z.infer<typeof loginSchema>
 
 export default function LoginPage() {
+    const { config } = useOrganization()
     const [error, setError] = useState('')
     const [loading, setLoading] = useState(false)
     const login = useAuthStore((state) => state.login)
@@ -59,65 +63,70 @@ export default function LoginPage() {
     }
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-gradient-to-tr from-slate-950 via-blue-950 to-emerald-950 p-4 relative overflow-hidden">
+        <div className="min-h-screen flex items-center justify-center bg-gradient-to-tr from-slate-950 via-emerald-950 to-emerald-900 p-4 relative overflow-hidden">
             {/* Glossy overlay */}
             <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_30%_30%,rgba(34,211,238,0.1),transparent)] pointer-events-none" />
             <div className="absolute bottom-0 right-0 w-full h-full bg-[radial-gradient(circle_at_70%_70%,rgba(16,185,129,0.1),transparent)] pointer-events-none" />
-            <Card className="w-full max-w-md">
+            <Card className="w-full max-w-md bg-white/10 border-white/10 backdrop-blur-md shadow-2xl relative z-10">
                 <CardHeader className="space-y-1 text-center">
                     <div className="flex justify-center mb-4">
-                        <img src="/assets/logo-edicarex.png" alt="EdiCarex" className="h-32 w-32 object-contain" />
+                        <img
+                            src={config?.logo || "/assets/logo-edicarex.png"}
+                            alt={config?.hospitalName || "EdiCarex"}
+                            className={cn(
+                                "h-32 w-32 object-contain transition-all duration-700 hover:scale-110",
+                                config?.branding?.logoType !== 'light' && "invert brightness-200"
+                            )}
+                        />
                     </div>
-                    <CardTitle className="text-2xl font-bold">EdiCarex Enterprise</CardTitle>
-                    <CardDescription>
+                    <CardTitle className="text-2xl font-bold text-white">{config?.hospitalName || "EdiCarex"} Enterprise</CardTitle>
+                    <CardDescription className="text-white/60">
                         Inicia sesión en tu cuenta para continuar
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
                     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
                         <div className="space-y-2">
-                            <label className="text-sm font-medium">Correo electrónico</label>
+                            <label className="text-sm font-medium text-white/80">Correo electrónico</label>
                             <Input
                                 {...register('email')}
                                 type="email"
                                 placeholder="admin@edicarex.com"
                                 disabled={loading}
+                                className="bg-black/20 border-white/10 text-white placeholder:text-white/30"
                             />
                             {errors.email && (
-                                <p className="text-sm text-destructive">{errors.email.message}</p>
+                                <p className="text-sm text-red-400">{errors.email.message}</p>
                             )}
                         </div>
 
                         <div className="space-y-2">
-                            <label className="text-sm font-medium">Contraseña</label>
+                            <label className="text-sm font-medium text-white/80">Contraseña</label>
                             <Input
                                 {...register('password')}
                                 type="password"
                                 placeholder="••••••••"
                                 disabled={loading}
+                                className="bg-black/20 border-white/10 text-white placeholder:text-white/30"
                             />
                             {errors.password && (
-                                <p className="text-sm text-destructive">{errors.password.message}</p>
+                                <p className="text-sm text-red-400">{errors.password.message}</p>
                             )}
                         </div>
 
                         {error && (
-                            <div className="p-3 rounded-md bg-destructive/10 text-destructive text-sm">
+                            <div className="p-3 rounded-md bg-red-500/10 text-red-400 text-sm">
                                 {error}
                             </div>
                         )}
 
-                        <Button type="submit" className="w-full" disabled={loading}>
+                        <Button type="submit" className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-6" disabled={loading}>
                             {loading ? 'Iniciando sesión...' : 'Iniciar Sesión'}
                         </Button>
                     </form>
-
-                    <div className="mt-4 text-center text-sm text-muted-foreground">
-                        <p>Credenciales de prueba:</p>
-                        <p className="font-mono">admin@edicarex.com / password123</p>
-                    </div>
                 </CardContent>
             </Card>
+            <InstitutionalFooter />
         </div>
     )
 }

@@ -89,6 +89,7 @@ export class AuthService {
                 firstName: user.firstName,
                 lastName: user.lastName,
                 role: user.role,
+                preferences: (user as any).preferences, // Include preferences (permissions)
                 patientId: (user as any).patient?.id, // Return patientId if exists
             },
         };

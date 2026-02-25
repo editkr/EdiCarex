@@ -46,6 +46,7 @@ app.include_router(summarization.router, prefix="", tags=["Resúmenes Clínicos"
 app.include_router(pharmacy.router, prefix="/pharmacy", tags=["Gestión de Farmacia"])
 app.include_router(analytics.router, prefix="/analytics", tags=["Analítica Financiera"])
 app.include_router(chat.router, prefix="/ai", tags=["Asistente Virtual"])
+app.include_router(generator.router, prefix="/text/generator", tags=["Generación de Documentos"])
 
 
 @app.get("/health", tags=["Sistema"])
@@ -53,15 +54,16 @@ async def health_check():
     from app.services.groq_service import GroqService
     groq = GroqService()
     connectivity = await groq.verify_connectivity()
+    security = groq.get_security_status()
     
     return {
         "status": "online" if connectivity else "degraded",
         "service": "EdiCarex AI Enterprise",
         "engines": {
-            "core": "Llama 3.1 & Mixtral (Groq LPU)",
+            "core": "Llama 3.3, 3.1 & Mixtral (Groq LPU)",
             "statistical": "Pandas & Numpy",
             "clinical": "Scikit-Learn Severity Cluster",
-            "security": "JOSE & Passlib (Integrity Mode)"
+            "security": security
         },
         "connectivity": "verified" if connectivity else "failure",
         "version": "2.5.0"

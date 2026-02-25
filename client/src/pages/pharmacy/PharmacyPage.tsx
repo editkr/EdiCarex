@@ -21,6 +21,8 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select'
+import { pharmacyAPI, reportsAPI, aiAPI } from '@/services/api'
+import { useToast } from '@/components/ui/use-toast'
 import {
     Pill,
     Plus,
@@ -39,13 +41,12 @@ import {
     Clock,
     Eye,
     FileText,
-    Filter, // Verified import
+    Filter,
     ClipboardList,
     AlertCircle,
-    Download
+    Download,
+    Sparkles
 } from 'lucide-react'
-import { pharmacyAPI, reportsAPI } from '@/services/api'
-import { useToast } from '@/components/ui/use-toast'
 import { format, differenceInDays, isValid } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { cn } from "@/lib/utils"
@@ -60,10 +61,24 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
+import { usePermissions } from '@/hooks/usePermissions'
+import { useOrganization } from '@/contexts/OrganizationContext'
+
+const MODEL_DISPLAY_NAMES: Record<string, string> = {
+    'llama-3.3-70b-versatile': 'Meta Llama 3.3 70B (Producción)',
+    'llama-3.1-8b-instant': 'Meta Llama 3.1 8B (Instantáneo)',
+    'openai/gpt-oss-120b': 'OpenAI GPT OSS 120B (Flagship)',
+    'groq/compound': 'Groq Compound (Sistema Agente)',
+    'groq/compound-mini': 'Groq Compound Mini',
+    'qwen/qwen3-32b': 'Qwen 3 32B (Preview)',
+};
 
 export default function PharmacyPage() {
     // Componente de gestión de farmacia con soporte de precios reales
     const navigate = useNavigate()
+    const { hasPermission } = usePermissions()
+    const { config } = useOrganization()
+    const aiConfig = config?.ai as any
     const queryClient = useQueryClient()
     const { toast } = useToast()
 
@@ -113,6 +128,34 @@ export default function PharmacyPage() {
         laboratory: 'all',
         status: 'all',
     })
+
+    // AI Prediction State
+    const [analyzingId, setAnalyzingId] = useState<string | null>(null)
+    const [aiResult, setAiResult] = useState<any | null>(null)
+    const [isAiModalOpen, setIsAiModalOpen] = useState(false)
+
+    const handleAIPredict = async (med: any) => {
+        try {
+            setAnalyzingId(med.id)
+            // Simular datos históricos si no hay (para demo Senior)
+            const historicalData = [med.currentStock + 5, med.currentStock - 2, med.currentStock + 10, med.currentStock]
+            const response = await aiAPI.predictDemand(med.id)
+            setAiResult({
+                ...response.data,
+                medName: med.name,
+                currentStock: med.currentStock
+            })
+            setIsAiModalOpen(true)
+        } catch (error) {
+            toast({
+                title: 'Error de IA',
+                description: 'No se pudo conectar con el motor de previsión EdiCarex.',
+                variant: 'destructive'
+            })
+        } finally {
+            setAnalyzingId(null)
+        }
+    }
 
     // Mutación para eliminar
     const deleteMutation = useMutation({
@@ -338,17 +381,19 @@ export default function PharmacyPage() {
                         <FileText className="h-4 w-4 mr-2" />
                         Reporte Stock
                     </Button>
-                    <Button
-                        onClick={() => {
-                            setEditItem(null)
-                            setNewItem({ name: '', laboratory: '', stock: 0, minStock: 10, expiry: '', batch: '', type: 'Medicamento', price: 0, costPrice: 0 })
-                            setIsAddDialogOpen(true)
-                        }}
-                        className="h-11 rounded-xl px-6 bg-emerald-600 hover:bg-emerald-700 font-bold text-sm shadow-lg shadow-emerald-900/20 text-white transition-all transform active:scale-95"
-                    >
-                        <Plus className="h-4 w-4 mr-2" />
-                        Agregar Medicamento
-                    </Button>
+                    {hasPermission('PHARMACY_CREATE') && (
+                        <Button
+                            onClick={() => {
+                                setEditItem(null)
+                                setNewItem({ name: '', laboratory: '', stock: 0, minStock: 10, expiry: '', batch: '', type: 'Medicamento', price: 0, costPrice: 0 })
+                                setIsAddDialogOpen(true)
+                            }}
+                            className="h-11 rounded-xl px-6 bg-emerald-600 hover:bg-emerald-700 font-bold text-sm shadow-lg shadow-emerald-900/20 text-white transition-all transform active:scale-95"
+                        >
+                            <Plus className="h-4 w-4 mr-2" />
+                            Agregar Medicamento
+                        </Button>
+                    )}
                 </div>
             </div>
 
@@ -490,8 +535,8 @@ export default function PharmacyPage() {
                                     <TableHead className="text-zinc-500 uppercase text-xs font-bold">Categoría</TableHead>
                                     <TableHead className="text-zinc-500 uppercase text-xs font-bold">Laboratorio</TableHead>
                                     <TableHead className="text-zinc-500 uppercase text-xs font-bold">Stock Actual</TableHead>
-                                    <TableHead className="text-zinc-500 uppercase text-xs font-bold">Precio (S/.)</TableHead>
-                                    <TableHead className="text-zinc-500 uppercase text-xs font-bold">Costo (S/.)</TableHead>
+                                    <TableHead className="text-zinc-500 uppercase text-xs font-bold text-right">Precio</TableHead>
+                                    <TableHead className="text-zinc-500 uppercase text-xs font-bold text-right">Costo</TableHead>
                                     <TableHead className="text-zinc-500 uppercase text-xs font-bold">Lote</TableHead>
                                     <TableHead className="text-zinc-500 uppercase text-xs font-bold">Vencimiento</TableHead>
                                     <TableHead className="text-right text-zinc-500 uppercase text-xs font-bold pr-6">Acciones</TableHead>
@@ -546,15 +591,16 @@ export default function PharmacyPage() {
                                                 <TableCell>
                                                     <div className="flex flex-col">
                                                         <span className="text-sm font-black text-emerald-500">
-                                                            {formatCurrency(med.price || 0)}
+                                                            {formatCurrency(med.price || 0, config)}
                                                         </span>
                                                         <span className="text-[9px] text-zinc-500 uppercase font-bold tracking-tighter">P. Venta Unit.</span>
                                                     </div>
                                                 </TableCell>
                                                 <TableCell>
                                                     <div className="flex flex-col">
-                                                        <span className="text-sm font-black text-rose-500">
-                                                            {formatCurrency(med.costPrice || med.unitPrice || 0)}
+                                                        <span className="text-[10px] text-zinc-500 uppercase font-bold tracking-tighter">P. Costo Prom.</span>
+                                                        <span className="text-sm font-bold text-zinc-400">
+                                                            {formatCurrency(med.costPrice || med.unitPrice || 0, config)}
                                                         </span>
                                                         <span className="text-[9px] text-zinc-500 uppercase font-bold tracking-tighter">Costo Unit.</span>
                                                     </div>
@@ -574,23 +620,52 @@ export default function PharmacyPage() {
                                                     </div>
                                                 </TableCell>
                                                 <TableCell className="text-right pr-6">
-                                                    <div className="flex justify-end gap-1">
-                                                        <Button
-                                                            variant="ghost"
-                                                            size="sm"
-                                                            className="h-8 w-8 text-blue-500 hover:bg-blue-500/10"
-                                                            onClick={() => handleEdit(med)}
-                                                        >
-                                                            <Edit className="h-4 w-4" />
-                                                        </Button>
-                                                        <Button
-                                                            variant="ghost"
-                                                            size="sm"
-                                                            className="h-8 w-8 text-rose-500 hover:bg-rose-500/10"
-                                                            onClick={() => setDeleteId(med.id)}
-                                                        >
-                                                            <Trash2 className="h-4 w-4" />
-                                                        </Button>
+                                                    <div className="flex justify-end items-center gap-1">
+                                                        {aiConfig?.enabled && aiConfig?.features?.pharmacyStock && (
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="sm"
+                                                                className={cn(
+                                                                    "h-12 w-12 text-emerald-500 hover:bg-emerald-500/10 transition-all hover:scale-110",
+                                                                    analyzingId === med.id && "animate-pulse"
+                                                                )}
+                                                                onClick={() => handleAIPredict(med)}
+                                                                disabled={!!analyzingId}
+                                                                title="Analizar Demanda con IA"
+                                                            >
+                                                                {analyzingId === med.id ? (
+                                                                    <Loader2 className="h-6 w-6 animate-spin" />
+                                                                ) : (
+                                                                    <div className="flex items-center justify-center">
+                                                                        <img
+                                                                            src="/assets/logoIA.png"
+                                                                            alt="AI Logo"
+                                                                            className="h-10 w-10 object-contain drop-shadow-[0_0_5px_rgba(16,185,129,0.3)]"
+                                                                        />
+                                                                    </div>
+                                                                )}
+                                                            </Button>
+                                                        )}
+                                                        {hasPermission('PHARMACY_EDIT') && (
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="sm"
+                                                                className="h-8 w-8 text-blue-500 hover:bg-blue-500/10"
+                                                                onClick={() => handleEdit(med)}
+                                                            >
+                                                                <Edit className="h-4 w-4" />
+                                                            </Button>
+                                                        )}
+                                                        {hasPermission('PHARMACY_DELETE') && (
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="sm"
+                                                                className="h-8 w-8 text-rose-500 hover:bg-rose-500/10"
+                                                                onClick={() => setDeleteId(med.id)}
+                                                            >
+                                                                <Trash2 className="h-4 w-4" />
+                                                            </Button>
+                                                        )}
                                                     </div>
                                                 </TableCell>
                                             </TableRow>
@@ -652,7 +727,7 @@ export default function PharmacyPage() {
                                                 </span>
                                             </TableCell>
                                             <TableCell className="text-right pr-6">
-                                                {order.status === 'PENDIENTE' && (
+                                                {order.status === 'PENDIENTE' && hasPermission('PHARMACY_DISPENSE') && (
                                                     <div className="flex justify-end gap-2">
                                                         <Button
                                                             size="sm"
@@ -782,6 +857,80 @@ export default function PharmacyPage() {
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
+
+            {/* AI Prediction Modal */}
+            <AlertDialog open={isAiModalOpen} onOpenChange={setIsAiModalOpen}>
+                <AlertDialogContent className="bg-zinc-900 border-zinc-800 text-white max-w-2xl shadow-[0_0_50px_rgba(16,185,129,0.1)]">
+                    <AlertDialogHeader>
+                        <div className="flex items-center gap-3 mb-2">
+                            <div className="h-24 w-24 flex items-center justify-center p-2">
+                                <img
+                                    src="/assets/logoIA.png"
+                                    alt="AI Logo"
+                                    className="h-24 w-24 object-contain drop-shadow-[0_0_15px_rgba(16,185,129,0.5)]"
+                                />
+                            </div>
+                            <div>
+                                <AlertDialogTitle className="text-xl font-bold flex items-center gap-2">
+                                    Análisis de Demanda IA
+                                    <Badge className="bg-emerald-500/20 text-emerald-400 border-none text-[10px]">
+                                        {MODEL_DISPLAY_NAMES[aiResult?.model] || 'EDICAREX SENIOR'}
+                                    </Badge>
+                                </AlertDialogTitle>
+                                <AlertDialogDescription className="text-zinc-400">
+                                    Predicción logística para <span className="text-zinc-100 font-bold">{aiResult?.medName}</span>
+                                </AlertDialogDescription>
+                            </div>
+                        </div>
+                    </AlertDialogHeader>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4">
+                        <Card className="bg-black/40 border-zinc-800 p-4">
+                            <div className="flex flex-col gap-1">
+                                <span className="text-xs text-zinc-500 uppercase font-black">Demanda Proyectada</span>
+                                <div className="flex items-baseline gap-2">
+                                    <span className="text-4xl font-black text-white italic tracking-tighter">
+                                        {aiResult?.predicted_demand}
+                                    </span>
+                                    <span className="text-sm text-zinc-500">unid. / mes</span>
+                                </div>
+                                <div className="mt-4 flex items-center gap-2">
+                                    <div className="h-1.5 flex-1 bg-zinc-800 rounded-full overflow-hidden">
+                                        <div
+                                            className="h-full bg-emerald-500"
+                                            style={{ width: `${(aiResult?.confidence || 0.8) * 100}%` }}
+                                        />
+                                    </div>
+                                    <span className="text-[10px] font-bold text-emerald-500">
+                                        {Math.round((aiResult?.confidence || 0.8) * 100)}% Confianza
+                                    </span>
+                                </div>
+                            </div>
+                        </Card>
+
+                        <div className="space-y-4">
+                            <div className="flex flex-col gap-1">
+                                <span className="text-xs text-zinc-500 uppercase font-black flex items-center gap-2">
+                                    <Sparkles className="h-3 w-3 text-emerald-400" />
+                                    Recomendación Logística
+                                </span>
+                                <p className="text-sm text-zinc-300 leading-relaxed bg-zinc-800/30 p-3 rounded-lg border border-zinc-800">
+                                    {aiResult?.recommendation}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <AlertDialogFooter className="border-t border-zinc-800 pt-4 mt-2">
+                        <AlertDialogAction
+                            onClick={() => setIsAiModalOpen(false)}
+                            className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl px-8"
+                        >
+                            Entendido
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
             {/* Add Medication Dialog */}
             <AlertDialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
                 <AlertDialogContent className="bg-zinc-900 border-zinc-800 text-white sm:max-w-lg">
@@ -843,7 +992,7 @@ export default function PharmacyPage() {
                                 />
                             </div>
                             <div className="space-y-2">
-                                <label className="text-[10px] font-black uppercase tracking-widest text-rose-500">Precio de Costo (S/.)</label>
+                                <label className="text-[10px] font-black uppercase tracking-widest text-rose-500">Precio de Costo</label>
                                 <Input
                                     type="number"
                                     step="0.01"
@@ -856,7 +1005,7 @@ export default function PharmacyPage() {
 
                         <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-2">
-                                <label className="text-[10px] font-black uppercase tracking-widest text-emerald-500">Precio de Venta (S/.)</label>
+                                <label className="text-[10px] font-black uppercase tracking-widest text-emerald-500">Precio de Venta</label>
                                 <Input
                                     type="number"
                                     step="0.01"

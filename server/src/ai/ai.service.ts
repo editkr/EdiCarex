@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { ConfigService } from '@nestjs/config';
 import { firstValueFrom } from 'rxjs';
+import { AdminService } from '../admin/admin.service';
 
 @Injectable()
 export class AiService {
@@ -11,34 +12,88 @@ export class AiService {
     constructor(
         private httpService: HttpService,
         private configService: ConfigService,
+        private adminService: AdminService,
     ) {
         this.aiServiceUrl = this.configService.get<string>('AI_SERVICE_URL') || 'http://localhost:8000';
     }
 
     async predictTriage(data: {
         symptoms: string;
-        age: number;
-        vitalSigns: any;
+        age?: number;
+        vitalSigns?: any;
     }): Promise<any> {
+        const config = await this.adminService.getOrganizationConfig();
+        const aiConfig = config.ai as any;
+
+        if (!aiConfig?.enabled || !aiConfig?.features?.triage) {
+            this.logger.warn('AI Triage disabled by admin or global switch, using fallback');
+            return this.fallbackTriage(data);
+        }
+
         try {
+            const temperature = this.mapCreativityToTemp(aiConfig.creativity);
             const response = await firstValueFrom(
-                this.httpService.post(`${this.aiServiceUrl}/predict/triage`, data),
+                this.httpService.post(`${this.aiServiceUrl}/predict/triage`, {
+                    symptoms: data.symptoms,
+                    age: data.age || 35, // Default age if missing
+                    vitalSigns: data.vitalSigns || {},
+                    model: aiConfig.model,
+                    temperature
+                }),
             );
             this.logger.log('AI triage prediction successful');
-            return response.data;
+            const result = response.data;
+
+            // Normalize for frontend consumption (Senior Mode)
+            const priorityStr = String(result.priority || '').toUpperCase();
+            let priorityNum = 4; // Default Green
+
+            if (priorityStr.includes('ROJO') || priorityStr.includes('EMERGENCIA')) priorityNum = 1;
+            else if (priorityStr.includes('NARANJA') || priorityStr.includes('MUY URGENTE')) priorityNum = 2;
+            else if (priorityStr.includes('AMARILLO') || priorityStr.includes('URGENTE')) priorityNum = 3;
+            else if (priorityStr.includes('VERDE') || priorityStr.includes('ESTÁNDAR')) priorityNum = 4;
+            else if (priorityStr.includes('AZUL') || priorityStr.includes('NO URGENTE')) priorityNum = 5;
+            else priorityNum = typeof result.priority === 'number' ? result.priority : (parseInt(priorityStr.match(/\d+/)?.[0] || '4'));
+
+            return {
+                ...result,
+                priority: priorityNum,
+                recommendations: result.recommendations?.length > 0 ? result.recommendations : ['Evaluación médica inmediata', 'Controlar signos vitales'],
+                waitTime: result.wait_time || result.waitTime || 60,
+                score: result.score || 0,
+                notes: result.notes || result.analysis || '',
+                analysis: result.notes || result.analysis || '' // Consistency for different frontend components
+            };
         } catch (error) {
             this.logger.warn('AI service unavailable, using fallback rules');
             // Fallback to rule-based triage when AI service is not running
-            return this.fallbackTriage(data);
+            const fallback = this.fallbackTriage(data);
+            return {
+                ...fallback,
+                analysis: '⚠️ (Motor Local) Evaluación automática basada en protocolos de emergencia estándar. El servicio de IA avanzado no está disponible actualmente.'
+            };
         }
     }
 
     async summarizeClinical(text: string): Promise<{ summary: string }> {
+        const config = await this.adminService.getOrganizationConfig();
+        const aiConfig = config.ai as any;
+
+        if (!aiConfig?.enabled || (!aiConfig?.features?.diagnosis && !aiConfig?.features?.recordSummarization)) {
+            this.logger.warn('AI Summarization/Diagnosis Support disabled');
+            return { summary: text.substring(0, 200) + '...' };
+        }
+
         try {
+            const temperature = this.mapCreativityToTemp(aiConfig.creativity);
             const response = await firstValueFrom(
-                this.httpService.post(`${this.aiServiceUrl}/summarize`, { text }),
+                this.httpService.post(`${this.aiServiceUrl}/summarize`, {
+                    text,
+                    model: aiConfig.model,
+                    temperature
+                }),
             );
-            return response.data as { summary: string };
+            return response.data as { summary: string, model?: string };
         } catch (error) {
             this.logger.error('AI summarization failed', error);
             return { summary: text.substring(0, 200) + '...' };
@@ -46,21 +101,71 @@ export class AiService {
     }
 
     async predictPharmacyDemand(medicationId: string): Promise<{ predicted_demand: number }> {
+        const config = await this.adminService.getOrganizationConfig();
+        const aiConfig = config.ai as any;
+
+        if (!aiConfig?.enabled || !aiConfig?.features?.pharmacyStock) {
+            this.logger.warn('AI Pharmacy Demand prediction disabled');
+            return { predicted_demand: 100 };
+        }
+
         try {
+            const temperature = this.mapCreativityToTemp(aiConfig.creativity);
             const response = await firstValueFrom(
-                this.httpService.post(`${this.aiServiceUrl}/pharmacy/demand`, { medication_id: medicationId }),
+                this.httpService.post(`${this.aiServiceUrl}/pharmacy/demand`, {
+                    medication_id: medicationId,
+                    model: aiConfig.model,
+                    temperature
+                }),
             );
-            return response.data as { predicted_demand: number };
+            return response.data as { predicted_demand: number, model?: string };
         } catch (error) {
             this.logger.error('AI demand prediction failed', error);
             return { predicted_demand: 100 };
         }
     }
 
-    async predictGrowth(financialData: any): Promise<any> {
+    async generateText(data: { template_type: string; patient_data: any; additional_notes?: string }): Promise<any> {
+        const config = await this.adminService.getOrganizationConfig();
+        const aiConfig = config.ai as any;
+
+        if (!aiConfig?.enabled || !aiConfig?.features?.documentGenerator) {
+            this.logger.warn('AI Text Generation disabled');
+            return { generated_text: `[DOCUMENTO: ${data.template_type.toUpperCase()}]\n\n${data.additional_notes || ''}` };
+        }
+
         try {
+            const temperature = this.mapCreativityToTemp(aiConfig.creativity);
             const response = await firstValueFrom(
-                this.httpService.post(`${this.aiServiceUrl}/analytics/predict/growth`, { financial_data: financialData }),
+                this.httpService.post(`${this.aiServiceUrl}/text/generator/text`, {
+                    ...data,
+                    model: aiConfig.model,
+                    temperature
+                }),
+            );
+            return response.data;
+        } catch (error) {
+            this.logger.error('AI text generation failed', error);
+            return { generated_text: `[DOCUMENTO: ${data.template_type.toUpperCase()}]\n\n${data.additional_notes || ''}` };
+        }
+    }
+
+    async predictGrowth(financialData: any): Promise<any> {
+        const config = await this.adminService.getOrganizationConfig();
+        const aiConfig = config.ai as any;
+
+        if (!aiConfig?.enabled || !aiConfig?.features?.predictiveAnalytics) {
+            return null;
+        }
+
+        try {
+            const temperature = this.mapCreativityToTemp(aiConfig.creativity);
+            const response = await firstValueFrom(
+                this.httpService.post(`${this.aiServiceUrl}/analytics/predict/growth`, {
+                    financial_data: financialData,
+                    model: aiConfig.model,
+                    temperature
+                }),
             );
             return response.data;
         } catch (error) {
@@ -70,9 +175,36 @@ export class AiService {
     }
 
     async chat(data: { message: string; context?: string }): Promise<any> {
+        const config = await this.adminService.getOrganizationConfig();
+        const aiConfig = config.ai as any;
+
+        const lowerContext = (data.context || '').toLowerCase();
+        let isAllowed = true;
+
+        if (lowerContext.includes('hr') || lowerContext.includes('recursos humanos')) {
+            isAllowed = !!aiConfig?.features?.hrAssistant;
+        } else if (lowerContext.includes('patient') || lowerContext.includes('paciente')) {
+            isAllowed = !!aiConfig?.features?.patientConcierge;
+        } else if (lowerContext.includes('diagnosis') || lowerContext.includes('diagnóstico')) {
+            isAllowed = !!aiConfig?.features?.diagnosis;
+        } else {
+            // Default to staffAssistant for general/staff context
+            isAllowed = !!aiConfig?.features?.staffAssistant;
+        }
+
+        if (!aiConfig?.enabled || !isAllowed) {
+            this.logger.warn(`AI Chat ${data.context} disabled by admin, using fallback`);
+            return this.fallbackChat(data.message);
+        }
+
         try {
+            const temperature = this.mapCreativityToTemp(aiConfig.creativity);
             const response = await firstValueFrom(
-                this.httpService.post(`${this.aiServiceUrl}/ai/chat`, data),
+                this.httpService.post(`${this.aiServiceUrl}/ai/chat`, {
+                    ...data,
+                    model: aiConfig.model,
+                    temperature
+                }),
             );
             this.logger.log('AI chat response successful');
             return response.data;
@@ -164,5 +296,14 @@ export class AiService {
         }
 
         return result;
+    }
+
+    private mapCreativityToTemp(level: string): number {
+        switch (level) {
+            case 'precise': return 0.2;
+            case 'balanced': return 0.7;
+            case 'creative': return 1.0;
+            default: return 0.7;
+        }
     }
 }
