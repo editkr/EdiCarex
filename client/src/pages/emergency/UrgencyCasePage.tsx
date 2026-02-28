@@ -89,7 +89,7 @@ import {
 } from "@/components/ui/command"
 import { Check, ChevronsUpDown } from "lucide-react"
 
-export default function EmergencyCaseProfilePage() {
+export default function UrgencyCasePage() {
     const { id } = useParams<{ id: string }>()
     const navigate = useNavigate()
     const { toast } = useToast()
@@ -279,7 +279,7 @@ export default function EmergencyCaseProfilePage() {
                 description: 'No se pudo cargar el caso',
                 variant: 'destructive'
             })
-            navigate('/emergency')
+            navigate('/urgencies')
         } finally {
             setLoading(false)
         }
@@ -495,12 +495,12 @@ export default function EmergencyCaseProfilePage() {
             {/* Encabezado */}
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
-                    <Button variant="ghost" onClick={() => navigate('/emergency')}>
+                    <Button variant="ghost" onClick={() => navigate('/urgencies')}>
                         <ArrowLeft className="h-4 w-4 mr-2" />
                         Volver
                     </Button>
                     <div>
-                        <h1 className="text-3xl font-bold tracking-tight">Perfil de Emergencia</h1>
+                        <h1 className="text-3xl font-bold tracking-tight">Detalle de Urgencia</h1>
                         <p className="text-muted-foreground">
                             {caseData.patient.name} • Cama {caseData.admission.bedNumber}
                         </p>

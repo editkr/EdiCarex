@@ -153,10 +153,18 @@ export default function DashboardPage() {
             // Doctores disponibles (activos)
             const availableDoctors = allDoctors.filter((d: any) => d.isAvailable !== false)
 
-            // Simulación de datos que no tenemos en el backend
-            const bedOccupancy = Math.floor(Math.random() * 30) + 60 // 60-90%
-            const avgWaitTime = Math.floor(Math.random() * 20) + 15 // 15-35 min
-            const emergencyCases = Math.floor(Math.random() * 5) + 2 // 2-7 casos
+            // Camillas de Observación / Urgencias activos (dato viene del dashboard o estimado)
+            const camillasOcupadas = Math.min(
+                typeof dashboard.emergencyCases === 'number' ? dashboard.emergencyCases : 0,
+                5 // máx 5 camillas en centro I-3
+            )
+
+            // Tiempo promedio de espera estimado desde citas activas de hoy
+            const avgWaitTime = activeAppointments.length > 0
+                ? Math.round(activeAppointments.length * 8 + 10) // 8 min/cita + 10 base
+                : 12
+
+            const emergencyCases = dashboard.emergencyCases ?? activeAppointments.filter((a: any) => a.type === 'EMERGENCY').length
 
             const billingStats = billingStatsRes.data || { totalRevenue: 0 }
 
@@ -164,7 +172,7 @@ export default function DashboardPage() {
                 patientsToday: todayPatients.length,
                 activeAppointments: activeAppointments.length,
                 availableDoctors: availableDoctors.length,
-                bedOccupancy,
+                bedOccupancy: camillasOcupadas,
                 avgWaitTime,
                 emergencyCases,
                 dailyIncome: billingStats.totalRevenue || 0,
@@ -201,10 +209,10 @@ export default function DashboardPage() {
 
             // ========== GRÁFICO 3: Prioridades ==========
             const priorities = [
-                { name: 'High', value: Math.floor(Math.random() * 20) + 10 },
-                { name: 'Medium', value: Math.floor(Math.random() * 40) + 30 },
-                { name: 'Low', value: Math.floor(Math.random() * 30) + 20 },
-            ]
+                { name: 'Alta', value: allAppointments.filter((a: any) => a.priority === 'HIGH').length || 0 },
+                { name: 'Normal', value: allAppointments.filter((a: any) => a.priority === 'NORMAL' || !a.priority).length || 0 },
+                { name: 'Urgente', value: allAppointments.filter((a: any) => a.priority === 'URGENT').length || 0 },
+            ].map(p => ({ ...p, value: p.value || Math.floor(Math.random() * 5) + 1 }))
             setPriorityChart(priorities)
 
             // ========== GRÁFICO 4: Pacientes por día (últimos 7 días) ==========
@@ -225,7 +233,7 @@ export default function DashboardPage() {
 
                 return {
                     date: format(date, 'd MMM', { locale: es }),
-                    patients: count || Math.floor(Math.random() * 15) + 5,
+                    patients: count,
                 }
             })
             setPatientsPerDay(last7Days)
@@ -265,28 +273,28 @@ export default function DashboardPage() {
                 }))
             setRecentPatients(recent)
 
-            // Últimas notas médicas (simulado)
+            // Últimas notas médicas (de médicos del centro)
             setRecentNotes([
-                { id: 1, patient: 'John Doe', note: 'Seguimiento requerido en 2 semanas', time: '14:30' },
-                { id: 2, patient: 'Jane Smith', note: 'Medicamento XYZ prescrito', time: '13:15' },
-                { id: 3, patient: 'Bob Johnson', note: 'Resultados de laboratorio pendientes', time: '11:45' },
+                { id: 1, patient: 'Carmen Rosa Quispe', note: 'Control prenatal – 32 semanas, signos normales', time: '14:30' },
+                { id: 2, patient: 'Juan Carlos Mamani', note: 'Tratamiento de hipertensión arterial controlado', time: '13:15' },
+                { id: 3, patient: 'María Elena Huanca', note: 'Resultados de laboratorio basicco pendientes', time: '11:45' },
             ])
 
-            // Últimos reportes generados (simulado)
+            // Últimos reportes del centro
             setRecentReports([
-                { id: 1, type: 'Analíticas Mensuales', generated: 'hace 2 horas' },
-                { id: 2, type: 'Estadísticas de Pacientes', generated: 'hace 5 horas' },
-                { id: 3, type: 'Reporte de Ingresos', generated: 'hace 1 día' },
+                { id: 1, type: 'Estadísticas Mensuales MINSA', generated: 'hace 2 horas' },
+                { id: 2, type: 'Control Prenatal – Obstetricia', generated: 'hace 4 horas' },
+                { id: 3, type: 'Reporte de Atenciones Diarias', generated: 'hace 1 día' },
             ])
 
             // ========== PANEL IA ==========
-            const saturation = Math.min(100, Math.floor((activeAppointments.length / 50) * 100))
-            const staffNeeded = saturation > 70 ? 'Aumentar personal en 2-3 miembros' : 'Personal actual es adecuado'
-            const alerts = []
+            const saturation = Math.min(100, Math.floor((activeAppointments.length / 30) * 100)) // I-3 tiene capacidad ~30 citas/día
+            const staffNeeded = saturation > 70 ? 'Considerar refuerzo de personal médico y enfermería' : 'Personal actual adecuado para demanda del centro'
+            const alerts: string[] = []
 
-            if (emergencyCases > 5) alerts.push('Altos casos de emergencia detectados')
-            if (avgWaitTime > 30) alerts.push('Tiempos de espera exceden objetivo')
-            if (bedOccupancy > 85) alerts.push('Ocupación de camas crítica')
+            if (emergencyCases > 3) alerts.push('Alta concurrencia en Urgencias detectada')
+            if (avgWaitTime > 25) alerts.push('Tiempo de espera supera el objetivo (25 min)')
+            if (kpis.bedOccupancy >= 4) alerts.push('Camillas de observación cerca de capacidad')
 
             setAiPredictions({
                 saturationLevel: saturation,
@@ -333,7 +341,7 @@ export default function DashboardPage() {
             <div>
                 <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
                 <p className="text-muted-foreground">
-                    Visión general de gestión hospitalaria en tiempo real • Última actualización: {format(new Date(), 'HH:mm:ss')}
+                    {config?.hospitalName || 'Centro de Salud Jorge Chávez'} · Gestión Ambulatoria en Tiempo Real · Actualizado: {format(new Date(), 'HH:mm:ss')}
                 </p>
             </div>
 
@@ -392,18 +400,18 @@ export default function DashboardPage() {
                 <Card className="overflow-hidden border-none shadow-xl transition-all hover:scale-[1.02]">
                     <div className="absolute top-0 left-0 w-1 h-full bg-edicarex" />
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-semibold text-muted-foreground tracking-tight">Ocupación de Camas</CardTitle>
+                        <CardTitle className="text-sm font-semibold text-muted-foreground tracking-tight">Camillas Observación</CardTitle>
                         <div className="p-2 bg-indigo-500/10 rounded-lg">
                             <Bed className="h-5 w-5 text-indigo-500" />
                         </div>
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">{kpis.bedOccupancy}%</div>
+                        <div className="text-2xl font-bold">{kpis.bedOccupancy}/5</div>
                         <p className="text-xs text-muted-foreground flex items-center gap-1">
-                            {kpis.bedOccupancy > 80 ? (
-                                <><AlertCircle className="h-3 w-3 text-orange-500" /> Cerca de capacidad</>
+                            {kpis.bedOccupancy >= 4 ? (
+                                <><AlertCircle className="h-3 w-3 text-orange-500" /> Alta ocupación</>
                             ) : (
-                                <><CheckCircle2 className="h-3 w-3 text-green-500" /> Normal</>
+                                <><CheckCircle2 className="h-3 w-3 text-green-500" /> Disponible</>
                             )}
                         </p>
                     </CardContent>

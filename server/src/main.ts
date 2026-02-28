@@ -11,6 +11,9 @@ async function bootstrap() {
         logger: ['error', 'warn', 'log', 'debug', 'verbose'],
     });
 
+    const helmet = require('helmet');
+    app.use(helmet());
+
     const logger = new Logger('Bootstrap');
 
     // Increase body limit for Base64 uploads

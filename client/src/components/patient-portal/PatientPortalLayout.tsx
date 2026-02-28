@@ -1,5 +1,5 @@
 import { ReactNode } from 'react'
-import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { Link, useLocation, useNavigate, Outlet } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { useTheme } from '@/components/theme-provider'
 import {
@@ -14,16 +14,16 @@ import {
     Heart,
     Moon,
     Sun,
+    Syringe,
+    FileSymlink,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useOrganization } from '@/contexts/OrganizationContext'
 import PatientAIChatBubble from './PatientAIChatBubble'
 
-interface PatientPortalLayoutProps {
-    children: ReactNode
-}
 
-export default function PatientPortalLayout({ children }: PatientPortalLayoutProps) {
+
+export default function PatientPortalLayout() {
     const location = useLocation()
     const navigate = useNavigate()
     const { theme, setTheme } = useTheme()
@@ -42,6 +42,8 @@ export default function PatientPortalLayout({ children }: PatientPortalLayoutPro
         { path: '/patient-portal/appointments', label: 'Mis Citas', icon: Calendar },
         { path: '/patient-portal/history', label: 'Historial Médico', icon: FileText },
         { path: '/patient-portal/lab-results', label: 'Resultados Lab', icon: FlaskConical },
+        { path: '/patient-portal/vaccinations', label: 'Mi Carnet de Vacunas', icon: Syringe },
+        { path: '/patient-portal/referrals', label: 'Mis Referencias', icon: FileSymlink },
         { path: '/patient-portal/billing', label: 'Facturación', icon: DollarSign },
         { path: '/patient-portal/profile', label: 'Mi Perfil', icon: User },
     ]
@@ -55,12 +57,12 @@ export default function PatientPortalLayout({ children }: PatientPortalLayoutPro
                     <Link to="/patient-portal/dashboard" className="flex items-center gap-3">
                         <img
                             src={config?.logo || "/assets/logo-edicarex.png"}
-                            alt={config?.hospitalName || "EdiCarex"}
+                            alt={config?.hospitalName || "C.S. Jorge Chávez"}
                             className="w-14 h-14 object-contain"
                         />
                         <div>
-                            <h1 className="font-bold text-foreground truncate max-w-[150px]" title={config?.hospitalName || "EdiCarex"}>
-                                {config?.hospitalName || "EdiCarex"}
+                            <h1 className="font-bold text-foreground truncate max-w-[150px]" title={config?.hospitalName || "C.S. Jorge Chávez"}>
+                                {config?.hospitalName || "C.S. Jorge Chávez"}
                             </h1>
                             <p className="text-xs text-muted-foreground">Portal del Paciente</p>
                         </div>
@@ -158,14 +160,14 @@ export default function PatientPortalLayout({ children }: PatientPortalLayoutPro
                 {/* Page Content */}
                 <main className="flex-1 overflow-auto bg-background relative bg-medical-portal">
                     <div className="relative z-10 h-full">
-                        {children}
+                        <Outlet />
                     </div>
                 </main>
 
                 {/* Footer */}
                 <footer className="bg-card border-t border-border px-6 py-3 relative z-30">
                     <div className="flex justify-between items-center text-sm text-muted-foreground">
-                        <p>© 2024 EdiCarex Hospital. Todos los derechos reservados.</p>
+                        <p>© {new Date().getFullYear()} {config?.hospitalName || 'C.S. Jorge Chávez'}. Todos los derechos reservados.</p>
                         <div className="flex gap-4">
                             <a href="#" className="hover:text-primary">Ayuda</a>
                             <a href="#" className="hover:text-primary">Privacidad</a>

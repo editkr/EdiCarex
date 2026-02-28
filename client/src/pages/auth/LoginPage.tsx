@@ -47,7 +47,7 @@ export default function LoginPage() {
 
                 // Also save basic user info just in case
                 try {
-                    localStorage.setItem('edicarex-user-backup', JSON.stringify(response.data.user))
+                    localStorage.setItem('csjc-user-backup', JSON.stringify(response.data.user))
                 } catch (e) {
                     console.error('Failed to save user backup', e)
                 }
@@ -79,7 +79,7 @@ export default function LoginPage() {
                             )}
                         />
                     </div>
-                    <CardTitle className="text-2xl font-bold text-white">{config?.hospitalName || "EdiCarex"} Enterprise</CardTitle>
+                    <CardTitle className="text-2xl font-bold text-white">{config?.hospitalName || "C.S. Jorge Chávez"}</CardTitle>
                     <CardDescription className="text-white/60">
                         Inicia sesión en tu cuenta para continuar
                     </CardDescription>
@@ -91,7 +91,7 @@ export default function LoginPage() {
                             <Input
                                 {...register('email')}
                                 type="email"
-                                placeholder="admin@edicarex.com"
+                                placeholder="admin@csjchavez.gob.pe"
                                 disabled={loading}
                                 className="bg-black/20 border-white/10 text-white placeholder:text-white/30"
                             />

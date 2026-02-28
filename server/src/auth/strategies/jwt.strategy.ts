@@ -29,6 +29,13 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
                 throw new UnauthorizedException();
             }
             console.log('JWT_STRATEGY: User found', user.email);
+            // Validate token version for smart invalidation
+            const userData = user as any;
+            if (payload.version !== undefined && userData.tokenVersion !== payload.version) {
+                console.warn(`JWT_STRATEGY: Token version mismatch for user ${user.email}. Token: ${payload.version}, DB: ${userData.tokenVersion}`);
+                throw new UnauthorizedException('La sesión ha expirado o ha sido invalidada.');
+            }
+
             return {
                 id: user.id,
                 email: user.email,
@@ -36,6 +43,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
                 lastName: user.lastName,
                 roleId: user.roleId,
                 role: user.role,
+                permissions: payload.permissions || [],
                 preferences: user.preferences,
             };
         } catch (error) {

@@ -27,6 +27,13 @@ import { ServicesCatalogModule } from './services-catalog/services-catalog.modul
 import { HealthController } from './health/health.controller';
 import { MaintenanceGuard } from './common/guards/maintenance.guard';
 import { ScheduleModule } from '@nestjs/schedule';
+import { TriajeModule } from './triaje/triaje.module';
+import { VacunacionModule } from './vacunacion/vacunacion.module';
+import { ProgramasMinsaModule } from './programas-minsa/programas-minsa.module';
+import { EncountersModule } from './encounters/encounters.module';
+import { CommonModule } from './common/common.module';
+import { ThrottlerGuard } from '@nestjs/throttler';
+
 
 @Module({
     imports: [
@@ -72,12 +79,22 @@ import { ScheduleModule } from '@nestjs/schedule';
         AnalyticsModule,
         BedsModule,
         ServicesCatalogModule,
+        // Módulos Centro de Salud I-3
+        TriajeModule,
+        VacunacionModule,
+        ProgramasMinsaModule,
+        EncountersModule,
+        CommonModule,
     ],
     controllers: [HealthController],
     providers: [
         {
             provide: APP_GUARD,
             useClass: MaintenanceGuard,
+        },
+        {
+            provide: APP_GUARD,
+            useClass: ThrottlerGuard,
         },
     ],
 })

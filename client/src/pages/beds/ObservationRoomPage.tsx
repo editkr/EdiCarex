@@ -27,7 +27,7 @@ import { formatDistanceToNow } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { usePermissions } from '@/hooks/usePermissions'
 
-export default function BedManagementPage() {
+export default function ObservationRoomPage() {
     const { hasPermission } = usePermissions()
     const [searchParams] = useSearchParams()
     const initialWard = searchParams.get('ward') || 'ALL'
@@ -67,12 +67,12 @@ export default function BedManagementPage() {
             {/* Header */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div>
-                    <h1 className="text-3xl font-bold text-foreground">Gestión de Camas</h1>
-                    <p className="text-muted-foreground">Centro de control y asignación hospitalaria en tiempo real</p>
+                    <h1 className="text-3xl font-bold text-foreground">Sala de Observación</h1>
+                    <p className="text-muted-foreground">Camillas de observación y urgencias del Centro de Salud I-4 en tiempo real</p>
                 </div>
                 {hasPermission('BEDS_CREATE') && (
                     <Button onClick={() => setIsBedModalOpen(true)} size="lg" className="shadow-md">
-                        <Plus className="mr-2 h-5 w-5" /> Nueva Cama
+                        <Plus className="mr-2 h-5 w-5" /> Nueva Camilla
                     </Button>
                 )}
             </div>
@@ -88,7 +88,7 @@ export default function BedManagementPage() {
                     </CardHeader>
                     <CardContent>
                         <div className="text-3xl font-bold text-foreground">{stats.total}</div>
-                        <p className="text-xs text-muted-foreground mt-1">Capacidad instalada</p>
+                        <p className="text-xs text-muted-foreground mt-1">Camillas disponibles</p>
                     </CardContent>
                 </Card>
 
@@ -101,7 +101,7 @@ export default function BedManagementPage() {
                     </CardHeader>
                     <CardContent>
                         <div className="text-3xl font-bold text-foreground">{stats.available}</div>
-                        <p className="text-xs text-muted-foreground mt-1">Listas para ingreso</p>
+                        <p className="text-xs text-muted-foreground mt-1">Listas para pacientes</p>
                     </CardContent>
                 </Card>
 
@@ -114,7 +114,7 @@ export default function BedManagementPage() {
                     </CardHeader>
                     <CardContent>
                         <div className="text-3xl font-bold text-foreground">{stats.occupancyRate}%</div>
-                        <p className="text-xs text-muted-foreground mt-1">{stats.occupied} camas ocupadas</p>
+                        <p className="text-xs text-muted-foreground mt-1">{stats.occupied} camillas en uso</p>
                     </CardContent>
                 </Card>
 
@@ -142,7 +142,7 @@ export default function BedManagementPage() {
                             <div className="relative flex-1 max-w-md">
                                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                                 <Input
-                                    placeholder="Buscar cama, paciente..."
+                                    placeholder="Buscar camilla, paciente..."
                                     className="pl-10 h-10"
                                     value={searchQuery}
                                     onChange={(e) => setSearchQuery(e.target.value)}
@@ -157,10 +157,8 @@ export default function BedManagementPage() {
                                 </SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="ALL">Todas las Áreas</SelectItem>
-                                    <SelectItem value="Emergencia">Emergencia</SelectItem>
-                                    <SelectItem value="UCI">UCI</SelectItem>
-                                    <SelectItem value="General">General</SelectItem>
-                                    <SelectItem value="Pediatría">Pediatría</SelectItem>
+                                    <SelectItem value="Observación">Observación</SelectItem>
+                                    <SelectItem value="Urgencias">Urgencias</SelectItem>
                                 </SelectContent>
                             </Select>
                             <Select value={filterStatus} onValueChange={setFilterStatus}>

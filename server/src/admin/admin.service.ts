@@ -135,22 +135,28 @@ export class AdminService {
         if (!config) {
             return this.prisma.organizationConfig.create({
                 data: {
-                    hospitalName: 'EdiCarex Hospital',
-                    email: 'contact@edicarex.com',
-                    phone: '+1 555 123 4567',
+                    hospitalName: 'Centro de Salud Jorge Chávez',
+                    email: 'esjorgechavez@gmail.com',
+                    phone: '951 515 888',
+                    address: 'Jr. Áncash S/N – Juliaca, San Román, Puno',
                     openingHours: {
-                        monday: { open: '08:00', close: '20:00', enabled: true },
-                        tuesday: { open: '08:00', close: '20:00', enabled: true },
-                        wednesday: { open: '08:00', close: '20:00', enabled: true },
-                        thursday: { open: '08:00', close: '20:00', enabled: true },
-                        friday: { open: '08:00', close: '20:00', enabled: true },
-                        saturday: { open: '09:00', close: '14:00', enabled: true },
+                        monday: { open: '07:00', close: '19:00', enabled: true },
+                        tuesday: { open: '07:00', close: '19:00', enabled: true },
+                        wednesday: { open: '07:00', close: '19:00', enabled: true },
+                        thursday: { open: '07:00', close: '19:00', enabled: true },
+                        friday: { open: '07:00', close: '19:00', enabled: true },
+                        saturday: { open: '07:00', close: '13:00', enabled: true },
                         sunday: { open: '00:00', close: '00:00', enabled: false },
                     },
                     billing: {
                         taxRate: 18,
                         currency: 'PEN',
                         invoicePrefix: 'F',
+                        ipress: '00003308',
+                        ruc: '20527421711',
+                        category: 'I-3',
+                        redSalud: 'Red San Román',
+                        microred: 'Santa Adriana',
                     },
                     ai: {
                         enabled: true,

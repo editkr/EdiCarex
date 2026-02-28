@@ -6,6 +6,7 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { AuditInterceptor } from '../common/interceptors/audit.interceptor';
 import { Audit, Public } from '../common/decorators';
 import { UseInterceptors } from '@nestjs/common';
+import { EstablishmentService } from '../common/services/establishment.service';
 
 @ApiTags('Admin')
 @ApiBearerAuth()
@@ -13,7 +14,10 @@ import { UseInterceptors } from '@nestjs/common';
 @UseInterceptors(AuditInterceptor)
 @Controller('admin')
 export class AdminController {
-    constructor(private readonly adminService: AdminService) { }
+    constructor(
+        private readonly adminService: AdminService,
+        private readonly establishmentService: EstablishmentService,
+    ) { }
 
     @Post('config')
     @ApiOperation({ summary: 'Create system configuration' })
@@ -55,16 +59,23 @@ export class AdminController {
 
     @Public()
     @Get('organization')
-    @ApiOperation({ summary: 'Get organization configuration' })
-    getOrganizationConfig() {
-        return this.adminService.getOrganizationConfig();
+    @ApiOperation({ summary: 'Get organization configuration (IPRESS 00003308)' })
+    async getOrganizationConfig() {
+        const ipressConfig = await this.establishmentService.getConfig();
+        const baseConfig = await this.adminService.getOrganizationConfig();
+
+        return {
+            ...baseConfig,
+            ...ipressConfig,
+            hospitalName: ipressConfig?.tradingName || baseConfig?.hospitalName,
+        };
     }
 
     @Put('organization')
     @Audit('ACTUALIZAR', 'SEGURIDAD')
     @ApiOperation({ summary: 'Update organization configuration' })
-    updateOrganizationConfig(@Body() body: any) {
-        return this.adminService.updateOrganizationConfig(body);
+    async updateOrganizationConfig(@Body() body: any) {
+        return this.establishmentService.updateConfig(body);
     }
 
     @Get('backups')

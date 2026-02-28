@@ -16,7 +16,7 @@ async function main() {
         'Pharmacy': ['DASHBOARD', 'PATIENTS_VIEW', 'PHARMACY_VIEW', 'PHARMACY_EDIT', 'PHARMACY_DISPENSE', 'PRESCRIPTIONS_VIEW', 'BILLING_VIEW', 'REPORTS_VIEW', 'MESSAGES_VIEW', 'MESSAGES_SEND'],
         'HR': ['DASHBOARD', 'HR_VIEW', 'HR_CREATE', 'HR_EDIT', 'HR_DELETE', 'ATTENDANCE_VIEW', 'ATTENDANCE_EDIT', 'REPORTS_VIEW', 'ANALYTICS_VIEW', 'MESSAGES_VIEW', 'MESSAGES_SEND'],
         'Billing': ['DASHBOARD', 'PATIENTS_VIEW', 'BILLING_VIEW', 'BILLING_CREATE', 'BILLING_EDIT', 'REPORTS_VIEW', 'ANALYTICS_VIEW', 'MESSAGES_VIEW', 'MESSAGES_SEND'],
-        'Management': ['DASHBOARD', 'PATIENTS_VIEW', 'DOCTORS_VIEW', 'APPOINTMENTS_VIEW', 'EMERGENCY_VIEW', 'BEDS_VIEW', 'PHARMACY_VIEW', 'LAB_VIEW', 'BILLING_VIEW', 'REPORTS_VIEW', 'REPORTS_EXPORT', 'ANALYTICS_VIEW', 'ANALYTICS_ADVANCED', 'AI_USE', 'MESSAGES_VIEW', 'MESSAGES_SEND'],
+        'Management': ['DASHBOARD', 'PATIENTS_VIEW', 'STAFF_VIEW', 'APPOINTMENTS_VIEW', 'EMERGENCY_VIEW', 'BEDS_VIEW', 'PHARMACY_VIEW', 'LAB_VIEW', 'BILLING_VIEW', 'REPORTS_VIEW', 'REPORTS_EXPORT', 'ANALYTICS_VIEW', 'ANALYTICS_ADVANCED', 'AI_USE', 'MESSAGES_VIEW', 'MESSAGES_SEND'],
         'Audit': ['DASHBOARD', 'ADMIN_VIEW', 'AUDIT_VIEW', 'BACKUPS_VIEW', 'BACKUPS_CREATE', 'SETTINGS_VIEW', 'SETTINGS_EDIT', 'MESSAGES_VIEW', 'MESSAGES_SEND'],
     };
 
@@ -171,16 +171,60 @@ async function main() {
 
     console.log('✅ Admin user created');
 
-    // Create Specialties
+    // ============================================
+    // ORGANIZACIÓN – Centro de Salud Jorge Chávez
+    // ============================================
+    const existingOrg = await prisma.organizationConfig.findFirst();
+    if (!existingOrg) {
+        await prisma.organizationConfig.create({
+            data: {
+                hospitalName: 'Centro de Salud Jorge Chávez',
+                email: 'esjorgechavez@gmail.com',
+                phone: '951 515 888',
+                address: 'Jr. Áncash S/N – Juliaca, San Román, Puno',
+                openingHours: {
+                    monday: { open: '07:00', close: '19:00', enabled: true },
+                    tuesday: { open: '07:00', close: '19:00', enabled: true },
+                    wednesday: { open: '07:00', close: '19:00', enabled: true },
+                    thursday: { open: '07:00', close: '19:00', enabled: true },
+                    friday: { open: '07:00', close: '19:00', enabled: true },
+                    saturday: { open: '07:00', close: '13:00', enabled: true },
+                    sunday: { open: '00:00', close: '00:00', enabled: false },
+                },
+                billing: {
+                    taxRate: 18,
+                    currency: 'PEN',
+                    invoicePrefix: 'F',
+                    ipress: '00003308',
+                    ruc: '20527421711',
+                    category: 'I-3',
+                    redSalud: 'Red San Román',
+                    microred: 'Santa Adriana',
+                    unidadEjecutora: '917 – Salud San Román',
+                },
+                ai: {
+                    enabled: true,
+                    model: 'llama-3.3-70b-versatile',
+                    features: { triage: true, diagnosis: true, teleconsulta: true },
+                },
+                maintenanceMode: false,
+            } as any,
+        });
+        console.log('✅ OrganizationConfig – Centro de Salud Jorge Chávez creado');
+    }
+
+    // ============================================
+    // ESPECIALIDADES REALES (Categoría I-3)
+    // ============================================
     const specialties = [
-        { name: 'Cardiología', description: 'Corazón y sistema cardiovascular' },
-        { name: 'Neurología', description: 'Cerebro y sistema nervioso' },
-        { name: 'Pediatría', description: 'Niños e infantes' },
-        { name: 'Ortopedia', description: 'Huesos y articulaciones' },
-        { name: 'Medicina General', description: 'Atención médica general' },
-        { name: 'Cirugía', description: 'Procedimientos quirúrgicos' },
-        { name: 'Dermatología', description: 'Piel y dermatología' },
-        { name: 'Emergencias', description: 'Atención de urgencias' },
+        { name: 'Medicina General', description: 'Consulta médica de primer nivel' },
+        { name: 'Obstetricia', description: 'Control prenatal y atención materna' },
+        { name: 'Odontología', description: 'Salud bucal y preventiva' },
+        { name: 'Nutrición', description: 'Evaluación nutricional y dietética' },
+        { name: 'Psicología', description: 'Salud mental y bienestar emocional' },
+        { name: 'Salud Mental', description: 'Atención integral en salud mental' },
+        { name: 'Enfermería', description: 'Cuidados de enfermería y procedimientos' },
+        { name: 'Emergencias', description: 'Atención de urgencias y triaje I-3' },
     ];
 
     for (const specialty of specialties) {
@@ -193,126 +237,282 @@ async function main() {
 
     console.log('✅ Specialties created');
 
-    // Create Sample Patients
+    // ============================================
+    // PACIENTES – Nombres peruanos/andinos reales
+    // ============================================
     const patients = [
         {
-            firstName: 'John',
-            lastName: 'Doe',
-            dateOfBirth: new Date('1990-05-15'),
-            gender: 'MALE',
-            bloodType: 'A+',
-            phone: '+1234567891',
-            email: 'john.doe@example.com',
-            address: '123 Main St',
-            city: 'New York',
-            state: 'NY',
-            zipCode: '10001',
-        },
-        {
-            firstName: 'Jane',
-            lastName: 'Smith',
-            dateOfBirth: new Date('1985-08-22'),
+            firstName: 'Carmen Rosa',
+            lastName: 'Quispe Mamani',
+            dateOfBirth: new Date('1988-03-12'),
             gender: 'FEMALE',
             bloodType: 'O+',
-            phone: '+1234567892',
-            email: 'jane.smith@example.com',
-            address: '456 Oak Ave',
-            city: 'Los Angeles',
-            state: 'CA',
-            zipCode: '90001',
+            phone: '951234001',
+            email: 'carmen.quispe@gmail.com',
+            address: 'Jr. Moquegua 342',
+            city: 'Juliaca',
+            state: 'Puno',
+            zipCode: '21101',
+        },
+        {
+            firstName: 'Juan Carlos',
+            lastName: 'Mamani Flores',
+            dateOfBirth: new Date('1975-11-08'),
+            gender: 'MALE',
+            bloodType: 'A+',
+            phone: '951234002',
+            email: 'juan.mamani@gmail.com',
+            address: 'Av. Circunvalación 891',
+            city: 'Juliaca',
+            state: 'Puno',
+            zipCode: '21101',
+        },
+        {
+            firstName: 'María Elena',
+            lastName: 'Huanca Ticona',
+            dateOfBirth: new Date('1995-07-20'),
+            gender: 'FEMALE',
+            bloodType: 'B+',
+            phone: '951234003',
+            email: 'maria.huanca@gmail.com',
+            address: 'Jr. Arequipa 156',
+            city: 'Juliaca',
+            state: 'Puno',
+            zipCode: '21101',
+        },
+        {
+            firstName: 'Pedro Lucio',
+            lastName: 'Condori Apaza',
+            dateOfBirth: new Date('1960-02-14'),
+            gender: 'MALE',
+            bloodType: 'AB+',
+            phone: '951234004',
+            email: 'pedro.condori@gmail.com',
+            address: 'Av. Piérola 450',
+            city: 'Juliaca',
+            state: 'Puno',
+            zipCode: '21101',
+        },
+        {
+            firstName: 'Lucía Dina',
+            lastName: 'Ramos Coaquira',
+            dateOfBirth: new Date('2000-09-03'),
+            gender: 'FEMALE',
+            bloodType: 'O-',
+            phone: '951234005',
+            email: 'lucia.ramos@gmail.com',
+            address: 'Jr. Tacna 78',
+            city: 'Juliaca',
+            state: 'Puno',
+            zipCode: '21101',
+        },
+        {
+            firstName: 'Wilber',
+            lastName: 'Ccopa Puma',
+            dateOfBirth: new Date('1983-05-17'),
+            gender: 'MALE',
+            bloodType: 'A-',
+            phone: '951234006',
+            email: 'wilber.ccopa@gmail.com',
+            address: 'Av. Ferroviaria 210',
+            city: 'Juliaca',
+            state: 'Puno',
+            zipCode: '21101',
         },
     ];
 
     for (const patient of patients) {
+        // Verificar si ya existe
+        const existingPatient = await prisma.patient.findFirst({ where: { email: patient.email } });
+        if (existingPatient) continue;
+
         const createdPatient = await prisma.patient.create({ data: patient });
 
-        // Create User for John Doe to test Patient Portal
-        if (patient.email === 'john.doe@example.com') {
-            const hashedPatientPw = await bcrypt.hash('password123', 10);
-            await prisma.user.create({
-                data: {
-                    email: patient.email,
-                    password: hashedPatientPw,
-                    firstName: patient.firstName,
-                    lastName: patient.lastName,
-                    phone: patient.phone,
-                    roleId: patientRole.id,
-                    patient: {
-                        connect: { id: createdPatient.id }
-                    },
-                    isActive: true,
-                }
-            });
-            console.log('✅ Created Patient User: john.doe@example.com / password123');
+        // Crear usuario del Portal del Paciente para el primer paciente
+        if (patient.email === 'carmen.quispe@gmail.com') {
+            const existingUser = await prisma.user.findUnique({ where: { email: patient.email } });
+            if (!existingUser) {
+                const hashedPatientPw = await bcrypt.hash('password123', 10);
+                await prisma.user.create({
+                    data: {
+                        email: patient.email,
+                        password: hashedPatientPw,
+                        firstName: patient.firstName,
+                        lastName: patient.lastName,
+                        phone: patient.phone,
+                        roleId: patientRole.id,
+                        patient: { connect: { id: createdPatient.id } },
+                        isActive: true,
+                    }
+                });
+                console.log('✅ Usuario portal paciente: carmen.quispe@gmail.com / password123');
+            }
         }
     }
 
     console.log('✅ Sample patients created');
 
     // ============================================
-    // HR SEEDING
+    // HR – Personal real del Centro de Salud Jorge Chávez
     // ============================================
     const employees = [
         {
-            name: 'Dr. John Smith',
-            area: 'Cardiología',
-            role: 'Doctor',
-            department: 'Medical',
-            email: 'john.smith@edicarex.com',
-            salary: 8500,
+            name: 'Lic. Elías Sucapuca Luque',
+            area: 'Dirección',
+            role: 'Management',
+            department: 'Administrative',
+            email: 'e.sucapuca@csjchavez.gob.pe',
+            salary: 6200,
             contract: 'Tiempo Completo',
             status: 'ACTIVE',
-            photo: 'https://api.dicebear.com/7.x/avataaars/svg?seed=John',
-            hireDate: new Date('2020-01-15'),
+            photo: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Elias',
+            hireDate: new Date('2018-05-10'),
             shifts: [
-                { dayOfWeek: 'Lunes', shiftType: 'MORNING', startTime: '08:00', endTime: '16:00' },
-                { dayOfWeek: 'Martes', shiftType: 'MORNING', startTime: '08:00', endTime: '16:00' },
+                { dayOfWeek: 'Lunes', shiftType: 'MORNING', startTime: '07:00', endTime: '15:00' },
+                { dayOfWeek: 'Martes', shiftType: 'MORNING', startTime: '07:00', endTime: '15:00' },
+                { dayOfWeek: 'Miércoles', shiftType: 'MORNING', startTime: '07:00', endTime: '15:00' },
+                { dayOfWeek: 'Jueves', shiftType: 'MORNING', startTime: '07:00', endTime: '15:00' },
+                { dayOfWeek: 'Viernes', shiftType: 'MORNING', startTime: '07:00', endTime: '15:00' },
             ]
         },
         {
-            name: 'Dra. Sarah Johnson',
-            area: 'Pediatría',
+            name: 'Dr. Raúl Huanca Quispe',
+            area: 'Medicina General',
             role: 'Doctor',
             department: 'Medical',
-            email: 'sarah.johnson@edicarex.com',
-            salary: 7800,
+            email: 'r.huanca@csjchavez.gob.pe',
+            salary: 5800,
             contract: 'Tiempo Completo',
             status: 'ACTIVE',
-            photo: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Sarah',
-            hireDate: new Date('2021-03-10'),
+            photo: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Raul',
+            hireDate: new Date('2019-03-01'),
             shifts: [
-                { dayOfWeek: 'Lunes', shiftType: 'AFTERNOON', startTime: '14:00', endTime: '22:00' },
-                { dayOfWeek: 'Miércoles', shiftType: 'MORNING', startTime: '08:00', endTime: '16:00' },
+                { dayOfWeek: 'Lunes', shiftType: 'MORNING', startTime: '07:00', endTime: '13:00' },
+                { dayOfWeek: 'Miércoles', shiftType: 'MORNING', startTime: '07:00', endTime: '13:00' },
+                { dayOfWeek: 'Viernes', shiftType: 'MORNING', startTime: '07:00', endTime: '13:00' },
             ]
         },
         {
-            name: 'Enf. Mike Williams',
-            area: 'Emergencia',
+            name: 'Dra. Flor María Condori Mamani',
+            area: 'Medicina General',
+            role: 'Doctor',
+            department: 'Medical',
+            email: 'f.condori@csjchavez.gob.pe',
+            salary: 5800,
+            contract: 'Tiempo Completo',
+            status: 'ACTIVE',
+            photo: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Flor',
+            hireDate: new Date('2021-07-15'),
+            shifts: [
+                { dayOfWeek: 'Martes', shiftType: 'MORNING', startTime: '07:00', endTime: '13:00' },
+                { dayOfWeek: 'Jueves', shiftType: 'MORNING', startTime: '07:00', endTime: '13:00' },
+                { dayOfWeek: 'Sábado', shiftType: 'MORNING', startTime: '07:00', endTime: '13:00' },
+            ]
+        },
+        {
+            name: 'Lic. Margarita Ccopa Apaza',
+            area: 'Obstetricia',
+            role: 'Doctor',
+            department: 'Medical',
+            email: 'm.ccopa@csjchavez.gob.pe',
+            salary: 4900,
+            contract: 'Tiempo Completo',
+            status: 'ACTIVE',
+            photo: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Margarita',
+            hireDate: new Date('2020-02-01'),
+            shifts: [
+                { dayOfWeek: 'Lunes', shiftType: 'MORNING', startTime: '07:00', endTime: '13:00' },
+                { dayOfWeek: 'Martes', shiftType: 'MORNING', startTime: '07:00', endTime: '13:00' },
+                { dayOfWeek: 'Jueves', shiftType: 'MORNING', startTime: '07:00', endTime: '13:00' },
+            ]
+        },
+        {
+            name: 'Enf. Sandra Ramos Tito',
+            area: 'Enfermería',
+            role: 'Nurse',
+            department: 'Medical',
+            email: 's.ramos@csjchavez.gob.pe',
+            salary: 3800,
+            contract: 'Tiempo Completo',
+            status: 'ACTIVE',
+            photo: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Sandra',
+            hireDate: new Date('2020-08-15'),
+            shifts: [
+                { dayOfWeek: 'Lunes', shiftType: 'MORNING', startTime: '07:00', endTime: '15:00' },
+                { dayOfWeek: 'Miércoles', shiftType: 'MORNING', startTime: '07:00', endTime: '15:00' },
+                { dayOfWeek: 'Viernes', shiftType: 'MORNING', startTime: '07:00', endTime: '15:00' },
+            ]
+        },
+        {
+            name: 'Enf. Carlos Puma Flores',
+            area: 'Emergencias',
             role: 'Nurse',
             department: 'Emergency',
-            email: 'mike.williams@edicarex.com',
-            salary: 4500,
+            email: 'c.puma@csjchavez.gob.pe',
+            salary: 3800,
             contract: 'Tiempo Completo',
             status: 'ACTIVE',
-            photo: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Mike',
-            hireDate: new Date('2022-06-01'),
+            photo: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Carlos',
+            hireDate: new Date('2022-01-10'),
             shifts: [
-                { dayOfWeek: 'Lunes', shiftType: 'NIGHT', startTime: '22:00', endTime: '06:00' },
+                { dayOfWeek: 'Martes', shiftType: 'AFTERNOON', startTime: '13:00', endTime: '19:00' },
+                { dayOfWeek: 'Jueves', shiftType: 'AFTERNOON', startTime: '13:00', endTime: '19:00' },
+                { dayOfWeek: 'Sábado', shiftType: 'MORNING', startTime: '07:00', endTime: '13:00' },
             ]
         },
         {
-            name: 'Emma Brown',
-            area: 'Administración',
-            role: 'Admin',
-            department: 'Administrative',
-            email: 'emma.brown@edicarex.com',
+            name: 'Tec. Rosa Ticona Coaquira',
+            area: 'Laboratorio',
+            role: 'Lab',
+            department: 'Laboratory',
+            email: 'r.ticona@csjchavez.gob.pe',
             salary: 3200,
-            contract: 'Medio Tiempo',
+            contract: 'Tiempo Completo',
             status: 'ACTIVE',
-            photo: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Emma',
-            hireDate: new Date('2023-01-20'),
-            shifts: []
-        }
+            photo: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Rosa',
+            hireDate: new Date('2021-05-20'),
+            shifts: [
+                { dayOfWeek: 'Lunes', shiftType: 'MORNING', startTime: '07:00', endTime: '13:00' },
+                { dayOfWeek: 'Miércoles', shiftType: 'MORNING', startTime: '07:00', endTime: '13:00' },
+                { dayOfWeek: 'Viernes', shiftType: 'MORNING', startTime: '07:00', endTime: '13:00' },
+            ]
+        },
+        {
+            name: 'Tec. Benita Mamani Pari',
+            area: 'Farmacia',
+            role: 'Pharmacy',
+            department: 'Pharmacy',
+            email: 'b.mamani@csjchavez.gob.pe',
+            salary: 3100,
+            contract: 'Tiempo Completo',
+            status: 'ACTIVE',
+            photo: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Benita',
+            hireDate: new Date('2022-03-01'),
+            shifts: [
+                { dayOfWeek: 'Lunes', shiftType: 'MORNING', startTime: '07:00', endTime: '15:00' },
+                { dayOfWeek: 'Martes', shiftType: 'MORNING', startTime: '07:00', endTime: '15:00' },
+                { dayOfWeek: 'Jueves', shiftType: 'MORNING', startTime: '07:00', endTime: '15:00' },
+            ]
+        },
+        {
+            name: 'Srta. Yolanda Quispe Torres',
+            area: 'Admisión',
+            role: 'Receptionist',
+            department: 'Administrative',
+            email: 'y.quispe@csjchavez.gob.pe',
+            salary: 2800,
+            contract: 'Tiempo Completo',
+            status: 'ACTIVE',
+            photo: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Yolanda',
+            hireDate: new Date('2023-01-05'),
+            shifts: [
+                { dayOfWeek: 'Lunes', shiftType: 'MORNING', startTime: '07:00', endTime: '15:00' },
+                { dayOfWeek: 'Martes', shiftType: 'MORNING', startTime: '07:00', endTime: '15:00' },
+                { dayOfWeek: 'Miércoles', shiftType: 'MORNING', startTime: '07:00', endTime: '15:00' },
+                { dayOfWeek: 'Jueves', shiftType: 'MORNING', startTime: '07:00', endTime: '15:00' },
+                { dayOfWeek: 'Viernes', shiftType: 'MORNING', startTime: '07:00', endTime: '15:00' },
+            ]
+        },
     ];
 
     for (const emp of employees) {
@@ -391,67 +591,87 @@ async function main() {
     console.log('✅ HR Data (Employees, Payroll) checked/seeded');
 
     // ============================================
-    // EMERGENCY SEEDING
+    // EMERGENCIA – Camillas de Observación (sin hospitalización I-3)
     // ============================================
-    const bedWards = [
-        { ward: 'UCI', count: 5 },
-        { ward: 'Emergencia', count: 10 },
-        { ward: 'General', count: 10 }
+    // El Centro de Salud Jorge Chávez es ambulatorio. Solo tiene
+    // camillas de observación en el área de urgencias (NO camas hospitalarias).
+    const observacionBeds = [
+        { number: 'OBS-01', ward: 'Observación', type: 'Camilla de Observación' },
+        { number: 'OBS-02', ward: 'Observación', type: 'Camilla de Observación' },
+        { number: 'OBS-03', ward: 'Observación', type: 'Camilla de Observación' },
+        { number: 'OBS-04', ward: 'Observación', type: 'Camilla de Observación' },
+        { number: 'OBS-05', ward: 'Urgencias', type: 'Camilla de Urgencias' },
     ];
 
-    let bedCounter = 1;
     const allBedIds: string[] = [];
-
-    for (const group of bedWards) {
-        for (let i = 1; i <= group.count; i++) {
-            const bedNum = `${group.ward === 'UCI' ? 'UCI' : group.ward === 'Emergencia' ? 'ER' : 'GEN'}-${i.toString().padStart(2, '0')}`;
-
-            const bed = await prisma.bed.upsert({
-                where: { number: bedNum },
-                update: {},
-                create: {
-                    number: bedNum,
-                    ward: group.ward,
-                    type: group.ward === 'UCI' ? 'Cama Hospitalaria' : 'Camilla',
-                    status: Math.random() > 0.7 ? 'OCCUPIED' : 'AVAILABLE',
-                }
-            });
-            if (bed.status === 'OCCUPIED') {
-                allBedIds.push(bed.id);
+    for (const obs of observacionBeds) {
+        const bed = await prisma.bed.upsert({
+            where: { number: obs.number },
+            update: {},
+            create: {
+                number: obs.number,
+                ward: obs.ward,
+                type: obs.type,
+                status: 'AVAILABLE',
             }
-        }
+        });
+        allBedIds.push(bed.id);
     }
 
-    // Create Emergency Cases for Occupied Beds
-    const erDiagnoses = ['Dolor Torácico', 'Cefalea Intensa', 'Esguince Tobillo', 'Dificultad Respiratoria', 'Fiebre Alta'];
+    // Casos de emergencia reales de un centro I-3
+    const erDiagnoses = [
+        'Fiebre Alta (39°C)',
+        'Dolor Abdominal Agudo',
+        'Crisis Asmática Leve',
+        'Traumatismo Leve por Caída',
+        'Cefalea Intensa',
+        'Deshidratación Moderada',
+    ];
 
-    for (const bedId of allBedIds) {
-        const diagnosis = erDiagnoses[Math.floor(Math.random() * erDiagnoses.length)];
-        const triage = Math.floor(Math.random() * 3) + 1; // 1-3 priority
+    // Doctores de emergencia del centro
+    const erDoctors = ['Dr. Raúl Huanca Quispe', 'Dra. Flor María Condori Mamani'];
+
+    // Crear 3 casos de emergencia activos
+    const patientNames = [
+        { name: 'Augusto Coila Mamani', age: 45 },
+        { name: 'Dolores Pari Ticona', age: 38 },
+        { name: 'Emilio Quisca Flores', age: 62 },
+    ];
+
+    for (let i = 0; i < patientNames.length; i++) {
+        const diagnosis = erDiagnoses[i % erDiagnoses.length];
+        const triage = Math.floor(Math.random() * 3) + 2; // 2-4 (I-3 no atiende prioridad 1)
 
         const kase = await prisma.emergencyCase.create({
             data: {
-                patientName: `Paciente ${Math.floor(Math.random() * 1000)}`,
-                patientAge: Math.floor(Math.random() * 60) + 18,
+                patientName: patientNames[i].name,
+                patientAge: patientNames[i].age,
                 triageLevel: triage,
                 chiefComplaint: diagnosis,
                 diagnosis: diagnosis,
-                vitalSigns: { hr: 80 + Math.random() * 20, bp: '120/80', temp: 37 + Math.random(), spo2: 95 + Math.random() * 4 },
-                status: 'ADMITTED',
-                bedNumber: 'Unknown', // Ideally link to bed
-                doctorName: 'Dr. Smith',
+                vitalSigns: {
+                    hr: 80 + Math.round(Math.random() * 20),
+                    bp: '120/80',
+                    temp: parseFloat((37 + Math.random()).toFixed(1)),
+                    spo2: parseFloat((95 + Math.random() * 4).toFixed(1))
+                },
+                status: 'IN_PROGRESS',
+                bedNumber: observacionBeds[i]?.number || 'OBS-01',
+                doctorName: erDoctors[i % erDoctors.length],
                 admissionDate: new Date()
             }
         });
 
-        // Update bed with patient info (conceptual link)
-        await prisma.bed.update({
-            where: { id: bedId },
-            data: { notes: `Occupied by Case ${kase.id}` }
-        });
+        // Marcar camilla como ocupada
+        if (allBedIds[i]) {
+            await prisma.bed.update({
+                where: { id: allBedIds[i] },
+                data: { status: 'OCCUPIED', notes: `Caso ER: ${kase.id}` }
+            });
+        }
     }
 
-    console.log('✅ Emergency Data (Beds, Cases) seeded');
+    console.log('✅ Camillas de Observación y Casos de Emergencia creados');
 
     // ============================================
     // APPOINTMENTS & BILLING SEEDING

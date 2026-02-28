@@ -1,10 +1,12 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, BadRequestException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { UsersService } from '../users/users.service';
 import { LoginDto, RegisterDto } from './dto';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
+import { ConfigService } from '@nestjs/config';
+import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()
 export class AuthService {
@@ -13,49 +15,65 @@ export class AuthService {
         private jwtService: JwtService,
         private prisma: PrismaService,
         private auditService: AuditService,
+        private configService: ConfigService,
     ) { }
 
     async validateUser(rawEmail: string, password: string): Promise<any> {
         const email = rawEmail.trim().toLowerCase();
-        console.log(`[AUTH DEBUG] Attempting login for email: '${email}'`);
-        // We need to fetch the user with patient relation to check if they are a patient
+
         const user = await this.prisma.user.findUnique({
             where: { email },
             include: {
-                role: true,
+                role: { include: { permissions: { include: { permission: true } } } },
                 patient: true
             }
         });
 
         if (!user) {
-            console.log(`[AUTH DEBUG] User not found for email: '${email}'`);
-            throw new UnauthorizedException('Usuario no encontrado. Verifique el email.');
+            throw new UnauthorizedException('Credenciales inválidas.');
+        }
+
+        // Check for lockout
+        if (user.lockoutUntil && user.lockoutUntil > new Date()) {
+            const minutesLeft = Math.ceil((user.lockoutUntil.getTime() - Date.now()) / 60000);
+            throw new UnauthorizedException(`Cuenta bloqueada temporalmente. Intente de nuevo en ${minutesLeft} minutos.`);
         }
 
         const isPasswordValid = await bcrypt.compare(password, user.password);
+
         if (!isPasswordValid) {
-            console.log(`[AUTH DEBUG] Password INVALID for user: '${email}'`);
+            // Increment failed attempts
+            const attempts = user.failedLoginAttempts + 1;
+            const lockoutUntil = attempts >= 5 ? new Date(Date.now() + 15 * 60 * 1000) : null;
+
+            await this.prisma.user.update({
+                where: { id: user.id },
+                data: {
+                    failedLoginAttempts: attempts,
+                    lockoutUntil
+                }
+            });
+
+            if (lockoutUntil) {
+                throw new UnauthorizedException('Demasiados intentos fallidos. Cuenta bloqueada por 15 minutos.');
+            }
             throw new UnauthorizedException('Contraseña incorrecta.');
         }
 
-        console.log(`[AUTH DEBUG] Login SUCCESS for user: '${email}'`);
-
-        if (!user.isActive) {
-            throw new UnauthorizedException('Account is inactive');
+        // Reset failed attempts on success
+        if (user.failedLoginAttempts > 0) {
+            await this.prisma.user.update({
+                where: { id: user.id },
+                data: {
+                    failedLoginAttempts: 0,
+                    lockoutUntil: null,
+                    lastLoginAt: new Date()
+                }
+            });
         }
 
-        if (user.deletedAt) {
-            // EMERGENCY RECOVERY: If main admin is deleted, restore them automatically
-            if (email === 'admin@edicarex.com') {
-                console.log('🚨 EMERGENCY: Resurrecting soft-deleted Admin user');
-                await this.prisma.user.update({
-                    where: { id: user.id },
-                    data: { deletedAt: null }
-                });
-                user.deletedAt = null; // Update local object
-            } else {
-                throw new UnauthorizedException('Account has been deleted');
-            }
+        if (!user.isActive) {
+            throw new UnauthorizedException('La cuenta está inactiva.');
         }
 
         const { password: _, ...result } = user;
@@ -64,39 +82,106 @@ export class AuthService {
 
     async login(loginDto: LoginDto) {
         const user = await this.validateUser(loginDto.email, loginDto.password);
+        return this.generateTokens(user);
+    }
+
+    async generateTokens(user: any) {
+        const permissions = user.role?.permissions?.map(p => `${p.permission.resource}:${p.permission.action}`) || [];
 
         const payload = {
             sub: user.id,
             email: user.email,
-            roleId: user.roleId,
+            role: user.role?.name,
+            permissions,
+            version: user.tokenVersion
         };
 
         const accessToken = this.jwtService.sign(payload);
 
-        // [AUDIT] Manual log for LOGIN
+        // Refresh Token logic
+        const refreshTokenValue = uuidv4();
+        const refreshTokenExpires = new Date();
+        refreshTokenExpires.setDate(refreshTokenExpires.getDate() + 14); // 14 days
+
+        await (this.prisma as any).refreshToken.create({
+            data: {
+                token: refreshTokenValue,
+                userId: user.id,
+                expiresAt: refreshTokenExpires
+            }
+        });
+
         await this.auditService.createLog({
             userId: user.id,
             action: 'LOGIN',
             resource: 'auth',
             changes: { email: user.email },
-        }).catch(err => console.error('Failed to log login:', err));
+        });
 
         return {
             accessToken,
+            refreshToken: refreshTokenValue,
             user: {
                 id: user.id,
                 email: user.email,
                 firstName: user.firstName,
                 lastName: user.lastName,
-                role: user.role,
-                preferences: (user as any).preferences, // Include preferences (permissions)
-                patientId: (user as any).patient?.id, // Return patientId if exists
+                role: user.role?.name,
+                permissions,
+                patientId: user.patient?.id,
             },
         };
     }
 
+    async refresh(refreshToken: string) {
+        const tokenDoc = await (this.prisma as any).refreshToken.findUnique({
+            where: { token: refreshToken },
+            include: { user: { include: { role: { include: { permissions: { include: { permission: true } } } }, patient: true } } }
+        });
+
+        if (!tokenDoc || tokenDoc.isRevoked || tokenDoc.expiresAt < new Date()) {
+            throw new UnauthorizedException('Refresh token inválido o expirado.');
+        }
+
+        // Revoke current token (rotation)
+        await (this.prisma as any).refreshToken.update({
+            where: { id: tokenDoc.id },
+            data: { isRevoked: true }
+        });
+
+        return this.generateTokens(tokenDoc.user);
+    }
+
+    async logout(accessToken: string, refreshToken?: string) {
+        try {
+            // Blacklist access token
+            const decoded = this.jwtService.decode(accessToken) as any;
+            if (decoded && decoded.exp) {
+                await (this.prisma as any).tokenBlacklist.create({
+                    data: {
+                        token: accessToken,
+                        expiresAt: new Date(decoded.exp * 1000),
+                    },
+                });
+            }
+
+            // Revoke refresh token if provided
+            if (refreshToken) {
+                await (this.prisma as any).refreshToken.updateMany({
+                    where: { token: refreshToken },
+                    data: { isRevoked: true }
+                });
+            }
+        } catch (e) {
+            console.error('Logout error:', e);
+        }
+
+        return { message: 'Sesión cerrada exitosamente.' };
+    }
+
     async register(registerDto: RegisterDto) {
-        const hashedPassword = await bcrypt.hash(registerDto.password, 10);
+        const saltRounds = 12;
+        const hashedPassword = await bcrypt.hash(registerDto.password, saltRounds);
 
         const user = await this.usersService.create({
             ...registerDto,
@@ -107,56 +192,35 @@ export class AuthService {
         return result;
     }
 
-    async refreshToken(userId: string) {
-        const user = await this.usersService.findOne(userId);
-
-        const payload = {
-            sub: user.id,
-            email: user.email,
-            roleId: user.roleId,
-        };
-
-        return {
-            accessToken: this.jwtService.sign(payload),
-        };
-    }
-
+    // Otros métodos (changePassword, forgotPassword, etc.) se mantienen igual pero usando factor 12
     async changePassword(userId: string, oldPassword: string, newPassword: string) {
-        // Get user with password
-        const userWithPassword = await this.prisma.user.findUnique({
-            where: { id: userId },
-        });
-
-        if (!userWithPassword) {
-            throw new UnauthorizedException('User not found');
-        }
+        const userWithPassword = await this.prisma.user.findUnique({ where: { id: userId } });
+        if (!userWithPassword) throw new UnauthorizedException('Usuario no encontrado');
 
         const isPasswordValid = await bcrypt.compare(oldPassword, userWithPassword.password);
-        if (!isPasswordValid) {
-            throw new UnauthorizedException('Current password is incorrect');
-        }
+        if (!isPasswordValid) throw new UnauthorizedException('Contraseña actual incorrecta');
 
-        const hashedPassword = await bcrypt.hash(newPassword, 10);
+        const hashedPassword = await bcrypt.hash(newPassword, 12);
         await this.prisma.user.update({
             where: { id: userId },
-            data: { password: hashedPassword },
+            data: {
+                password: hashedPassword,
+                tokenVersion: { increment: 1 } // Invalidate all existing tokens
+            },
         });
 
-        return { message: 'Password changed successfully' };
+        return { message: 'Contraseña actualizada y sesiones cerradas.' };
     }
 
     async forgotPassword(email: string) {
         const user = await this.usersService.findByEmail(email);
         if (!user) {
-            // Don't reveal if user exists
-            return { message: 'If email exists, a reset link has been sent' };
+            return { message: 'Si el correo existe, se ha enviado un enlace de recuperación' };
         }
 
-        // Generate token
         const token = require('crypto').randomBytes(32).toString('hex');
-        const expiresAt = new Date(Date.now() + 3600000); // 1 hour
+        const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
 
-        // Store token (using any cast due to prisma generate issue)
         await (this.prisma as any).passwordResetToken.create({
             data: {
                 userId: user.id,
@@ -165,79 +229,34 @@ export class AuthService {
             },
         });
 
-        // In production, send email here
-        // For now, return the token (simulated)
-        console.log(`Password reset token for ${email}: ${token}`);
+        console.log(`[SECURITY] Password reset token for ${email}: ${token}`);
 
         return {
-            message: 'If email exists, a reset link has been sent',
-            // Only for development - remove in production
+            message: 'Si el correo existe, se ha enviado un enlace de recuperación',
             _devToken: token
         };
     }
 
     async resetPassword(token: string, newPassword: string) {
-        // Find valid token
         const resetToken = await (this.prisma as any).passwordResetToken.findUnique({
             where: { token },
             include: { user: true },
         });
 
-        if (!resetToken) {
-            throw new UnauthorizedException('Invalid or expired token');
+        if (!resetToken || new Date() > resetToken.expiresAt) {
+            throw new UnauthorizedException('Token inválido o expirado');
         }
 
-        if (new Date() > resetToken.expiresAt) {
-            // Delete expired token
-            await (this.prisma as any).passwordResetToken.delete({ where: { id: resetToken.id } });
-            throw new UnauthorizedException('Token has expired');
-        }
-
-        // Update password
-        const hashedPassword = await bcrypt.hash(newPassword, 10);
+        const hashedPassword = await bcrypt.hash(newPassword, 12);
         await this.prisma.user.update({
             where: { id: resetToken.userId },
-            data: { password: hashedPassword },
+            data: {
+                password: hashedPassword,
+                tokenVersion: { increment: 1 }
+            },
         });
 
-        // Delete used token
         await (this.prisma as any).passwordResetToken.delete({ where: { id: resetToken.id } });
-
-        return { message: 'Password reset successfully' };
-    }
-
-    async logout(token: string) {
-        try {
-            // Decode token to get expiry
-            const decoded = this.jwtService.decode(token) as any;
-            if (!decoded || !decoded.exp) {
-                return { message: 'Logged out successfully' };
-            }
-
-            const expiresAt = new Date(decoded.exp * 1000);
-
-            // Add to blacklist
-            await (this.prisma as any).tokenBlacklist.create({
-                data: {
-                    token,
-                    expiresAt,
-                },
-            });
-        } catch (e) {
-            // Token might be invalid, but logout still succeeds
-        }
-
-        return { message: 'Logged out successfully' };
-    }
-
-    async isTokenBlacklisted(token: string): Promise<boolean> {
-        try {
-            const blacklisted = await (this.prisma as any).tokenBlacklist.findUnique({
-                where: { token },
-            });
-            return !!blacklisted;
-        } catch {
-            return false;
-        }
+        return { message: 'Contraseña restablecida exitosamente' };
     }
 }

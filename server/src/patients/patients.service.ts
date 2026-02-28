@@ -1,16 +1,47 @@
 import { Injectable, NotFoundException, ConflictException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreatePatientDto, UpdatePatientDto, SearchPatientsDto } from './dto';
+import { AuditService } from '../audit/audit.service';
+import { EncryptionService } from '../common/services/encryption.service';
 
 @Injectable()
 export class PatientsService {
-    constructor(private prisma: PrismaService) { }
+    constructor(
+        private prisma: PrismaService,
+        private auditService: AuditService,
+        private encryptionService: EncryptionService,
+    ) { }
 
     async create(createPatientDto: CreatePatientDto) {
         try {
-            return await this.prisma.patient.create({
-                data: createPatientDto,
+            // Encrypt sensitive fields
+            const encryptedData = {
+                ...createPatientDto,
+                documentNumber: this.encryptionService.encrypt(createPatientDto.documentNumber),
+                phone: createPatientDto.phone ? this.encryptionService.encrypt(createPatientDto.phone) : undefined,
+                address: createPatientDto.address ? this.encryptionService.encrypt(createPatientDto.address) : undefined,
+                email: createPatientDto.email ? this.encryptionService.encrypt(createPatientDto.email) : undefined,
+            };
+
+            const patient = await this.prisma.patient.create({
+                data: encryptedData,
             });
+
+            await this.auditService.createLog({
+                userId: 'SYSTEM',
+                action: 'CREATE',
+                resource: 'PATIENT',
+                resourceId: patient.id,
+                changes: createPatientDto
+            });
+
+            // Decrypt for returning
+            patient.documentNumber = this.encryptionService.decrypt(patient.documentNumber);
+            if (patient.phone) patient.phone = this.encryptionService.decrypt(patient.phone);
+            if (patient.address) patient.address = this.encryptionService.decrypt(patient.address);
+            if (patient.email) patient.email = this.encryptionService.decrypt(patient.email);
+
+            return patient;
         } catch (error) {
             this.handlePrismaError(error);
         }
@@ -18,10 +49,16 @@ export class PatientsService {
 
     async importPatients(patients: CreatePatientDto[]) {
         try {
-            // Using createMany with skipDuplicates to avoid crashing on existing unique fields (like documentNumber)
-            // Note: skipDuplicates ignores records that violate unique constraints.
+            const encryptedPatients = patients.map(p => ({
+                ...p,
+                documentNumber: this.encryptionService.encrypt(p.documentNumber),
+                phone: p.phone ? this.encryptionService.encrypt(p.phone) : undefined,
+                address: p.address ? this.encryptionService.encrypt(p.address) : undefined,
+                email: p.email ? this.encryptionService.encrypt(p.email) : undefined,
+            }));
+
             return await this.prisma.patient.createMany({
-                data: patients,
+                data: encryptedPatients,
                 skipDuplicates: true,
             });
         } catch (error) {
@@ -68,8 +105,21 @@ export class PatientsService {
             this.prisma.patient.count({ where }),
         ]);
 
+        // Decrypt patients for frontend
+        const decryptedPatients = patients.map(p => {
+            try {
+                p.documentNumber = this.encryptionService.decrypt(p.documentNumber);
+                if (p.phone) p.phone = this.encryptionService.decrypt(p.phone);
+                if (p.address) p.address = this.encryptionService.decrypt(p.address);
+                if (p.email) p.email = this.encryptionService.decrypt(p.email);
+            } catch (e) {
+                console.error(`Error decrypting patient ${p.id}:`, e.message);
+            }
+            return p;
+        });
+
         return {
-            data: patients,
+            data: decryptedPatients,
             meta: {
                 total,
                 page,
@@ -108,21 +158,50 @@ export class PatientsService {
             },
         });
 
-        if (!patient || patient.deletedAt) {
+        if (!patient || (patient as any).deletedAt) {
             throw new NotFoundException('Patient not found');
         }
+
+        // Decrypt sensitive fields
+        patient.documentNumber = this.encryptionService.decrypt(patient.documentNumber);
+        if (patient.phone) patient.phone = this.encryptionService.decrypt(patient.phone);
+        if (patient.address) patient.address = this.encryptionService.decrypt(patient.address);
+        if (patient.email) patient.email = this.encryptionService.decrypt(patient.email);
 
         return patient;
     }
 
     async update(id: string, updatePatientDto: UpdatePatientDto) {
-        await this.findOne(id);
+        const current = await this.findOne(id); // Already decrypted
+
+        // Encrypt updated fields
+        const encryptedData = { ...updatePatientDto };
+        if (encryptedData.documentNumber) encryptedData.documentNumber = this.encryptionService.encrypt(encryptedData.documentNumber);
+        if (encryptedData.phone) encryptedData.phone = this.encryptionService.encrypt(encryptedData.phone);
+        if (encryptedData.address) encryptedData.address = this.encryptionService.encrypt(encryptedData.address);
+        if (encryptedData.email) encryptedData.email = this.encryptionService.encrypt(encryptedData.email);
 
         try {
-            return await this.prisma.patient.update({
+            const updated = await this.prisma.patient.update({
                 where: { id },
-                data: updatePatientDto,
+                data: encryptedData,
             });
+
+            await this.auditService.createLog({
+                userId: 'SYSTEM',
+                action: 'UPDATE',
+                resource: 'PATIENT',
+                resourceId: id,
+                changes: { from: current, to: updatePatientDto }
+            });
+
+            // Decrypt for returning
+            updated.documentNumber = this.encryptionService.decrypt(updated.documentNumber);
+            if (updated.phone) updated.phone = this.encryptionService.decrypt(updated.phone);
+            if (updated.address) updated.address = this.encryptionService.decrypt(updated.address);
+            if (updated.email) updated.email = this.encryptionService.decrypt(updated.email);
+
+            return updated;
         } catch (error) {
             this.handlePrismaError(error);
         }
@@ -161,7 +240,6 @@ export class PatientsService {
     async enablePortalAccess(id: string) {
         const patient = await this.findOne(id) as any;
 
-        // 1. Get Patient Role
         const patientRole = await this.prisma.role.findFirst({
             where: { name: 'Patient' },
         });
@@ -173,14 +251,12 @@ export class PatientsService {
         const tempPassword = `Portal${new Date().getFullYear()}!`;
         const hashedPassword = await import('bcrypt').then(m => m.hash(tempPassword, 10));
 
-        // IF USER EXISTS: RESET PASSWORD
         if (patient.userId) {
             await this.prisma.user.update({
                 where: { id: patient.userId },
                 data: { password: hashedPassword }
             });
 
-            // Find user to get email
             const user = await this.prisma.user.findUnique({ where: { id: patient.userId } });
 
             return {
@@ -192,19 +268,14 @@ export class PatientsService {
             };
         }
 
-        // IF NEW USER: CREATE
-
-        // Use part of email or name as base, fallback to random if no email
         const baseEmail = patient.email || `patient${patient.documentNumber || patient.id.substring(0, 6)}@edicarex.portal`;
 
-        // Ensure email uniqueness (simple check, improve for prod)
         let email = baseEmail;
         const existingUser = await this.prisma.user.findUnique({ where: { email } });
         if (existingUser) {
             email = `${patient.id.substring(0, 4)}.${baseEmail}`;
         }
 
-        // Create User linked to Patient
         return this.prisma.$transaction(async (tx) => {
             const newUser = await tx.user.create({
                 data: {
@@ -215,14 +286,12 @@ export class PatientsService {
                     phone: patient.phone,
                     roleId: patientRole.id,
                     isActive: true,
-                    // Link to patient
                     patient: {
                         connect: { id: patient.id }
                     }
                 } as any
             });
 
-            // Return credentials to be shown ONCE
             return {
                 message: 'Portal access enabled successfully',
                 credentials: {
@@ -233,9 +302,6 @@ export class PatientsService {
         });
     }
 
-    // ============================================
-    // PATIENT TIMELINE
-    // ============================================
     async getTimeline(id: string) {
         await this.findOne(id);
 
@@ -246,29 +312,28 @@ export class PatientsService {
                 take: 50,
                 include: { doctor: { include: { user: true } } },
             }),
-            (this.prisma as any).patientDiagnosis.findMany({
+            (this.prisma as any).patientDiagnosis?.findMany({
                 where: { patientId: id },
                 orderBy: { diagnosedDate: 'desc' },
                 take: 50,
-            }),
-            (this.prisma as any).patientMedication.findMany({
+            }) || Promise.resolve([]),
+            (this.prisma as any).patientMedication?.findMany({
                 where: { patientId: id },
                 orderBy: { startDate: 'desc' },
                 take: 50,
-            }),
+            }) || Promise.resolve([]),
             this.prisma.labOrder.findMany({
                 where: { patientId: id },
                 orderBy: { createdAt: 'desc' },
                 take: 50,
             }),
-            (this.prisma as any).patientVitalSign.findMany({
+            (this.prisma as any).patientVitalSign?.findMany({
                 where: { patientId: id },
                 orderBy: { recordedAt: 'desc' },
                 take: 50,
-            }),
+            }) || Promise.resolve([]),
         ]);
 
-        // Combine and sort all events
         const events = [
             ...appointments.map(a => ({ type: 'APPOINTMENT', date: a.appointmentDate, data: a })),
             ...diagnoses.map(d => ({ type: 'DIAGNOSIS', date: d.diagnosedDate, data: d })),
@@ -280,15 +345,12 @@ export class PatientsService {
         return events;
     }
 
-    // ============================================
-    // PATIENT ALLERGIES
-    // ============================================
     async getAllergies(id: string) {
         await this.findOne(id);
-        return (this.prisma as any).patientAllergy.findMany({
+        return (this.prisma as any).patientAllergy?.findMany({
             where: { patientId: id },
             orderBy: { createdAt: 'desc' },
-        });
+        }) || Promise.resolve([]);
     }
 
     async addAllergy(id: string, data: { allergen: string; reaction?: string; severity?: string; notes?: string }) {
@@ -298,31 +360,28 @@ export class PatientsService {
         });
     }
 
-    async updateAllergy(patientId: string, allergyId: string, data: any) {
-        await this.findOne(patientId);
+    async updateAllergy(id: string, allergyId: string, data: any) {
+        await this.findOne(id);
         return (this.prisma as any).patientAllergy.update({
-            where: { id: allergyId },
+            where: { id: allergyId, patientId: id },
             data,
         });
     }
 
-    async deleteAllergy(patientId: string, allergyId: string) {
-        await this.findOne(patientId);
+    async deleteAllergy(id: string, allergyId: string) {
+        await this.findOne(id);
         return (this.prisma as any).patientAllergy.delete({
-            where: { id: allergyId },
+            where: { id: allergyId, patientId: id },
         });
     }
 
-    // ============================================
-    // PATIENT VITAL SIGNS
-    // ============================================
     async getVitalSigns(id: string, limit: number = 50) {
         await this.findOne(id);
-        return (this.prisma as any).patientVitalSign.findMany({
+        return (this.prisma as any).patientVitalSign?.findMany({
             where: { patientId: id },
             orderBy: { recordedAt: 'desc' },
             take: limit,
-        });
+        }) || Promise.resolve([]);
     }
 
     async addVitalSign(id: string, data: any) {
@@ -337,13 +396,13 @@ export class PatientsService {
         const sixMonthsAgo = new Date();
         sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
 
-        const vitals = await (this.prisma as any).patientVitalSign.findMany({
+        const vitals = await (this.prisma as any).patientVitalSign?.findMany({
             where: {
                 patientId: id,
                 recordedAt: { gte: sixMonthsAgo },
             },
             orderBy: { recordedAt: 'asc' },
-        });
+        }) || [];
 
         return {
             weight: vitals.filter(v => v.weight).map(v => ({ date: v.recordedAt, value: v.weight })),
@@ -357,15 +416,12 @@ export class PatientsService {
         };
     }
 
-    // ============================================
-    // PATIENT MEDICATIONS
-    // ============================================
     async getMedications(id: string, activeOnly: boolean = false) {
         await this.findOne(id);
         const where: any = { patientId: id };
         if (activeOnly) where.isActive = true;
 
-        return (this.prisma as any).patientMedication.findMany({
+        return (this.prisma as any).patientMedication?.findMany({
             where,
             include: {
                 prescribedBy: {
@@ -373,15 +429,13 @@ export class PatientsService {
                 }
             },
             orderBy: { startDate: 'desc' },
-        });
+        }) || Promise.resolve([]);
     }
 
     async addMedication(id: string, data: any) {
         try {
             await this.findOne(id);
 
-            // [SENIOR INTEGRATION] Find medication and doctor to create order
-            // We'll use the first active doctor if not specified for outpatient prescriptions
             const doctor = await this.prisma.doctor.findFirst({
                 include: { user: true }
             });
@@ -405,16 +459,14 @@ export class PatientsService {
                     data: {
                         orderNumber,
                         medicationId: medication.id,
-                        quantity: 1, // Default for outpatient prescription
+                        quantity: 1,
                         doctorId: doctor.id,
                         patientId: id,
                         status: 'PENDIENTE'
                     }
                 });
-                console.log(`[PatientsService] Automatic pharmacy order ${orderNumber} created for patient ${id} linked to med ${medication.id}`);
             }
 
-            // Ensure startDate is a valid Date object
             const payload = {
                 patientId: id,
                 medicationId: medication?.id || data.medicationId || null,
@@ -436,23 +488,20 @@ export class PatientsService {
         }
     }
 
-    async updateMedication(patientId: string, medicationId: string, data: any) {
-        await this.findOne(patientId);
+    async updateMedication(id: string, medicationId: string, data: any) {
+        await this.findOne(id);
         return (this.prisma as any).patientMedication.update({
-            where: { id: medicationId },
+            where: { id: medicationId, patientId: id },
             data,
         });
     }
 
-    // ============================================
-    // PATIENT DIAGNOSES
-    // ============================================
     async getDiagnoses(id: string) {
         await this.findOne(id);
-        return (this.prisma as any).patientDiagnosis.findMany({
+        return (this.prisma as any).patientDiagnosis?.findMany({
             where: { patientId: id },
             orderBy: { diagnosedDate: 'desc' },
-        });
+        }) || Promise.resolve([]);
     }
 
     async addDiagnosis(id: string, data: any) {
@@ -462,22 +511,19 @@ export class PatientsService {
         });
     }
 
-    async updateDiagnosis(patientId: string, diagnosisId: string, data: any) {
-        await this.findOne(patientId);
+    async updateDiagnosis(id: string, diagnosisId: string, data: any) {
+        await this.findOne(id);
         return (this.prisma as any).patientDiagnosis.update({
-            where: { id: diagnosisId },
+            where: { id: diagnosisId, patientId: id },
             data,
         });
     }
 
-    // ============================================
-    // PATIENT FAMILY MEMBERS
-    // ============================================
     async getFamilyMembers(id: string) {
         await this.findOne(id);
-        return (this.prisma as any).patientFamilyMember.findMany({
+        return (this.prisma as any).patientFamilyMember?.findMany({
             where: { patientId: id },
-        });
+        }) || Promise.resolve([]);
     }
 
     async addFamilyMember(id: string, data: any) {
@@ -487,30 +533,27 @@ export class PatientsService {
         });
     }
 
-    async updateFamilyMember(patientId: string, memberId: string, data: any) {
-        await this.findOne(patientId);
+    async updateFamilyMember(id: string, memberId: string, data: any) {
+        await this.findOne(id);
         return (this.prisma as any).patientFamilyMember.update({
-            where: { id: memberId },
+            where: { id: memberId, patientId: id },
             data,
         });
     }
 
-    async deleteFamilyMember(patientId: string, memberId: string) {
-        await this.findOne(patientId);
+    async deleteFamilyMember(id: string, memberId: string) {
+        await this.findOne(id);
         return (this.prisma as any).patientFamilyMember.delete({
-            where: { id: memberId },
+            where: { id: memberId, patientId: id },
         });
     }
 
-    // ============================================
-    // PATIENT DOCUMENTS
-    // ============================================
     async getDocuments(id: string) {
         await this.findOne(id);
-        return (this.prisma as any).patientDocument.findMany({
+        return (this.prisma as any).patientDocument?.findMany({
             where: { patientId: id },
             orderBy: { uploadedAt: 'desc' },
-        });
+        }) || Promise.resolve([]);
     }
 
     async addDocument(id: string, data: { name: string; type: string; url: string; mimeType?: string; size?: number; uploadedBy?: string }) {
@@ -520,25 +563,19 @@ export class PatientsService {
         });
     }
 
-    async deleteDocument(patientId: string, documentId: string) {
-        await this.findOne(patientId);
+    async deleteDocument(id: string, documentId: string) {
+        await this.findOne(id);
         return (this.prisma as any).patientDocument.delete({
-            where: { id: documentId },
+            where: { id: documentId, patientId: id },
         });
     }
 
-    // ============================================
-    // CLINICAL NOTES
-    // ============================================
     async addNote(id: string, data: { title: string; content: string }) {
         await this.findOne(id);
 
-        // Find a default doctor (first available) to assign this note to
-        // In a real app, this should come from the logged-in user context
         const doctor = await this.prisma.doctor.findFirst();
 
         if (!doctor) {
-            // Fallback or error if no doctor exists
             throw new BadRequestException('No se encontraron doctores en el sistema para asignar la nota.');
         }
 
@@ -548,7 +585,7 @@ export class PatientsService {
                 doctorId: doctor.id,
                 visitDate: new Date(),
                 chiefComplaint: data.title,
-                diagnosis: 'Nota Clínica', // Tag to identify it as a note
+                diagnosis: 'Nota Clínica',
                 notes: data.content,
                 treatment: '',
                 prescriptions: ''

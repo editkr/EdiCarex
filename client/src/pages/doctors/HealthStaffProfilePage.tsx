@@ -31,7 +31,7 @@ import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, L
 import DoctorCalendar from '@/components/calendar/DoctorCalendar'
 import DoctorModal from '@/components/modals/DoctorModal'
 
-export default function DoctorProfilePage() {
+export default function HealthStaffProfilePage() {
     const { id } = useParams<{ id: string }>()
     const navigate = useNavigate()
     const { toast } = useToast()
@@ -180,10 +180,10 @@ export default function DoctorProfilePage() {
     if (!doctor) {
         return (
             <div className="flex flex-col items-center justify-center h-96 space-y-4">
-                <p className="text-muted-foreground">Doctor no encontrado</p>
-                <Button onClick={() => navigate('/doctors')}>
+                <p className="text-muted-foreground">Personal no encontrado</p>
+                <Button onClick={() => navigate('/health-staff')}>
                     <ArrowLeft className="h-4 w-4 mr-2" />
-                    Volver a Doctores
+                    Volver a Personal de Salud
                 </Button>
             </div>
         )
@@ -211,13 +211,13 @@ export default function DoctorProfilePage() {
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
-                    <Button variant="ghost" onClick={() => navigate('/doctors')}>
+                    <Button variant="ghost" onClick={() => navigate('/health-staff')}>
                         <ArrowLeft className="h-4 w-4 mr-2" />
                         Volver
                     </Button>
                     <div>
                         <h1 className="text-3xl font-bold tracking-tight">
-                            Dr. {doctor.user?.firstName} {doctor.user?.lastName}
+                            {doctor.user?.firstName} {doctor.user?.lastName}
                         </h1>
                         <p className="text-muted-foreground">
                             {doctor.specialization || 'Médico General'} • Licencia: {doctor.licenseNumber}
@@ -225,7 +225,7 @@ export default function DoctorProfilePage() {
                     </div>
                 </div>
                 <div className="flex gap-2">
-                    {hasPermission('DOCTORS_EDIT') && (
+                    {hasPermission('STAFF_EDIT') && (
                         <Button variant="outline" onClick={() => setIsModalOpen(true)}>
                             <Edit className="h-4 w-4 mr-2" />
                             Editar Perfil
@@ -575,7 +575,7 @@ export default function DoctorProfilePage() {
                         <CardContent>
                             <div className="space-y-4">
                                 {/* Upload Area */}
-                                {hasPermission('DOCTORS_EDIT') && (
+                                {hasPermission('STAFF_EDIT') && (
                                     <div className="flex flex-col items-center justify-center py-6 text-center space-y-3 border-2 border-dashed rounded-xl bg-slate-50">
                                         <div className="h-12 w-12 rounded-full bg-white flex items-center justify-center shadow-sm">
                                             <Upload className="h-6 w-6 text-indigo-500" />
@@ -625,7 +625,7 @@ export default function DoctorProfilePage() {
                                                     }}>
                                                         <File className="h-4 w-4" />
                                                     </Button>
-                                                    {hasPermission('DOCTORS_EDIT') && (
+                                                    {hasPermission('STAFF_EDIT') && (
                                                         <Button variant="ghost" size="icon" className="h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-50" onClick={() => handleDeleteDocument(doc.id)}>
                                                             <Trash className="h-4 w-4" />
                                                         </Button>
@@ -673,7 +673,7 @@ export default function DoctorProfilePage() {
                                         <Clock className="h-8 w-8 text-slate-300 mb-2" />
                                         <span className="font-medium text-slate-600">Sin Horario Definido</span>
                                         <span className="text-xs text-muted-foreground mt-1">Este doctor no tiene horarios configurados.</span>
-                                        <Button variant="link" size="sm" className="mt-2 text-indigo-600" onClick={() => navigate('/doctors')}>
+                                        <Button variant="link" size="sm" className="mt-2 text-indigo-600" onClick={() => navigate('/health-staff')}>
                                             Ir a lista para configurar
                                         </Button>
                                     </div>

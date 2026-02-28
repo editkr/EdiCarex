@@ -25,13 +25,22 @@ export default function ProtectedRoute({
     const localToken = localStorage.getItem('token')
     const location = useLocation()
 
+    // 0. Prevenir bucle infinito si ya estamos en una ruta de auth
+    const authPaths = ['/login', '/attendance/login', '/patient-portal/login']
+    if (authPaths.includes(location.pathname)) {
+        return children ? <>{children}</> : <Outlet />
+    }
+
     // 1. Verificar autenticación
     if (!isAuthenticated && !localToken) {
         // Redirección inteligente: si es una ruta de asistencia, ir al login operativo
         if (location.pathname.startsWith('/attendance')) {
-            return <Navigate to="/attendance/login" replace />
+            return <Navigate to="/attendance/login" state={{ from: location }} replace />
         }
-        return <Navigate to="/login" replace />
+        if (location.pathname.startsWith('/patient-portal')) {
+            return <Navigate to="/patient-portal/login" state={{ from: location }} replace />
+        }
+        return <Navigate to="/login" state={{ from: location }} replace />
     }
 
     // 2. Verificar permiso granular (PRIORIDAD)

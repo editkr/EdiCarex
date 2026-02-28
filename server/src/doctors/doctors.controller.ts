@@ -19,7 +19,7 @@ export class DoctorsController {
 
     @Get()
     @ApiOperation({ summary: 'Get all doctors' })
-    @RequirePermission('DOCTORS_VIEW')
+    @RequirePermission('STAFF_VIEW')
     @ApiQuery({ name: 'page', required: false, type: Number })
     @ApiQuery({ name: 'limit', required: false, type: Number })
     findAll(@Query('page') page?: string, @Query('limit') limit?: string) {
@@ -31,22 +31,22 @@ export class DoctorsController {
 
     @Get('specialties')
     @ApiOperation({ summary: 'Get all specialties' })
-    // Specialties might be needed for dropdowns, so maybe lax permission or DOCTORS_VIEW
-    @RequirePermission('DOCTORS_VIEW')
+    // Specialties might be needed for dropdowns, so maybe lax permission or STAFF_VIEW
+    @RequirePermission('STAFF_VIEW')
     findSpecialties() {
         return this.doctorsService.findSpecialties();
     }
 
     @Get(':id')
     @ApiOperation({ summary: 'Get doctor by ID' })
-    @RequirePermission('DOCTORS_VIEW')
+    @RequirePermission('STAFF_VIEW')
     findOne(@Param('id') id: string) {
         return this.doctorsService.findOne(id);
     }
 
     @Post()
     @ApiOperation({ summary: 'Create doctor' })
-    @RequirePermission('DOCTORS_CREATE')
+    @RequirePermission('STAFF_CREATE')
     @Audit('CREATE_DOCTOR', 'doctors')
     create(@Body() data: any) {
         return this.doctorsService.create(data);
@@ -54,7 +54,7 @@ export class DoctorsController {
 
     @Patch(':id')
     @ApiOperation({ summary: 'Update doctor' })
-    @RequirePermission('DOCTORS_EDIT')
+    @RequirePermission('STAFF_EDIT')
     @Audit('UPDATE_DOCTOR', 'doctors')
     update(@Param('id') id: string, @Body() data: any) {
         return this.doctorsService.update(id, data);
@@ -62,7 +62,7 @@ export class DoctorsController {
 
     @Delete(':id')
     @ApiOperation({ summary: 'Delete doctor' })
-    @RequirePermission('DOCTORS_DELETE')
+    @RequirePermission('STAFF_DELETE')
     @Audit('DELETE_DOCTOR', 'doctors')
     remove(@Param('id') id: string) {
         return this.doctorsService.remove(id);
@@ -70,21 +70,21 @@ export class DoctorsController {
 
     @Post(':id/documents')
     @ApiOperation({ summary: 'Add document to doctor' })
-    @RequirePermission('DOCTORS_EDIT')
+    @RequirePermission('STAFF_EDIT')
     addDocument(@Param('id') id: string, @Body() data: any) {
         return this.doctorsService.addDocument(id, data);
     }
 
     @Get(':id/documents')
     @ApiOperation({ summary: 'Get doctor documents' })
-    @RequirePermission('DOCTORS_VIEW')
+    @RequirePermission('STAFF_VIEW')
     getDocuments(@Param('id') id: string) {
         return this.doctorsService.getDocuments(id);
     }
 
     @Delete(':id/documents/:docId')
     @ApiOperation({ summary: 'Delete doctor document' })
-    @RequirePermission('DOCTORS_EDIT')
+    @RequirePermission('STAFF_EDIT')
     removeDocument(@Param('id') id: string, @Param('docId') docId: string) {
         return this.doctorsService.removeDocument(id, docId);
     }

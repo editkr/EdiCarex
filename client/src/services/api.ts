@@ -460,3 +460,39 @@ export const servicesCatalogAPI = {
 export const systemAPI = {
     getStatus: () => api.get('/health'),
 }
+
+// ============================================
+// TRIAJE API - C.S. JORGE CHÁVEZ I-3
+// ============================================
+export const triajeAPI = {
+    getAll: (date?: string) => api.get('/triaje', { params: { date } }),
+    getStats: () => api.get('/triaje/stats'),
+    getById: (id: string) => api.get(`/triaje/${id}`),
+    create: (data: any) => api.post('/triaje', data),
+    update: (id: string, data: any) => api.put(`/triaje/${id}`, data),
+    updateStatus: (id: string, status: string) => api.patch(`/triaje/${id}/status`, { status }),
+}
+
+// ============================================
+// VACUNACION API - ESNI
+// ============================================
+export const vacunacionAPI = {
+    getAll: (params?: { category?: string; month?: string }) => api.get('/vacunacion', { params }),
+    getStats: (month?: string) => api.get('/vacunacion/stats', { params: { month } }),
+    getById: (id: string) => api.get(`/vacunacion/${id}`),
+    create: (data: any) => api.post('/vacunacion', data),
+    update: (id: string, data: any) => api.put(`/vacunacion/${id}`, data),
+}
+
+// ============================================
+// PROGRAMAS MINSA API
+// ============================================
+export const programasMinsaAPI = {
+    getAll: () => api.get('/programas-minsa'),
+    getDashboard: () => api.get('/programas-minsa/dashboard'),
+    getRecords: (programId: string, month?: string) =>
+        api.get(`/programas-minsa/${programId}/records`, { params: { month } }),
+    createRecord: (data: any) => api.post('/programas-minsa/records', data),
+    updateRecord: (id: string, data: any) => api.put(`/programas-minsa/records/${id}`, data),
+}
+

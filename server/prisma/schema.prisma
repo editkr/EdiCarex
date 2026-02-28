@@ -28,6 +28,13 @@ model User {
   updatedAt   DateTime  @updatedAt
   deletedAt   DateTime?
   preferences Json?
+  
+  // Security fields
+  passwordHash         String? // Reserved for migration if needed
+  failedLoginAttempts  Int       @default(0)
+  lockoutUntil         DateTime?
+  lastLoginAt          DateTime?
+  tokenVersion        Int       @default(0)
 
   // Relations
   roleId String
@@ -53,6 +60,7 @@ model User {
 
   // Auth tokens
   passwordResetTokens PasswordResetToken[]
+  refreshTokens       RefreshToken[]
 
   @@index([email])
   @@index([roleId])
@@ -69,6 +77,21 @@ model PasswordResetToken {
   createdAt DateTime @default(now())
 
   @@map("password_reset_tokens")
+}
+
+// Refresh Tokens for Session Management
+model RefreshToken {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  isRevoked Boolean  @default(false)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([token])
+  @@map("refresh_tokens")
 }
 
 // Token Blacklist for Logout
@@ -210,7 +233,8 @@ model Patient {
   emergencyContact  String?
   emergencyPhone    String?
   insuranceNumber   String?
-  insuranceProvider String?
+  insuranceProvider String? @default("SIS") // SIS, ESSALUD, PRIVADO, OTROS
+  insuranceType     String? @default("MINSA") // MINSA, ESSALUD, PARROQUIAL
   allergies         String?
   chronicConditions String?
   notes             String?
@@ -223,6 +247,7 @@ model Patient {
   // Relations
   userId         String?         @unique
   user           User?           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  encounters     Encounter[]
   appointments   Appointment[]
   medicalRecords MedicalRecord[]
   labOrders      LabOrder[]
@@ -239,6 +264,12 @@ model Patient {
   vitalSigns     PatientVitalSign[]
   medications    PatientMedication[]
   diagnoses      PatientDiagnosis[]
+
+  // Módulos I-3
+  triages            Triage[]
+  vaccinations       Vaccination[]
+  minsaProgramRecords MinsaProgramRecord[]
+  observationStretcher ObservationStretcher?
 
   @@index([firstName, lastName])
   @@index([phone])
@@ -407,6 +438,7 @@ model Doctor {
   prescribedMedications PatientMedication[]
   labOrders      LabOrder[] @relation("DoctorLabOrders")
   invoices       Invoice[]
+  encounters     Encounter[]
 
   @@index([licenseNumber])
   @@map("doctors")
@@ -476,6 +508,9 @@ model Appointment {
   history        AppointmentHistory[]
   medicalRecords MedicalRecord[]
   invoices       Invoice[]     @relation("AppointmentInvoice")
+  
+  // Link to Encounter
+  encounter      Encounter?
 
   @@index([patientId])
   @@index([doctorId])
@@ -564,6 +599,57 @@ model NotificationLog {
 }
 
 // ============================================
+// ESTABLISHMENT CONFIGURATION (IPRESS 00003308)
+// ============================================
+
+model EstablishmentConfig {
+  id              String   @id @default(uuid())
+  tradingName     String   @default("Centro de Salud Jorge Chávez")
+  ipressCode      String   @default("00003308")
+  ruc             String   @default("20222371105")
+  address         String   @default("Jr. Ancash S/N, Juliaca, San Román, Puno")
+  ubigeo          String   @default("211101")
+  latitude        Float    @default(-15.48032349)
+  longitude       Float    @default(-70.13931455)
+  altitude        Int      @default(3882)
+  phone           String   @default("951515888")
+  email           String   @default("esjorgechavez@gmail.com")
+  operatingHours  String   @default("07:00 a 19:00")
+  dependency      String   @default("DIRESA Puno")
+  red             String   @default("San Román")
+  microred        String   @default("Santa Adriana")
+  category        String   @default("I-3")
+  isInternment    Boolean  @default(false)
+  activityStart   DateTime @default("1990-11-08T00:00:00Z")
+  resolution      String   @default("R.D.R. 0964-09/DRS-PUNO-DEA-PER")
+  
+  updatedAt       DateTime @updatedAt
+
+  @@map("establishment_config")
+}
+
+// ============================================
+// OBSERVATION ROOM (I-3 Max 6 Stretchers)
+// ============================================
+
+model ObservationStretcher {
+  id          String   @id @default(uuid())
+  number      String   // ej: "OBS-01"
+  status      String   @default("AVAILABLE") // AVAILABLE, OCCUPIED, MAINTENANCE
+  notes       String?
+  
+  patientId   String?  @unique
+  patient     Patient? @relation(fields: [patientId], references: [id])
+  
+  admittedAt  DateTime?
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("observation_stretchers")
+}
+
+// ============================================
 // MEDICAL RECORDS
 // ============================================
 
@@ -589,6 +675,9 @@ model MedicalRecord {
   doctor        Doctor       @relation(fields: [doctorId], references: [id])
   appointmentId String?
   appointment   Appointment? @relation(fields: [appointmentId], references: [id])
+
+  encounterId   String?
+  encounter     Encounter?   @relation(fields: [encounterId], references: [id])
 
   @@index([patientId])
   @@index([doctorId])
@@ -619,6 +708,7 @@ model Medication {
   movements PharmacyMovement[]
   orders    PharmacyOrder[]
   patientMedications PatientMedication[]
+  prescriptions Prescription[]
 
   @@index([name])
   @@map("medications")
@@ -749,6 +839,9 @@ model LabOrder {
   testType  String?
   testName  String?
 
+  encounterId String?
+  encounter   Encounter? @relation(fields: [encounterId], references: [id])
+
   results   LabResult[]
 
   @@index([patientId])
@@ -775,6 +868,9 @@ model LabResult {
   // Relations
   labOrderId String
   labOrder   LabOrder @relation(fields: [labOrderId], references: [id], onDelete: Cascade)
+
+  encounterId String?
+  encounter   Encounter? @relation(fields: [encounterId], references: [id])
 
   @@index([labOrderId])
   @@map("lab_results")
@@ -1108,6 +1204,46 @@ model EmergencyCase {
   @@map("emergency_cases")
 }
 
+// ============================================
+// CLINICAL ENCOUNTERS (CONSULTAS / TRIAJE / EVOLUCION)
+// ============================================
+
+model Encounter {
+  id        String   @id @default(uuid())
+  type      String   // CONSULTA, TRIAGE, URGENCIA, CONTROL, EMERGENCIA
+  reason    String?
+  notes     String?   // Evolución médica
+  status    String   @default("OPEN") // OPEN, CLOSED, CANCELLED
+  
+  // Datos clínicos (JSON para flexibilidad o campos específicos)
+  diagnoses Json?    // Array de CIE-10 [{code, name, type: 'PRIMARY|SECONDARY'}]
+  vitals    Json?    // Instantánea de vitales en este encuentro
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  closedAt  DateTime?
+
+  // Relations
+  patientId  String
+  patient    Patient @relation(fields: [patientId], references: [id])
+  doctorId   String?
+  doctor     Doctor?  @relation(fields: [doctorId], references: [id])
+  
+  appointmentId String? @unique
+  appointment   Appointment? @relation(fields: [appointmentId], references: [id])
+
+  triage         Triage?
+  prescriptions  Prescription[]
+  labResults     LabResult[]
+  labOrders      LabOrder[]
+  medicalRecords MedicalRecord[] // Optional: for legacy transition
+
+  @@index([patientId])
+  @@index([doctorId])
+  @@index([type])
+  @@map("encounters")
+}
+
 model EmergencyVitalSign {
   id              String        @id @default(uuid())
   emergencyCaseId String
@@ -1220,4 +1356,180 @@ model ServiceCatalog {
   @@index([category])
   @@index([isActive])
   @@map("services_catalog")
+}
+
+// ============================================
+// TRIAJE - CENTRO DE SALUD I-3
+// ============================================
+
+model Triage {
+  id          String   @id @default(uuid())
+  // Datos del paciente
+  patientId   String?
+  patient     Patient? @relation(fields: [patientId], references: [id])
+  patientName String   // Para casos sin paciente registrado
+  patientAge  Int?
+  patientDni  String?
+
+  // Signos vitales
+  heartRate         Int?    // FC: lat/min
+  respiratoryRate   Int?    // FR: resp/min
+  temperature       Float?  // Temp: °C
+  oxygenSaturation  Float?  // SpO2: %
+  bloodPressure     String? // PA: mmHg (ej: "120/80")
+  weight            Float?  // kg
+  height            Float?  // cm
+  glucometry        Float?  // mg/dL
+
+  // Clasificación
+  priority      String  @default("VERDE") // ROJO, NARANJA, VERDE
+  chiefComplaint String
+  notes         String?
+
+  // Estado del triaje
+  status        String   @default("WAITING") // WAITING, IN_ATTENTION, COMPLETED, TRANSFERRED
+  triageBy      String?  // Nombre del profesional que tría
+  triageAt      DateTime @default(now())
+  attendedAt    DateTime?
+  completedAt   DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Link to Encounter
+  encounterId String?   @unique
+  encounter   Encounter? @relation(fields: [encounterId], references: [id])
+
+  @@index([status])
+  @@index([priority])
+  @@index([triageAt])
+  @@map("triages")
+}
+
+// ============================================
+// VACUNACION - ESTRATEGIA SANITARIA NACIONAL ESNI
+// ============================================
+
+model Vaccination {
+  id        String   @id @default(uuid())
+  
+  // Paciente
+  patientId   String?
+  patient     Patient? @relation(fields: [patientId], references: [id])
+  patientName String
+  patientAge  Int?
+  patientDni  String?
+
+  // Vacuna
+  vaccineName   String  // Nombre de la vacuna (ej: "BCG", "DPT", "Influenza")
+  doseNumber    String  // Primera, Segunda, Tercera, Refuerzo
+  lotNumber     String? // Número de lote
+  laboratory    String? // Laboratorio fabricante
+  expirationDate DateTime? // Fecha de expiración del lote
+  
+  // Aplicación
+  appliedAt     DateTime @default(now())
+  appliedBy     String   // Profesional que vacunó
+  site          String?  // Sitio de aplicación (ej: "Deltoides izquierdo")
+  route         String   @default("IM") // IM, SC, ID, VO
+  
+  // Categoría ESNI
+  category      String   // NINO, EMBARAZADA, ADULTO, ADULTO_MAYOR
+  
+  // Próxima dosis
+  nextDoseDate  DateTime?
+  nextVaccine   String?
+  
+  notes         String?
+  status        String   @default("APPLIED") // APPLIED, PENDING, CANCELLED
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([patientId])
+  @@index([appliedAt])
+  @@index([category])
+  @@index([vaccineName])
+  @@map("vaccinations")
+}
+
+model Prescription {
+  id           String   @id @default(uuid())
+  medication   String   // Nombre del medicamento
+  dosage       String   // ej: "1 tableta"
+  frequency    String   // ej: "cada 8 horas"
+  duration     String?  // ej: "por 5 días"
+  instructions String?
+  
+  quantity     Int      @default(1)
+  isDispensed  Boolean  @default(false)
+  dispensedAt  DateTime?
+  
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Relations
+  encounterId String
+  encounter   Encounter @relation(fields: [encounterId], references: [id], onDelete: Cascade)
+  medicationId String?  // Opcional: link al inventario real
+  medicationRef Medication? @relation(fields: [medicationId], references: [id])
+
+  @@index([encounterId])
+  @@map("prescriptions")
+}
+
+// ============================================
+// PROGRAMAS MINSA - ESTRATEGIAS SANITARIAS
+// ============================================
+
+model MinsaProgram {
+  id          String   @id @default(uuid())
+  code        String   @unique // PRENATAL, CRED, TBC, ANEMIA, PF, MENTAL
+  name        String
+  description String?
+  
+  // Metas mensuales
+  monthlyGoal Int      @default(100)
+  
+  // Estado del programa
+  isActive    Boolean  @default(true)
+  coordinator String?  // Profesional responsable
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Registros del programa
+  records MinsaProgramRecord[]
+
+  @@map("minsa_programs")
+}
+
+model MinsaProgramRecord {
+  id        String      @id @default(uuid())
+  programId String
+  program   MinsaProgram @relation(fields: [programId], references: [id])
+
+  // Paciente
+  patientId   String?
+  patient     Patient? @relation(fields: [patientId], references: [id])
+  patientName String
+  patientDni  String?
+  patientAge  Int?
+
+  // Atención
+  visitDate     DateTime @default(now())
+  visitType     String   // CONTROL, SESION, ANALISIS, ENTREGA, SEGUIMIENTO
+  observations  String?
+  nextVisitDate DateTime?
+  status        String   @default("ACTIVE") // ACTIVE, COMPLETED, DROPOUT
+
+  attendedBy  String? // Profesional
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([programId])
+  @@index([patientId])
+  @@index([visitDate])
+  @@map("minsa_program_records")
 }

@@ -193,7 +193,7 @@ export default function AIPage() {
         if (!generatedDoc) return;
 
         const doc = new jsPDF();
-        const hospitalName = (config?.hospitalName || "EDICAREX CLINIC").toUpperCase();
+        const hospitalName = (config?.hospitalName || "C.S. JORGE CHÁVEZ").toUpperCase();
         const patientName = selectedPatient ? `${selectedPatient.firstName} ${selectedPatient.lastName}` : "PACIENTE ANÓNIMO";
         const dateStr = new Date().toLocaleDateString();
         const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -221,7 +221,7 @@ export default function AIPage() {
 
         doc.setFontSize(9);
         doc.setFont("helvetica", "normal");
-        doc.text("CENTRO DE INTELIGENCIA CLÍNICA AVANZADA", 20, 28);
+        doc.text("SISTEMA DE INTELIGENCIA CLÍNICA – CATEGORÍA I-3", 20, 28);
 
         // Document Type Badge in Header
         doc.setFillColor(255, 255, 255, 0.2);
@@ -650,8 +650,8 @@ export default function AIPage() {
                 role: 'assistant',
                 content: response.data.response,
                 timestamp: new Date(),
-                source: response.data.source || 'edicarex-ai',
-                model: response.data.model || `EdiCarex ${aiConfig?.model || 'Engine'}`
+                source: response.data.source || 'csjc-ai',
+                model: response.data.model || `IA ${config?.hospitalName || 'C.S. Jorge Chávez'} – ${aiConfig?.model || 'Engine'}`
             }
 
             setChatMessages(prev => [...prev, aiMessage])
@@ -689,11 +689,11 @@ export default function AIPage() {
                         </div>
                         <div>
                             <h1 className="text-3xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-gray-900 to-gray-600 dark:from-white dark:to-zinc-400">
-                                Asistente Médico EdiCarex IA
+                                Asistente Médico IA – {config?.hospitalName || 'C.S. Jorge Chávez'}
                             </h1>
                             <p className="text-zinc-500 dark:text-zinc-400 mt-1 flex items-center gap-2">
                                 <Sparkles className="h-3.5 w-3.5 text-indigo-400" />
-                                Sistema inteligente EdiCarex de diagnóstico preliminar y análisis predictivo
+                                Sistema inteligente de diagnóstico preliminar y análisis predictivo I-3
                             </p>
                         </div>
                     </div>
@@ -710,7 +710,7 @@ export default function AIPage() {
                         </Button>
                         <Badge variant="outline" className={`px-4 py-1.5 text-[10px] font-black tracking-widest ${aiConfig?.enabled ? 'border-indigo-500/30 text-indigo-400 bg-indigo-500/5' : 'border-zinc-500/30 text-zinc-400 bg-zinc-500/5'} backdrop-blur-md uppercase shadow-lg shadow-indigo-500/10`}>
                             <Zap className={`h-3.5 w-3.5 mr-2 ${aiConfig?.enabled ? 'animate-pulse text-emerald-400' : 'text-zinc-600'}`} />
-                            MOTOR ACTIVO: {MODEL_DISPLAY_NAMES[aiConfig?.model] || aiConfig?.model || 'EdiCarex Engine'}
+                            MOTOR ACTIVO: {MODEL_DISPLAY_NAMES[aiConfig?.model] || aiConfig?.model || 'Motor IA'}
                         </Badge>
                     </div>
                 </div>

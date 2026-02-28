@@ -92,7 +92,7 @@ const ScheduleBadges = ({ schedules }: { schedules: any[] }) => {
     )
 }
 
-export default function DoctorsPage() {
+export default function HealthStaffPage() {
     const navigate = useNavigate()
     const { hasPermission } = usePermissions()
     const [searchTerm, setSearchTerm] = useState('')
@@ -120,7 +120,7 @@ export default function DoctorsPage() {
         } catch (error: any) {
             toast({
                 title: 'Error',
-                description: error.response?.data?.message || 'Error al cargar doctores',
+                description: error.response?.data?.message || 'Error al cargar personal de salud',
                 variant: 'destructive',
             })
         } finally {
@@ -134,13 +134,13 @@ export default function DoctorsPage() {
             await doctorsAPI.delete(deleteId)
             toast({
                 title: 'Éxito',
-                description: 'Doctor eliminado correctamente',
+                description: 'Personal de salud eliminado correctamente',
             })
             loadData()
         } catch (error: any) {
             toast({
                 title: 'Error',
-                description: error.response?.data?.message || 'Error al eliminar doctor',
+                description: error.response?.data?.message || 'Error al eliminar personal',
                 variant: 'destructive',
             })
         } finally {
@@ -164,7 +164,7 @@ export default function DoctorsPage() {
     }
 
     const handleViewProfile = (doctorId: string) => {
-        navigate(`/doctors/${doctorId}`)
+        navigate(`/health-staff/${doctorId}`)
     }
 
 
@@ -180,7 +180,7 @@ export default function DoctorsPage() {
             ))
             toast({
                 title: 'Estado actualizado',
-                description: `Doctor ${!doctor.isAvailable ? 'marcado como disponible' : 'marcado como no disponible'}`,
+                description: `Personal ${!doctor.isAvailable ? 'marcado como disponible' : 'marcado como no disponible'}`,
             })
         } catch (error) {
             toast({
@@ -266,15 +266,15 @@ export default function DoctorsPage() {
             {/* Header */}
             <div className="flex justify-between items-start">
                 <div>
-                    <h1 className="text-3xl font-bold tracking-tight">Doctores</h1>
+                    <h1 className="text-3xl font-bold tracking-tight">Personal de Salud</h1>
                     <p className="text-muted-foreground">
-                        Gestionar personal médico y horarios • {filteredDoctors.length} total
+                        Gestionar personal asistencial y horarios • {filteredDoctors.length} total
                     </p>
                 </div>
-                {hasPermission('DOCTORS_CREATE') && (
+                {hasPermission('STAFF_CREATE') && (
                     <Button onClick={handleAdd}>
                         <Plus className="h-4 w-4 mr-2" />
-                        Nuevo Doctor
+                        Nuevo Personal
                     </Button>
                 )}
             </div>
@@ -311,7 +311,7 @@ export default function DoctorsPage() {
                         {filteredDoctors.length === 0 ? (
                             <TableRow>
                                 <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
-                                    No se encontraron doctores
+                                    No se encontraron registros
                                 </TableCell>
                             </TableRow>
                         ) : (
@@ -384,7 +384,7 @@ export default function DoctorsPage() {
                                                 >
                                                     <Eye className="h-4 w-4" />
                                                 </Button>
-                                                {hasPermission('DOCTORS_EDIT') && (
+                                                {hasPermission('STAFF_EDIT') && (
                                                     <Button
                                                         variant="ghost"
                                                         size="sm"
@@ -393,7 +393,7 @@ export default function DoctorsPage() {
                                                         <Edit className="h-4 w-4" />
                                                     </Button>
                                                 )}
-                                                {hasPermission('DOCTORS_DELETE') && (
+                                                {hasPermission('STAFF_DELETE') && (
                                                     <Button
                                                         variant="ghost"
                                                         size="sm"

@@ -148,7 +148,7 @@ export default function AdminPage() {
         'Pharmacy': ['DASHBOARD', 'PATIENTS_VIEW', 'PHARMACY_VIEW', 'PHARMACY_EDIT', 'PHARMACY_DISPENSE', 'PRESCRIPTIONS_VIEW', 'BILLING_VIEW', 'REPORTS_VIEW', 'MESSAGES_VIEW', 'MESSAGES_SEND'],
         'HR': ['DASHBOARD', 'HR_VIEW', 'HR_CREATE', 'HR_EDIT', 'HR_DELETE', 'ATTENDANCE_VIEW', 'ATTENDANCE_EDIT', 'REPORTS_VIEW', 'ANALYTICS_VIEW', 'MESSAGES_VIEW', 'MESSAGES_SEND'],
         'Billing': ['DASHBOARD', 'PATIENTS_VIEW', 'BILLING_VIEW', 'BILLING_CREATE', 'BILLING_EDIT', 'REPORTS_VIEW', 'ANALYTICS_VIEW', 'MESSAGES_VIEW', 'MESSAGES_SEND'],
-        'Management': ['DASHBOARD', 'PATIENTS_VIEW', 'DOCTORS_VIEW', 'APPOINTMENTS_VIEW', 'EMERGENCY_VIEW', 'BEDS_VIEW', 'PHARMACY_VIEW', 'LAB_VIEW', 'BILLING_VIEW', 'REPORTS_VIEW', 'REPORTS_EXPORT', 'ANALYTICS_VIEW', 'ANALYTICS_ADVANCED', 'AI_USE', 'MESSAGES_VIEW', 'MESSAGES_SEND'],
+        'Management': ['DASHBOARD', 'PATIENTS_VIEW', 'STAFF_VIEW', 'APPOINTMENTS_VIEW', 'EMERGENCY_VIEW', 'BEDS_VIEW', 'PHARMACY_VIEW', 'LAB_VIEW', 'BILLING_VIEW', 'REPORTS_VIEW', 'REPORTS_EXPORT', 'ANALYTICS_VIEW', 'ANALYTICS_ADVANCED', 'AI_USE', 'MESSAGES_VIEW', 'MESSAGES_SEND'],
         'Audit': ['DASHBOARD', 'ADMIN_VIEW', 'AUDIT_VIEW', 'BACKUPS_VIEW', 'BACKUPS_CREATE', 'SETTINGS_VIEW', 'SETTINGS_EDIT', 'MESSAGES_VIEW', 'MESSAGES_SEND'],
     }
 
@@ -168,9 +168,8 @@ export default function AdminPage() {
     };
 
     const GROUP_DISPLAY_NAMES: Record<string, string> = {
-        'DASHBOARD': 'Panel Principal',
         'PATIENTS': 'Pacientes',
-        'DOCTORS': 'Doctores',
+        'STAFF': 'Personal de Salud',
         'APPOINTMENTS': 'Citas',
         'EMERGENCY': 'Emergencias',
         'BEDS': 'Gestión de Camas',
@@ -203,11 +202,11 @@ export default function AdminPage() {
         'PATIENTS_EDIT': { label: 'Editar Pacientes', icon: Pencil },
         'PATIENTS_DELETE': { label: 'Eliminar Pacientes', icon: Trash2 },
 
-        // Médicos
-        'DOCTORS_VIEW': { label: 'Módulo Doctores', icon: Stethoscope },
-        'DOCTORS_CREATE': { label: 'Registrar Médicos', icon: UserPlus },
-        'DOCTORS_EDIT': { label: 'Editar Médicos', icon: Pencil },
-        'DOCTORS_DELETE': { label: 'Eliminar Médicos', icon: Trash2 },
+        // Personal de Salud
+        'STAFF_VIEW': { label: 'Módulo Personal de Salud', icon: Stethoscope },
+        'STAFF_CREATE': { label: 'Registrar Personal', icon: UserPlus },
+        'STAFF_EDIT': { label: 'Editar Personal', icon: Pencil },
+        'STAFF_DELETE': { label: 'Eliminar Personal', icon: Trash2 },
 
         // Citas
         'APPOINTMENTS_VIEW': { label: 'Módulo Citas', icon: Calendar },

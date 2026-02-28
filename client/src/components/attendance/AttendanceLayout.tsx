@@ -1,5 +1,5 @@
 import React from 'react'
-import { Link, useLocation } from 'react-router-dom'
+import { Link, useLocation, Outlet } from 'react-router-dom'
 import { cn } from '@/lib/utils'
 import {
     Clock,
@@ -66,7 +66,7 @@ function NavItem({ icon: Icon, label, path }: NavItemProps) {
     )
 }
 
-export function AttendanceLayout({ children }: { children: React.ReactNode }) {
+export default function AttendanceLayout() {
     const { theme, setTheme } = useTheme()
     const { config } = useOrganization()
 
@@ -214,7 +214,7 @@ export function AttendanceLayout({ children }: { children: React.ReactNode }) {
 
                 <main className="flex-1 overflow-y-auto p-12 custom-scrollbar bg-attendance-portal">
                     <div className="max-w-7xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-700 pb-20 relative z-10">
-                        {children}
+                        <Outlet />
                     </div>
                 </main>
             </div>

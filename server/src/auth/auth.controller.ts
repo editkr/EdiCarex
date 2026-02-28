@@ -29,12 +29,19 @@ export class AuthController {
         return req.user;
     }
 
-    @UseGuards(JwtAuthGuard)
-    @ApiBearerAuth()
     @Post('refresh')
     @ApiOperation({ summary: 'Refresh access token' })
-    async refresh(@Request() req) {
-        return this.authService.refreshToken(req.user.id);
+    async refresh(@Body('refreshToken') refreshToken: string) {
+        return this.authService.refresh(refreshToken);
+    }
+
+    @UseGuards(JwtAuthGuard)
+    @ApiBearerAuth()
+    @Post('logout')
+    @ApiOperation({ summary: 'Logout and revoke session' })
+    async logout(@Request() req, @Body('refreshToken') refreshToken: string) {
+        const accessToken = req.headers.authorization?.replace('Bearer ', '');
+        return this.authService.logout(accessToken, refreshToken);
     }
 
     @UseGuards(JwtAuthGuard)
@@ -61,12 +68,4 @@ export class AuthController {
         return this.authService.resetPassword(body.token, body.newPassword);
     }
 
-    @UseGuards(JwtAuthGuard)
-    @ApiBearerAuth()
-    @Post('logout')
-    @ApiOperation({ summary: 'Logout and blacklist token' })
-    async logout(@Request() req) {
-        const token = req.headers.authorization?.replace('Bearer ', '');
-        return this.authService.logout(token);
-    }
 }

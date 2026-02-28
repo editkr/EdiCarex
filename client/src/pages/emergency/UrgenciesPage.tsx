@@ -56,7 +56,7 @@ import EmergencyModal from '@/components/modals/EmergencyModal'
 import { usePermissions } from '@/hooks/usePermissions'
 import { useOrganization } from '@/contexts/OrganizationContext'
 
-export default function EmergencyPage() {
+export default function UrgenciesPage() {
     const navigate = useNavigate()
     const { hasPermission } = usePermissions()
     const { config } = useOrganization()
@@ -210,9 +210,9 @@ export default function EmergencyPage() {
                         <AlertTriangle className="h-6 w-6 text-red-600" />
                     </div>
                     <div>
-                        <h1 className="text-3xl font-bold tracking-tight">Departamento de Emergencia</h1>
+                        <h1 className="text-3xl font-bold tracking-tight">Servicio de Urgencias</h1>
                         <p className="text-muted-foreground">
-                            Gestión de emergencias en tiempo real y evaluación con IA
+                            Gestión de urgencias en tiempo real y evaluación con IA
                         </p>
                     </div>
                 </div>
@@ -544,7 +544,7 @@ export default function EmergencyPage() {
                                                         <Button
                                                             variant="ghost"
                                                             size="sm"
-                                                            onClick={() => navigate(`/emergency/${patient.id}`)}
+                                                            onClick={() => navigate(`/urgencies/${patient.id}`)}
                                                             title="Ver Detalles"
                                                         >
                                                             <Eye className="h-4 w-4" />

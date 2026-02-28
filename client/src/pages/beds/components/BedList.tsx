@@ -17,6 +17,8 @@ import { formatDistanceToNow } from "date-fns"
 import { es } from "date-fns/locale"
 import { usePermissions } from "@/hooks/usePermissions"
 
+import { Link } from "react-router-dom"
+
 interface BedListProps {
     filterWard: string
     filterStatus: string
@@ -205,6 +207,13 @@ export default function BedList({ filterWard, filterStatus, searchQuery, onEditB
                                                     setAssignDialogOpen(true)
                                                 }} className="text-emerald-600 focus:text-emerald-600 focus:bg-emerald-50 dark:focus:bg-emerald-950/30 cursor-pointer">
                                                     <UserPlus className="mr-2 h-4 w-4" /> Asignar Paciente
+                                                </DropdownMenuItem>
+                                            )}
+                                            {bed.status === 'OCCUPIED' && (
+                                                <DropdownMenuItem asChild className="text-primary focus:text-primary focus:bg-primary/5 cursor-pointer">
+                                                    <Link to={`/observation-room/${bed.id}`} className="flex items-center w-full">
+                                                        <Clock className="mr-2 h-4 w-4" /> Ver Monitoreo (12h)
+                                                    </Link>
                                                 </DropdownMenuItem>
                                             )}
                                             {bed.status === 'OCCUPIED' && hasPermission('BEDS_EDIT') && (

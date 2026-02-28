@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { Bed, MoreVertical, UserPlus, UserMinus, Settings, Trash2, Activity, Clock, AlertCircle, CheckCircle2, CalendarClock, Stethoscope } from 'lucide-react'
 import { useBedStore, Bed as BedType } from '@/stores/bedStore'
+import { Link } from 'react-router-dom'
 import { useToast } from '@/components/ui/use-toast'
 import BedAssignmentDialog from './BedAssignmentDialog'
 import { formatDistanceToNow } from 'date-fns'
@@ -130,11 +131,18 @@ export default function BedMap({ filterWard, filterStatus, searchQuery, onEditBe
                                                 <UserPlus className="mr-2 h-4 w-4" /> Asignar Paciente
                                             </DropdownMenuItem>
                                         )}
+                                        {bed.status === 'OCCUPIED' && (
+                                            <DropdownMenuItem asChild className="text-primary focus:text-primary focus:bg-primary/5 cursor-pointer">
+                                                <Link to={`/observation-room/${bed.id}`} className="flex items-center w-full">
+                                                    <Clock className="mr-2 h-4 w-4" /> Ver Monitoreo (12h)
+                                                </Link>
+                                            </DropdownMenuItem>
+                                        )}
                                         {bed.status === 'OCCUPIED' && hasPermission('BEDS_EDIT') && (
                                             <DropdownMenuItem onClick={() => {
                                                 dischargePatient(bed.id)
                                                 toast({ title: 'Paciente dado de alta', description: 'La cama ahora está en limpieza.' })
-                                            }} className="text-amber-600 focus:text-amber-600 focus:bg-amber-50 dark:focus:bg-amber-950/30">
+                                            }} className="text-amber-600 focus:text-amber-600 focus:bg-amber-50 dark:focus:bg-amber-950/30 font-medium cursor-pointer">
                                                 <UserMinus className="mr-2 h-4 w-4" /> Dar de Alta
                                             </DropdownMenuItem>
                                         )}
