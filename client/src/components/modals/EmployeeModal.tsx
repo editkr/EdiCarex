@@ -184,7 +184,7 @@ export default function EmployeeModal({ open, onOpenChange, employee, onSuccess 
                                                 </SelectTrigger>
                                             </FormControl>
                                             <SelectContent>
-                                                <SelectItem value="DOCTOR">Doctor</SelectItem>
+                                                <SelectItem value="Staff">Personal de Salud</SelectItem>
                                                 <SelectItem value="NURSE">Nurse</SelectItem>
                                                 <SelectItem value="RECEPTIONIST">Receptionist</SelectItem>
                                                 <SelectItem value="PHARMACIST">Pharmacist</SelectItem>

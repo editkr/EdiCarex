@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import { patientsAPI } from '@/services/api'
 import { Card } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import {
@@ -202,15 +203,22 @@ export default function PatientsPage() {
         try {
             const doc = new jsPDF() as any
 
-            // Header
-            doc.setFontSize(20)
+            // Header - Institucional MINSA/DIRESA
+            doc.setFontSize(14)
+            doc.setTextColor(30)
+            doc.text('C.S. JORGE CHÁVEZ I-4 - RED SAN ROMÁN', 14, 20)
+            doc.setFontSize(10)
+            doc.setTextColor(80)
+            doc.text('MICRORED SANTA ADRIANA - DIRESA PUNO', 14, 26)
+
+            doc.setFontSize(16)
             doc.setTextColor(40)
-            doc.text('REPORTE DE PACIENTES - EDICAREX', 14, 22)
+            doc.text('REPORTE GENERAL DE PACIENTES', 14, 36)
 
             doc.setFontSize(10)
             doc.setTextColor(100)
-            doc.text(`Generado el: ${format(new Date(), 'PPP', { locale: es })}`, 14, 30)
-            doc.text(`Total de pacientes: ${filteredPatients.length}`, 14, 36)
+            doc.text(`Generado el: ${format(new Date(), 'PPP', { locale: es })}`, 14, 44)
+            doc.text(`Total de pacientes: ${filteredPatients.length}`, 14, 50)
 
             // Table data
             const tableData = filteredPatients.map((patient: any) => [
@@ -219,15 +227,15 @@ export default function PatientsPage() {
                 calculateAge(patient.dateOfBirth) + ' años',
                 patient.gender === 'MALE' ? 'M' : patient.gender === 'FEMALE' ? 'F' : 'O',
                 patient.phone || 'N/A',
-                patient.insuranceProvider || 'Sin seguro',
+                patient.sisCode || 'No afiliado',
                 patient.status === 'ACTIVE' ? 'Activo' : patient.status === 'CRITICAL' ? 'Crítico' : 'Inactivo'
             ])
 
             // Generate table
             autoTable(doc, {
-                head: [['DNI', 'Paciente', 'Edad', 'Género', 'Teléfono', 'Seguro', 'Estado']],
+                head: [['DNI', 'Paciente', 'Edad', 'Sexo', 'Teléfono', 'Cód. SIS', 'Estado']],
                 body: tableData,
-                startY: 45,
+                startY: 55,
                 theme: 'grid',
                 headStyles: {
                     fillColor: [59, 130, 246], // Blue
@@ -427,7 +435,7 @@ export default function PatientsPage() {
                 <div>
                     <h1 className="text-3xl font-bold tracking-tight">Pacientes</h1>
                     <p className="text-muted-foreground">
-                        Gestionar registros de pacientes e historial médico • {filteredPatients.length} total
+                        Padrón Nominal y asegurados SIS • {filteredPatients.length} total
                     </p>
                 </div>
                 <div className="flex gap-2">
@@ -559,7 +567,7 @@ export default function PatientsPage() {
                             <TableHead>DNI/ID</TableHead>
                             <TableHead>Género</TableHead>
                             <TableHead>Edad</TableHead>
-                            <TableHead>Seguro</TableHead>
+                            <TableHead>Estado SIS</TableHead>
                             <TableHead>Teléfono</TableHead>
                             <TableHead>Prioridad</TableHead>
                             <TableHead>Última Visita</TableHead>
@@ -601,7 +609,20 @@ export default function PatientsPage() {
                                     <TableCell>{patient.documentNumber || 'N/A'}</TableCell>
                                     <TableCell>{patient.gender || 'N/A'}</TableCell>
                                     <TableCell>{calculateAge(patient.dateOfBirth)}</TableCell>
-                                    <TableCell>{patient.insuranceProvider || 'None'}</TableCell>
+                                    <TableCell>
+                                        <div className="flex flex-col gap-1 items-start">
+                                            <span className="text-xs text-muted-foreground">{patient.sisCode || 'Sin código'}</span>
+                                            {patient.sisStatus === 'ACTIVE' ? (
+                                                <Badge variant="outline" className="text-[10px] h-4 px-1 py-0 bg-green-50 text-green-700 border-green-200">
+                                                    SIS Activo
+                                                </Badge>
+                                            ) : (
+                                                <Badge variant="outline" className="text-[10px] h-4 px-1 py-0 bg-slate-50 text-slate-500 border-slate-200">
+                                                    {patient.sisStatus === 'NOT_AFFILIATED' ? 'No Afiliado' : patient.sisStatus || 'Validar'}
+                                                </Badge>
+                                            )}
+                                        </div>
+                                    </TableCell>
                                     <TableCell>{patient.phone || 'N/A'}</TableCell>
                                     <TableCell>
                                         <span className={`text-xs px-2 py-1 rounded-full ${getPriorityBadge(getPatientPriority(patient))}`}>

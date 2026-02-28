@@ -13,12 +13,12 @@ async function main() {
     });
     console.log('---------------------------------------');
 
-    console.log('\n--- Current Doctors Specialization Strings ---');
-    const doctors = await prisma.doctor.findMany({
+    console.log('\n--- Current HealthStaff Specialization Strings ---');
+    const staff = await prisma.healthStaff.findMany({
         select: { specialization: true, specialtyId: true }
     });
 
-    const uniqueSpecs = [...new Set(doctors.map(d => d.specialization))];
+    const uniqueSpecs = [...new Set(staff.map(d => d.specialization))];
     uniqueSpecs.forEach(s => {
         console.log(`- specialization: ${s}`);
     });

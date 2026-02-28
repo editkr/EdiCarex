@@ -179,7 +179,7 @@ export default function PatientMedicalHistoryPage() {
                                             <TableHead>Fecha</TableHead>
                                             <TableHead>Código</TableHead>
                                             <TableHead>Diagnóstico</TableHead>
-                                            <TableHead>Doctor</TableHead>
+                                            <TableHead>Personal de Salud</TableHead>
                                             <TableHead>Estado</TableHead>
                                         </TableRow>
                                     </TableHeader>

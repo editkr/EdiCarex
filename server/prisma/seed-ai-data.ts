@@ -5,19 +5,19 @@ async function main() {
     console.log('--- INICIO DE INYECCIÓN DE DATOS IA EDICAREX ENTERPRISE ---');
 
     // 1. Obtener o crear entidades base
-    let doctor = await prisma.doctor.findFirst();
-    if (!doctor) {
-        console.log('Creando doctor base para estadísticas...');
+    let staff = await prisma.healthStaff.findFirst();
+    if (!staff) {
+        console.log('Creando personal base para estadísticas...');
         const user = await prisma.user.create({
             data: {
                 email: 'dr.ia@edicarex.com',
                 password: 'password_hashed',
                 firstName: 'Admin',
-                lastName: 'AI Doctor',
-                role: { connect: { name: 'Doctor' } }
+                lastName: 'AI Staff',
+                role: { connect: { name: 'Staff' } }
             }
         });
-        doctor = await prisma.doctor.create({
+        staff = await prisma.healthStaff.create({
             data: {
                 userId: user.id,
                 licenseNumber: 'AI-2026-X',
@@ -53,7 +53,7 @@ async function main() {
                 reason: 'Consulta Proyectada IA',
                 status: 'COMPLETED',
                 patientId: patient.id,
-                doctorId: doctor.id,
+                staffId: staff.id,
                 type: i % 10 === 0 ? 'EMERGENCY' : 'CONSULTATION'
             }
         });
@@ -74,7 +74,7 @@ async function main() {
                 total: amount * 1.18,
                 status: 'PAID',
                 patientId: patient.id,
-                doctorId: doctor.id
+                staffId: staff.id
             }
         });
     }

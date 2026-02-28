@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { patientsAPI, appointmentsAPI, emergencyAPI, laboratoryAPI, pharmacyAPI, aiAPI } from '@/services/api'
+import { patientsAPI, appointmentsAPI, emergencyAPI, laboratoryAPI, pharmacyAPI, aiAPI, sisAPI } from '@/services/api'
 import {
     Command,
     CommandEmpty,
@@ -31,6 +31,7 @@ import {
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { format } from 'date-fns'
+import { es } from 'date-fns/locale'
 import { useToast } from '@/components/ui/use-toast'
 import { usePermissions } from '@/hooks/usePermissions'
 import PatientModal from '@/components/modals/PatientModal'
@@ -162,14 +163,27 @@ export default function PatientProfilePage() {
         enabled: !!id,
     })
 
-    // Cargar historial de emergencias
+    // Cargar historial de urgencias (API original emergencyAPI)
     const { data: emergencyData, refetch: refetchEmergencies } = useQuery({
         queryKey: ['patient-emergency', id],
         queryFn: () => emergencyAPI.getPatientHistory(id!),
         enabled: !!id,
     })
 
-    // Cargar ordenes de laboratorio
+    // Cargar SIS Validation History
+    const { data: sisHistoryData } = useQuery({
+        queryKey: ['patient-sis', id],
+        queryFn: () => sisAPI.getHistory(id!),
+        enabled: !!id,
+    })
+
+    // Cargar MINSA Programs
+    const { data: minsaProgramsData } = useQuery({
+        queryKey: ['patient-minsa', id],
+        queryFn: () => patientsAPI.getMinsaPrograms(id!),
+        enabled: !!id,
+    })
+
     // Cargar ordenes de laboratorio
     const { data: labData, refetch: refetchLabOrders } = useQuery({
         queryKey: ['patient-lab', id],
@@ -243,6 +257,8 @@ export default function PatientProfilePage() {
 
     const medications = medicationsData?.data || []
     const documents = documentsData?.data || []
+    const sisHistory = sisHistoryData?.data || []
+    const minsaPrograms = minsaProgramsData?.data || []
 
     const calculateAge = (dateOfBirth: string) => {
         if (!dateOfBirth) return 'N/A'
@@ -337,7 +353,7 @@ export default function PatientProfilePage() {
                     </div>
                     <div style="margin-top: 50px; text-align: center; color: #64748b; font-size: 12px;">
                         <p>Documento generado el ${new Date().toLocaleString()}</p>
-                        <p>EdiCarex - Sistema de Gestión Hospitalaria</p>
+                        <p>${config?.hospitalName || 'Centro de Salud Jorge Chávez I-4'} - DIRESA PUNO</p>
                     </div>
                 </body>
                 </html>
@@ -548,6 +564,14 @@ export default function PatientProfilePage() {
                         <User className="h-4 w-4 mr-2" />
                         General
                     </TabsTrigger>
+                    <TabsTrigger value="sis">
+                        <Shield className="h-4 w-4 mr-2" />
+                        SIS
+                    </TabsTrigger>
+                    <TabsTrigger value="minsa">
+                        <Activity className="h-4 w-4 mr-2" />
+                        MINSA
+                    </TabsTrigger>
                     <TabsTrigger value="history">
                         <FileText className="h-4 w-4 mr-2" />
                         Historial
@@ -560,21 +584,9 @@ export default function PatientProfilePage() {
                         <Pill className="h-4 w-4 mr-2" />
                         Recetas
                     </TabsTrigger>
-                    <TabsTrigger value="lab">
-                        <FlaskConical className="h-4 w-4 mr-2" />
-                        Laboratorio
-                    </TabsTrigger>
                     <TabsTrigger value="emergency">
                         <AlertTriangle className="h-4 w-4 mr-2" />
-                        Emergencias
-                    </TabsTrigger>
-                    <TabsTrigger value="notes">
-                        <StickyNote className="h-4 w-4 mr-2" />
-                        Notas
-                    </TabsTrigger>
-                    <TabsTrigger value="files">
-                        <Paperclip className="h-4 w-4 mr-2" />
-                        Archivos
+                        Urgencias
                     </TabsTrigger>
                 </TabsList>
 
@@ -782,7 +794,7 @@ export default function PatientProfilePage() {
                                                             {format(new Date(apt.appointmentDate), 'MMM dd, yyyy HH:mm')}
                                                         </p>
                                                         <p className="text-xs text-muted-foreground mt-1">
-                                                            Dr. {apt.doctor?.user?.firstName || 'Desconocido'}
+                                                            Personal de Salud: {apt.staff?.user?.firstName || 'Desconocido'}
                                                         </p>
                                                     </div>
                                                     <span className="text-xs px-2 py-1 rounded-full bg-blue-100 text-blue-800">
@@ -815,7 +827,7 @@ export default function PatientProfilePage() {
                                                             {format(new Date(apt.appointmentDate), 'MMM dd, yyyy')}
                                                         </p>
                                                         <p className="text-xs text-muted-foreground mt-1">
-                                                            Dr. {apt.doctor?.user?.firstName || 'Desconocido'}
+                                                            Personal de Salud: {apt.staff?.user?.firstName || 'Desconocido'}
                                                         </p>
                                                     </div>
                                                     <span className="text-xs px-2 py-1 rounded-full bg-gray-100 text-gray-800">
@@ -1101,13 +1113,13 @@ export default function PatientProfilePage() {
                     </Card>
                 </TabsContent>
 
-                {/* Tab: Emergencies */}
+                {/* Tab: Urgencies */}
                 <TabsContent value="emergency">
                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between">
                             <div>
-                                <CardTitle>Registros de Emergencia ({emergencies.length})</CardTitle>
-                                <CardDescription>Visitas de emergencia previas</CardDescription>
+                                <CardTitle>Registros de Urgencia ({emergencies.length})</CardTitle>
+                                <CardDescription>Visitas de urgencia previas</CardDescription>
                             </div>
                             {hasPermission('EMERGENCY_CREATE') && (
                                 <Button
@@ -1116,13 +1128,13 @@ export default function PatientProfilePage() {
                                     className="bg-red-600 hover:bg-red-700 text-white shadow-sm transition-all hover:scale-105 active:scale-95"
                                 >
                                     <AlertTriangle className="h-4 w-4 mr-2" />
-                                    Nueva Emergencia
+                                    Nueva Urgencia
                                 </Button>
                             )}
                         </CardHeader>
                         <CardContent>
                             {emergencies.length === 0 ? (
-                                <p className="text-sm text-muted-foreground">No hay registros de emergencia</p>
+                                <p className="text-sm text-muted-foreground">No hay registros de urgencia</p>
                             ) : (
                                 <div className="space-y-3">
                                     {emergencies.map((em: any) => (
@@ -1152,7 +1164,7 @@ export default function PatientProfilePage() {
                                                 <div className="flex items-center gap-2">
                                                     <User className="h-3.5 w-3.5 text-slate-400" />
                                                     <span className="text-xs text-slate-600">
-                                                        {em.doctorName || 'Sin médico asignado'}
+                                                        Personal de Salud: {em.staffName || 'Sin personal asignado'}
                                                     </span>
                                                 </div>
                                                 <div className="flex items-center gap-2">
@@ -1191,12 +1203,82 @@ export default function PatientProfilePage() {
                     </Card>
                 </TabsContent>
 
+                {/* Tab: SIS Validation */}
+                <TabsContent value="sis">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Historial de Validación SIS</CardTitle>
+                            <CardDescription>Auditoría de validaciones en la plataforma de MINSA/SIS</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            {sisHistory.length === 0 ? (
+                                <p className="text-sm text-muted-foreground">No hay registros de validación SIS disponibles.</p>
+                            ) : (
+                                <div className="space-y-4">
+                                    {sisHistory.map((sh: any) => (
+                                        <div key={sh.id} className="p-4 border rounded-lg hover:bg-slate-50">
+                                            <div className="flex justify-between items-start">
+                                                <div>
+                                                    <Badge variant={sh.resultStatus === 'ACTIVE' ? 'default' : 'secondary'} className="mb-2">
+                                                        {sh.resultStatus === 'ACTIVE' ? 'SIS ACTIVO' : sh.resultStatus}
+                                                    </Badge>
+                                                    <h4 className="font-semibold text-sm">Respuesta: {sh.responseMessage}</h4>
+                                                    <p className="text-xs text-muted-foreground mt-1">
+                                                        Fecha: {format(new Date(sh.validationDate), 'dd MMM yyyy HH:mm', { locale: es })}
+                                                    </p>
+                                                </div>
+                                                <div className="text-right">
+                                                    <p className="text-sm font-medium">Validado por</p>
+                                                    <p className="text-xs text-muted-foreground">{sh.validatedBy || 'Sistema'}</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </CardContent>
+                    </Card>
+                </TabsContent>
+
+                {/* Tab: MINSA Programs */}
+                <TabsContent value="minsa">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Programas MINSA</CardTitle>
+                            <CardDescription>Participación e inscripción en programas de salud</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            {minsaPrograms.length === 0 ? (
+                                <p className="text-sm text-muted-foreground">El paciente no está adscrito a ningún programa MINSA activo.</p>
+                            ) : (
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    {minsaPrograms.map((mp: any) => (
+                                        <Card key={mp.id} className="border border-blue-100 bg-blue-50/20">
+                                            <CardHeader className="pb-2 flex flex-row items-center justify-between">
+                                                <CardTitle className="text-lg text-blue-800">{mp.program?.name || 'Programa'}</CardTitle>
+                                                <Activity className="h-5 w-5 text-blue-500" />
+                                            </CardHeader>
+                                            <CardContent className="text-sm">
+                                                <p className="line-clamp-2 text-muted-foreground mb-3">{mp.notes}</p>
+                                                <div className="flex justify-between text-xs font-semibold text-blue-700">
+                                                    <span>Última visita: {format(new Date(mp.visitDate), 'dd/MM/yyyy')}</span>
+                                                    <span>Próxima: {mp.nextAppointment ? format(new Date(mp.nextAppointment), 'dd/MM/yyyy') : 'N/A'}</span>
+                                                </div>
+                                            </CardContent>
+                                        </Card>
+                                    ))}
+                                </div>
+                            )}
+                        </CardContent>
+                    </Card>
+                </TabsContent>
+
                 {/* Tab: Notes */}
                 <TabsContent value="notes">
                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between">
                             <div>
-                                <CardTitle>Notas del Doctor</CardTitle>
+                                <CardTitle>Notas del Personal de Salud</CardTitle>
                                 <CardDescription>Notas clínicas y observaciones</CardDescription>
                             </div>
                             {hasPermission('MEDICAL_RECORDS_CREATE') && (
@@ -1220,7 +1302,7 @@ export default function PatientProfilePage() {
                                             <p className="text-sm text-slate-600 whitespace-pre-wrap">{note.notes}</p>
                                             <div className="mt-2 flex items-center gap-2">
                                                 <span className="text-xs bg-slate-100 text-slate-600 px-2 py-1 rounded-full">
-                                                    Dr. {note.doctor?.user?.firstName || 'Unknown'} {note.doctor?.user?.lastName || ''}
+                                                    Personal de Salud: {note.staff?.user?.firstName || 'Unknown'} {note.staff?.user?.lastName || ''}
                                                 </span>
                                             </div>
                                         </div>

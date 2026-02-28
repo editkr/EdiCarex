@@ -126,7 +126,7 @@ export class NotificationsService {
             where: { id: appointmentId },
             include: {
                 patient: true,
-                doctor: { include: { user: true } },
+                staff: { include: { user: true } },
             },
         });
 
@@ -139,7 +139,7 @@ export class NotificationsService {
                 channel: 'EMAIL',
                 recipient: appointment.patient.email || 'unknown',
                 subject: 'Recordatorio de Cita',
-                message: `Tiene una cita programada para el ${appointment.appointmentDate} con Dr. ${appointment.doctor.user.firstName} ${appointment.doctor.user.lastName}`,
+                message: `Tiene una cita programada para el ${appointment.appointmentDate} con ${appointment.staff.user.firstName} ${appointment.staff.user.lastName}`,
                 status: 'SENT',
                 sentAt: new Date(),
             },

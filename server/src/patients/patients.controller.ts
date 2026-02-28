@@ -271,4 +271,26 @@ export class PatientsController {
     addNote(@Param('id') id: string, @Body() data: any) {
         return this.patientsService.addNote(id, data);
     }
+
+    // ============================================
+    // VACCINES, ENCOUNTERS, PROGRAMS
+    // ============================================
+
+    @Get(':id/vaccinations')
+    @ApiOperation({ summary: 'Get patient vaccinations' })
+    getVaccinations(@Param('id') id: string) {
+        return this.patientsService.getVaccinations(id);
+    }
+
+    @Get(':id/encounters')
+    @ApiOperation({ summary: 'Get patient clinical encounters' })
+    getEncounters(@Param('id') id: string) {
+        return this.patientsService.getEncounters(id);
+    }
+
+    @Get(':id/minsa-programs')
+    @ApiOperation({ summary: 'Get patient MINSA program records' })
+    getMinsaPrograms(@Param('id') id: string) {
+        return this.patientsService.getMinsaPrograms(id);
+    }
 }

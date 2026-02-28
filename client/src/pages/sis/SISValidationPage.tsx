@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import {
@@ -9,12 +9,55 @@ import {
     ExternalLink,
     CheckCircle2,
     Clock,
-    HeartPulse
+    HeartPulse,
+    Loader2
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { useMutation } from '@tanstack/react-query';
+import { sisAPI } from '@/services/api';
+import { useToast } from '@/components/ui/use-toast';
 
 const SISValidationPage: React.FC = () => {
+    const { toast } = useToast();
+    const [dni, setDni] = useState('');
+    const [validationResult, setValidationResult] = useState<any>(null);
+
+    const { mutate: validateSIS, isPending } = useMutation({
+        mutationFn: async (documentNumber: string) => {
+            const res = await sisAPI.validate({ documentNumber, documentType: 'DNI' });
+            return res.data;
+        },
+        onSuccess: (data) => {
+            setValidationResult(data);
+            toast({
+                title: 'Validación Completada',
+                description: data.isActive ? 'El paciente tiene SIS Activo' : 'El paciente NO tiene SIS activo',
+                variant: data.isActive ? 'default' : 'destructive',
+            });
+        },
+        onError: (error: any) => {
+            toast({
+                title: 'Error de Validación',
+                description: error.response?.data?.message || 'No se pudo conectar con el servicio SIS',
+                variant: 'destructive',
+            });
+            setValidationResult(null);
+        }
+    });
+
+    const handleValidate = () => {
+        if (!dni || dni.length < 8) {
+            toast({
+                title: 'DNI Inválido',
+                description: 'Ingrese un DNI válido de 8 dígitos',
+                variant: 'destructive',
+            });
+            return;
+        }
+        validateSIS(dni);
+    };
+
     return (
         <div className="p-6 space-y-6">
             <div className="flex justify-between items-start">
@@ -28,7 +71,7 @@ const SISValidationPage: React.FC = () => {
                         Acreditación en tiempo real del Seguro Integral de Salud (C.S. Jorge Chávez)
                     </p>
                 </div>
-                <Button variant="outline" className="border-red-200 text-red-700 hover:bg-red-50 font-bold shadow-sm">
+                <Button variant="outline" className="border-red-200 text-red-700 hover:bg-red-50 font-bold shadow-sm" onClick={() => window.open('http://app1.sis.gob.pe/SisConsultaEnLinea/Consulta/frmConsultaEnLinea.aspx', '_blank')}>
                     <ExternalLink className="h-4 w-4 mr-2" />
                     Portal Acreditación
                 </Button>
@@ -52,16 +95,57 @@ const SISValidationPage: React.FC = () => {
                         <div className="flex w-full md:w-auto gap-3 bg-white/15 p-2 rounded-2xl border border-white/20 backdrop-blur-sm">
                             <Input
                                 placeholder="Ingrese DNI..."
+                                value={dni}
+                                onChange={(e) => setDni(e.target.value)}
                                 className="bg-white text-slate-900 placeholder:text-slate-400 w-full md:w-56 h-12 border-none font-bold text-lg rounded-xl focus-visible:ring-white/50"
+                                maxLength={8}
+                                onKeyDown={(e) => e.key === 'Enter' && handleValidate()}
                             />
-                            <Button className="bg-white text-red-700 hover:bg-slate-100 font-black px-8 h-12 rounded-xl shadow-lg border-none">
-                                <Search className="h-5 w-5 mr-3" />
+                            <Button
+                                className="bg-white text-red-700 hover:bg-slate-100 font-black px-8 h-12 rounded-xl shadow-lg border-none"
+                                onClick={handleValidate}
+                                disabled={isPending}
+                            >
+                                {isPending ? <Loader2 className="h-5 w-5 mr-3 animate-spin" /> : <Search className="h-5 w-5 mr-3" />}
                                 VALIDAR
                             </Button>
                         </div>
                     </div>
                 </CardContent>
             </Card>
+
+            {validationResult && (
+                <Card className={`border-t-4 ${validationResult.isActive ? 'border-t-emerald-500' : 'border-t-red-500'} shadow-lg animate-in fade-in slide-in-from-bottom-4`}>
+                    <CardHeader className="pb-3 border-b">
+                        <CardTitle className="flex items-center gap-2">
+                            {validationResult.isActive ? <CheckCircle2 className="h-6 w-6 text-emerald-500" /> : <FileWarning className="h-6 w-6 text-red-500" />}
+                            Resultado de Validación
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent className="pt-6">
+                        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                            <div>
+                                <p className="text-xs uppercase text-muted-foreground font-bold mb-1">Estado</p>
+                                <Badge className={validationResult.isActive ? 'bg-emerald-100 text-emerald-700 hover:bg-emerald-100' : 'bg-red-100 text-red-700 hover:bg-red-100'}>
+                                    {validationResult.isActive ? 'ACTIVO' : 'INACTIVO / NO AFILIADO'}
+                                </Badge>
+                            </div>
+                            <div>
+                                <p className="text-xs uppercase text-muted-foreground font-bold mb-1">Paciente</p>
+                                <p className="font-semibold">{validationResult.fullName || 'No Registrado'}</p>
+                            </div>
+                            <div>
+                                <p className="text-xs uppercase text-muted-foreground font-bold mb-1">Plan de Beneficios</p>
+                                <p className="font-semibold">{validationResult.plan || 'N/A'}</p>
+                            </div>
+                            <div>
+                                <p className="text-xs uppercase text-muted-foreground font-bold mb-1">Centro de Adscripción</p>
+                                <p className="font-semibold">{validationResult.establishment || 'N/A'}</p>
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
+            )}
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <Card className="lg:col-span-2 shadow-sm border-slate-100 overflow-hidden">

@@ -46,7 +46,7 @@ export class PharmacyService {
             const orders = await (this.prisma as any).pharmacyOrder.findMany({
                 include: {
                     medication: true,
-                    doctor: { include: { user: true } }, // To get doctor name
+                    staff: { include: { user: true } }, // To get staff name
                     patient: true
                 },
                 orderBy: { requestedAt: 'desc' }
@@ -56,7 +56,7 @@ export class PharmacyService {
                 id: order.id,
                 medicationName: order.medication?.name || 'Medicamento',
                 quantity: order.quantity,
-                requesterName: order.doctor?.user ? `Dr. ${order.doctor.user.lastName}` : 'Dr. Externo',
+                requesterName: order.staff?.user ? `${order.staff.user.lastName}` : 'Personal Externo',
                 patientName: order.patient ? `${order.patient.firstName} ${order.patient.lastName}` : 'Paciente Externo',
                 status: order.status, // PENDIENTE, APROBADO, RECHAZADO
                 requestedAt: order.requestedAt,

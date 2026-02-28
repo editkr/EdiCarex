@@ -30,14 +30,14 @@ import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { useToast } from '@/components/ui/use-toast'
-import { appointmentsAPI, doctorsAPI } from '@/services/api'
+import { appointmentsAPI, healthStaffAPI } from '@/services/api'
 import { Loader2, CalendarIcon } from 'lucide-react'
 import { Calendar } from '@/components/ui/calendar'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { cn } from '@/lib/utils'
 
 const appointmentSchema = z.object({
-    doctorId: z.string().min(1, 'El doctor es requerido'),
+    staffId: z.string().min(1, 'El personal de salud es requerido'),
     appointmentDate: z.date({
         required_error: "La fecha es requerida",
     }),
@@ -63,13 +63,13 @@ export default function PatientPortalAppointmentModal({
     patientId,
 }: PatientPortalAppointmentModalProps) {
     const { toast } = useToast()
-    const [doctors, setDoctors] = useState<any[]>([])
+    const [staff, setStaff] = useState<any[]>([])
     const [loadingResources, setLoadingResources] = useState(false)
 
     const form = useForm<AppointmentFormData>({
         resolver: zodResolver(appointmentSchema),
         defaultValues: {
-            doctorId: '',
+            staffId: '',
             type: 'CHECKUP',
             reason: '',
             symptoms: '',
@@ -79,9 +79,9 @@ export default function PatientPortalAppointmentModal({
 
     useEffect(() => {
         if (open) {
-            fetchDoctors()
+            fetchStaff()
             form.reset({
-                doctorId: '',
+                staffId: '',
                 type: 'CHECKUP',
                 reason: '',
                 symptoms: '',
@@ -90,16 +90,16 @@ export default function PatientPortalAppointmentModal({
         }
     }, [open, form])
 
-    const fetchDoctors = async () => {
+    const fetchStaff = async () => {
         try {
             setLoadingResources(true)
-            const doctorsRes = await doctorsAPI.getAll()
-            setDoctors(doctorsRes.data.data || [])
+            const staffRes = await healthStaffAPI.getAll()
+            setStaff(staffRes.data.data || [])
         } catch (error) {
-            console.error('Failed to load doctors', error)
+            console.error('Failed to load specialists', error)
             toast({
                 title: 'Error',
-                description: 'Error al cargar lista de doctores',
+                description: 'Error al cargar lista de especialistas',
                 variant: 'destructive',
             })
         } finally {
@@ -164,20 +164,20 @@ export default function PatientPortalAppointmentModal({
 
                         <FormField
                             control={form.control}
-                            name="doctorId"
+                            name="staffId"
                             render={({ field }) => (
                                 <FormItem>
                                     <FormLabel>Especialista</FormLabel>
                                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                                         <FormControl>
                                             <SelectTrigger>
-                                                <SelectValue placeholder="Seleccionar doctor" />
+                                                <SelectValue placeholder="Seleccionar especialista" />
                                             </SelectTrigger>
                                         </FormControl>
                                         <SelectContent>
-                                            {doctors.map((doc) => (
+                                            {staff.map((doc: any) => (
                                                 <SelectItem key={doc.id} value={doc.id}>
-                                                    Dr. {doc.user?.firstName} {doc.user?.lastName} ({doc.specialization})
+                                                    {doc.user?.firstName} {doc.user?.lastName} ({doc.specialization || 'General'})
                                                 </SelectItem>
                                             ))}
                                         </SelectContent>

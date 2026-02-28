@@ -390,10 +390,10 @@ export class AnalyticsService {
 
     async getAreaComparison(range?: string) {
         const startDate = this.getStartDate(range);
-        // Group revenue by doctor specialization using real paid invoices
+        // Group revenue by staff specialization using real paid invoices
         const specialties = await this.prisma.specialty.findMany({
             include: {
-                doctors: {
+                staff: {
                     include: {
                         invoices: {
                             where: { status: 'PAID', invoiceDate: { gte: startDate } },
@@ -410,12 +410,12 @@ export class AnalyticsService {
             let totalPatients = 0;
             let completedAppointments = 0;
 
-            spec.doctors.forEach(doc => {
-                totalRevenue += doc.invoices.reduce((sum, inv) => sum + Number(inv.total), 0);
-                totalPatients += doc._count.appointments;
+            spec.staff.forEach(s => {
+                totalRevenue += s.invoices.reduce((sum, inv) => sum + Number(inv.total), 0);
+                totalPatients += s._count.appointments;
                 // Since we don't have direct access to status count here, we assume completion based on existing metrics
                 // This is still better than a hardcoded 4.8
-                completedAppointments += doc._count.appointments; // Placeholder for real status filter if needed
+                completedAppointments += s._count.appointments; // Placeholder for real status filter if needed
             });
 
             // Calculate a pseudo-satisfaction based on real hospital throughput or a default high floor
@@ -616,9 +616,9 @@ export class AnalyticsService {
         return result;
     }
 
-    async getTopDoctors(range?: string) {
+    async getTopStaff(range?: string) {
         const startDate = this.getStartDate(range);
-        const doctors = await this.prisma.doctor.findMany({
+        const staff = await this.prisma.healthStaff.findMany({
             include: {
                 user: { select: { firstName: true, lastName: true } },
                 invoices: { where: { status: 'PAID', invoiceDate: { gte: startDate } }, select: { total: true } },
@@ -627,9 +627,9 @@ export class AnalyticsService {
             take: 5
         });
 
-        return doctors.map(doc => {
-            const totalAppointments = doc._count.appointments;
-            const revenue = doc.invoices.reduce((sum, inv) => sum + Number(inv.total), 0);
+        return staff.map(s => {
+            const totalAppointments = s._count.appointments;
+            const revenue = s.invoices.reduce((sum, inv) => sum + Number(inv.total), 0);
 
             // Calculate real satisfaction based on completion and volume
             // If they have many appointments and high revenue, they likely have higher satisfaction
@@ -638,7 +638,7 @@ export class AnalyticsService {
                 : 4.5;
 
             return {
-                name: `${doc.user.firstName} ${doc.user.lastName}`,
+                name: `${s.user.firstName} ${s.user.lastName}`,
                 revenue: revenue,
                 appointments: totalAppointments,
                 satisfaction: Number(satisfaction.toFixed(1))
@@ -647,7 +647,7 @@ export class AnalyticsService {
     }
 
     async getDashboardData(range?: string) {
-        const [appointments, patients, revenue, todayAppointmentsCount, topDoctors] = await Promise.all([
+        const [appointments, patients, revenue, todayAppointmentsCount, topStaff] = await Promise.all([
             this.getAppointmentsByPriority(range),
             this.getPatientStats(range),
             this.getRevenueStats(range),
@@ -659,7 +659,7 @@ export class AnalyticsService {
                     },
                 },
             }),
-            this.getTopDoctors(range)
+            this.getTopStaff(range)
         ]);
 
         return {
@@ -667,7 +667,7 @@ export class AnalyticsService {
             patients,
             revenue,
             todayAppointments: todayAppointmentsCount,
-            topDoctors
+            topStaff
         };
     }
 }

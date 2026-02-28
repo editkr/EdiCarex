@@ -96,7 +96,7 @@ const RESOURCE_LABELS: Record<string, string> = {
     'auth': 'SEGURIDAD',
     'pharmacy-orders': 'FARMACIA',
     'emergency': 'EMERGENCIAS',
-    'doctors': 'MÉDICOS',
+    'doctors': 'PERSONAL DE SALUD',
     'users': 'USUARIOS'
 };
 
@@ -104,7 +104,8 @@ const FIELD_LABELS: Record<string, string> = {
     'notes': 'Notas/Observaciones',
     'status': 'Estado',
     'testId': 'ID de Prueba',
-    'doctorId': 'ID de Médico',
+    'staffId': 'ID de Personal',
+    'doctorId': 'ID de Personal',
     'priority': 'Prioridad',
     'orderDate': 'Fecha de Orden',
     'patientId': 'ID de Paciente',
@@ -391,7 +392,7 @@ export default function AuditLogsPage() {
                                     <SelectItem value="CREATE_LAB_ORDER">Orden Laboratorio</SelectItem>
                                     <SelectItem value="CREATE_EMERGENCY_CASE">Ingreso Emergencia</SelectItem>
                                     <SelectItem value="APPROVE_PHARMACY_ORDER">Aprobar Receta</SelectItem>
-                                    <SelectItem value="CREATE_DOCTOR">Registrar Médico</SelectItem>
+                                    <SelectItem value="CREATE_DOCTOR">Registrar Personal</SelectItem>
                                     <SelectItem value="CREATE_USER">Crear Usuario</SelectItem>
                                     <SelectItem value="ADD_CLINICAL_NOTE">Nota Clínica</SelectItem>
                                 </SelectContent>
@@ -407,7 +408,7 @@ export default function AuditLogsPage() {
                                     <SelectItem value="laboratory">Laboratorio</SelectItem>
                                     <SelectItem value="pharmacy-orders">Farmacia</SelectItem>
                                     <SelectItem value="emergency">Emergencias</SelectItem>
-                                    <SelectItem value="doctors">Médicos</SelectItem>
+                                    <SelectItem value="doctors">Personal de Salud</SelectItem>
                                     <SelectItem value="users">Usuarios</SelectItem>
                                     <SelectItem value="auth">Seguridad</SelectItem>
                                 </SelectContent>

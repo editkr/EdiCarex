@@ -57,7 +57,7 @@ import {
 } from "@/components/ui/alert-dialog"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { patientsAPI, doctorsAPI, laboratoryAPI } from '@/services/api'
+import { patientsAPI, healthStaffAPI, laboratoryAPI } from '@/services/api'
 import { useOrganization } from '@/contexts/OrganizationContext'
 import { useToast } from '@/components/ui/use-toast'
 import ResultEntryForm from './components/ResultEntryForm'
@@ -98,12 +98,12 @@ export default function LaboratoryPage() {
     const [viewingReport, setViewingReport] = useState<any>(null)
 
     const [patients, setPatients] = useState<any[]>([])
-    const [doctors, setDoctors] = useState<any[]>([])
+    const [staff, setStaff] = useState<any[]>([])
     const [tests, setTests] = useState<any[]>([])
 
     const [formData, setFormData] = useState({
         patientId: '',
-        doctorId: '',
+        staffId: '',
         testType: '',
         priority: 'NORMAL',
         notes: ''
@@ -127,16 +127,16 @@ export default function LaboratoryPage() {
         try {
             const [pRes, dRes, tRes] = await Promise.all([
                 patientsAPI.getAll(),
-                doctorsAPI.getAll(),
+                healthStaffAPI.getAll(),
                 laboratoryAPI.getTests()
             ])
 
             const patientsList = Array.isArray(pRes.data) ? pRes.data : (pRes.data?.data || [])
-            const doctorsList = Array.isArray(dRes.data) ? dRes.data : (dRes.data?.data || [])
+            const staffList = Array.isArray(dRes.data) ? dRes.data : (dRes.data?.data || [])
             const testsList = Array.isArray(tRes.data) ? tRes.data : (tRes.data?.data || [])
 
             setPatients(patientsList)
-            setDoctors(doctorsList)
+            setStaff(staffList)
             setTests(testsList)
         } catch (error) {
             console.error("Error loading dropdowns", error)
@@ -200,7 +200,7 @@ export default function LaboratoryPage() {
         setSelectedOrder(order)
         setFormData({
             patientId: order.patientId,
-            doctorId: order.doctorId,
+            staffId: order.staffId,
             testType: order.testId || '',
             priority: order.priority,
             notes: order.notes || ''
@@ -429,7 +429,7 @@ export default function LaboratoryPage() {
                         <div className="relative flex-1 w-full md:w-64">
                             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-zinc-500" />
                             <Input
-                                placeholder="Buscar por paciente, examen o doctor..."
+                                placeholder="Buscar por paciente, examen o personal..."
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
                                 className="pl-9 bg-zinc-900 border-zinc-800 focus:ring-red-500"
@@ -511,7 +511,7 @@ export default function LaboratoryPage() {
                                                                 : 'Anónimo'}
                                                         </p>
                                                         <p className="text-sm text-muted-foreground">
-                                                            Ref: Dr. {order.doctor?.user?.lastName || 'Asignado'}
+                                                            Personal de Salud: {order.staff?.user?.lastName || 'Asignado'}
                                                         </p>
                                                     </div>
                                                 </TableCell>

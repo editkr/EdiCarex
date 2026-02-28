@@ -59,8 +59,8 @@ interface ReferralModalProps {
     news2Score: number
     isCritical: boolean
     initialWard: string
-    doctorName: string
-    doctorSpecialty: string
+    staffName: string
+    staffSpecialty: string
     onSuccess: () => void
 }
 
@@ -73,8 +73,8 @@ export default function ReferralModal({
     news2Score,
     isCritical,
     initialWard,
-    doctorName,
-    doctorSpecialty,
+    staffName,
+    staffSpecialty,
     onSuccess
 }: ReferralModalProps) {
     const { toast } = useToast()
@@ -167,11 +167,11 @@ export default function ReferralModal({
                         </DialogTitle>
                         <div className="mt-2 flex items-center gap-3 p-2 rounded-lg bg-zinc-800/30 border border-zinc-700/30">
                             <div className="h-8 w-8 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold text-xs">
-                                {doctorName?.split(' ').pop()?.charAt(0) || 'D'}
+                                {staffName?.split(' ').pop()?.charAt(0) || 'P'}
                             </div>
                             <div>
-                                <p className="text-[10px] text-zinc-500 uppercase tracking-wider font-bold">Médico que Refiere</p>
-                                <p className="text-xs font-semibold text-zinc-200">{doctorName} • <span className="text-primary/70">{doctorSpecialty}</span></p>
+                                <p className="text-[10px] text-zinc-500 uppercase tracking-wider font-bold">Personal que Refiere</p>
+                                <p className="text-xs font-semibold text-zinc-200">{staffName} • <span className="text-primary/70">{staffSpecialty}</span></p>
                             </div>
                         </div>
                         <DialogDescription className="text-zinc-400 mt-3">

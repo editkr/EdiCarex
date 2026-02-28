@@ -41,10 +41,10 @@ export default function PatientAppointmentsPage() {
     const [activeTab, setActiveTab] = useState('upcoming')
 
     // New Appointment State
-    const [doctors, setDoctors] = useState<any[]>([])
+    const [staff, setStaff] = useState<any[]>([])
     const [showNewAppointment, setShowNewAppointment] = useState(false)
     const [newAppointment, setNewAppointment] = useState({
-        doctorId: '',
+        staffId: '',
         date: '',
         time: '',
         reason: '',
@@ -57,24 +57,24 @@ export default function PatientAppointmentsPage() {
     useEffect(() => {
         if (user.patientId) {
             loadAppointments()
-            loadDoctors()
+            loadStaff()
         }
     }, [])
 
-    const loadDoctors = async () => {
+    const loadStaff = async () => {
         try {
-            // Using doctorsAPI imported from api.ts (need to import it)
-            // Assuming doctorsAPI is available and imported
-            const res = await import('@/services/api').then(m => m.doctorsAPI.getAll())
-            setDoctors(res.data.data || [])
+            // Using staffAPI imported from api.ts (need to import it)
+            // Assuming staffAPI is available and imported
+            const res = await import('@/services/api').then(m => m.healthStaffAPI.getAll())
+            setStaff(res.data.data || [])
         } catch (error) {
-            console.error("Error loading doctors", error)
+            console.error("Error loading staff", error)
         }
     }
 
     const handleCreateAppointment = async () => {
         try {
-            if (!newAppointment.doctorId || !newAppointment.date || !newAppointment.time || !newAppointment.reason) {
+            if (!newAppointment.staffId || !newAppointment.date || !newAppointment.time || !newAppointment.reason) {
                 toast({ title: 'Error', description: 'Por favor complete todos los campos', variant: 'destructive' })
                 return
             }
@@ -83,7 +83,7 @@ export default function PatientAppointmentsPage() {
 
             await appointmentsAPI.create({
                 patientId: user.patientId,
-                doctorId: newAppointment.doctorId,
+                staffId: newAppointment.staffId,
                 appointmentDate: appointmentDate.toISOString(),
                 time: newAppointment.time,
                 reason: newAppointment.reason,
@@ -93,7 +93,7 @@ export default function PatientAppointmentsPage() {
 
             toast({ title: 'Cita agendada', description: 'Tu cita ha sido programada exitosamente.' })
             setShowNewAppointment(false)
-            setNewAppointment({ doctorId: '', date: '', time: '', reason: '', type: 'CHECKUP' })
+            setNewAppointment({ staffId: '', date: '', time: '', reason: '', type: 'CHECKUP' })
             loadAppointments()
         } catch (error) {
             toast({ title: 'Error', description: 'No se pudo agendar la cita', variant: 'destructive' })
@@ -212,7 +212,7 @@ export default function PatientAppointmentsPage() {
                                                 </div>
                                                 <div>
                                                     <p className="font-semibold">
-                                                        Dr. {apt.doctor?.user?.firstName} {apt.doctor?.user?.lastName}
+                                                        Personal de Salud: {apt.staff?.user?.firstName} {apt.staff?.user?.lastName}
                                                     </p>
                                                     <p className="text-gray-500 text-sm">{apt.reason}</p>
                                                     <div className="flex items-center gap-4 mt-1 text-sm text-gray-600">
@@ -276,7 +276,7 @@ export default function PatientAppointmentsPage() {
                                 <TableHeader>
                                     <TableRow>
                                         <TableHead>Fecha</TableHead>
-                                        <TableHead>Doctor</TableHead>
+                                        <TableHead>Personal de Salud</TableHead>
                                         <TableHead>Motivo</TableHead>
                                         <TableHead>Estado</TableHead>
                                         <TableHead>Acciones</TableHead>
@@ -289,7 +289,7 @@ export default function PatientAppointmentsPage() {
                                                 {format(new Date(apt.appointmentDate), 'PPP', { locale: es })}
                                             </TableCell>
                                             <TableCell>
-                                                Dr. {apt.doctor?.user?.firstName} {apt.doctor?.user?.lastName}
+                                                Personal de Salud: {apt.staff?.user?.firstName} {apt.staff?.user?.lastName}
                                             </TableCell>
                                             <TableCell>{apt.reason}</TableCell>
                                             <TableCell>{getStatusBadge(apt.status)}</TableCell>
@@ -327,10 +327,10 @@ export default function PatientAppointmentsPage() {
                                 <User className="h-12 w-12 text-gray-400" />
                                 <div>
                                     <p className="font-semibold">
-                                        Dr. {selectedAppointment.doctor?.user?.firstName} {selectedAppointment.doctor?.user?.lastName}
+                                        Personal de Salud: {selectedAppointment.staff?.user?.firstName} {selectedAppointment.staff?.user?.lastName}
                                     </p>
                                     <p className="text-sm text-gray-500">
-                                        {selectedAppointment.doctor?.specialty?.name || 'Medicina General'}
+                                        {selectedAppointment.healthStaff?.specialty?.name || selectedAppointment.doctor?.specialty?.name || 'Medicina General'}
                                     </p>
                                 </div>
                             </div>

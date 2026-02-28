@@ -12,9 +12,52 @@ import {
     Plus
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useQuery, useMutation } from '@tanstack/react-query';
+import { hisAPI } from '@/services/api';
+import { Skeleton } from '@/components/ui/skeleton';
+import { format } from 'date-fns';
+import { es } from 'date-fns/locale';
+import { useToast } from '@/components/ui/use-toast';
 
 const HISReportingPage: React.FC = () => {
     const navigate = useNavigate();
+    const { toast } = useToast();
+
+    const { data: stats, isLoading: isLoadingStats } = useQuery({
+        queryKey: ['his-stats'],
+        queryFn: async () => {
+            const response = await hisAPI.getStats();
+            return response.data;
+        }
+    });
+
+    const { data: hisRecords, isLoading: isLoadingRecords } = useQuery({
+        queryKey: ['his-records'],
+        queryFn: async () => {
+            const response = await hisAPI.getAll();
+            return response.data;
+        }
+    });
+
+    const { mutate: exportHis, isPending: isExporting } = useMutation({
+        mutationFn: async () => {
+            const response = await hisAPI.exportCsv();
+            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', `his_export_${format(new Date(), 'yyyyMMdd')}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            link.parentNode?.removeChild(link);
+        },
+        onSuccess: () => {
+            toast({ title: 'Éxito', description: 'Trama HIS exportada correctamente.' });
+        },
+        onError: () => {
+            toast({ title: 'Error', description: 'Ocurrió un error al exportar la trama HIS.', variant: 'destructive' });
+        }
+    });
+
     return (
         <div className="p-6 space-y-6">
             <div className="flex justify-between items-start">
@@ -25,7 +68,7 @@ const HISReportingPage: React.FC = () => {
                     </p>
                 </div>
                 <div className="flex gap-2">
-                    <Button variant="outline">
+                    <Button variant="outline" onClick={() => window.location.reload()}>
                         <RefreshCcw className="h-4 w-4 mr-2" />
                         Sincronizar Datos
                     </Button>
@@ -47,13 +90,15 @@ const HISReportingPage: React.FC = () => {
                 <Card className="bg-gradient-to-br from-indigo-500 to-indigo-600 text-white border-none shadow-lg">
                     <CardHeader className="pb-2">
                         <CardTitle className="text-xs font-medium uppercase opacity-80 flex items-center justify-between text-white">
-                            Registros Mensuales
+                            Registros Totales
                             <Database className="h-4 w-4" />
                         </CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <div className="text-3xl font-bold">1,450</div>
-                        <p className="text-[10px] opacity-70 mt-1">Lista para exportación de Febrero</p>
+                        <div className="text-3xl font-bold">
+                            {isLoadingStats ? <Skeleton className="h-9 w-16 bg-indigo-400" /> : stats?.totalRecords || 0}
+                        </div>
+                        <p className="text-[10px] opacity-70 mt-1">Lista para exportación</p>
                     </CardContent>
                 </Card>
                 <Card>
@@ -69,11 +114,13 @@ const HISReportingPage: React.FC = () => {
                 </Card>
                 <Card>
                     <CardHeader className="pb-1">
-                        <CardTitle className="text-sm font-medium text-red-600">Errores de Trama</CardTitle>
+                        <CardTitle className="text-sm font-medium text-amber-600">Pacientes Atendidos</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold text-red-500">2</div>
-                        <p className="text-[10px] text-muted-foreground mt-1">DNI inválidos detectados</p>
+                        <div className="text-2xl font-bold text-amber-500">
+                            {isLoadingStats ? <Skeleton className="h-8 w-12" /> : stats?.uniquePatients || 0}
+                        </div>
+                        <p className="text-[10px] text-muted-foreground mt-1">Pacientes únicos con HIS</p>
                     </CardContent>
                 </Card>
                 <Card>
@@ -97,7 +144,7 @@ const HISReportingPage: React.FC = () => {
                         <CardDescription>Genere archivos compatibles con los sistemas nacionales</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                        <div className="flex items-center justify-between p-4 border rounded-xl hover:bg-slate-50 transition-colors cursor-pointer group">
+                        <div className="flex items-center justify-between p-4 border rounded-xl hover:bg-slate-50 transition-colors cursor-pointer group" onClick={() => exportHis()}>
                             <div className="flex items-center gap-3">
                                 <FileSpreadsheet className="h-8 w-8 text-emerald-600" />
                                 <div>
@@ -105,11 +152,11 @@ const HISReportingPage: React.FC = () => {
                                     <p className="text-xs text-muted-foreground">Formato .txt / .csv para SIH-MINSA</p>
                                 </div>
                             </div>
-                            <Button variant="ghost" size="icon" className="group-hover:text-emerald-600">
-                                <Download className="h-5 w-5" />
+                            <Button variant="ghost" size="icon" className="group-hover:text-emerald-600" disabled={isExporting}>
+                                {isExporting ? <span className="animate-spin">⏳</span> : <Download className="h-5 w-5" />}
                             </Button>
                         </div>
-                        <div className="flex items-center justify-between p-4 border rounded-xl hover:bg-slate-50 transition-colors cursor-pointer group">
+                        <div className="flex items-center justify-between p-4 border rounded-xl hover:bg-slate-50 transition-colors cursor-pointer group" onClick={() => toast({ title: 'Generando PDF', description: 'El reporte está siendo generado...' })}>
                             <div className="flex items-center gap-3">
                                 <FileText className="h-8 w-8 text-blue-600" />
                                 <div>
@@ -126,21 +173,32 @@ const HISReportingPage: React.FC = () => {
 
                 <Card>
                     <CardHeader>
-                        <CardTitle>Historial de Envíos</CardTitle>
-                        <CardDescription>Validación y confirmación de recepción en Red San Román</CardDescription>
+                        <CardTitle>Historial de Envíos y Registros HIS</CardTitle>
+                        <CardDescription>Últimos registros grabados en el sistema HIS local</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <div className="space-y-4">
-                            {[1, 2, 3].map((i) => (
-                                <div key={i} className="flex items-center gap-4 text-sm pb-4 border-b last:border-0 border-slate-100">
-                                    <div className="h-2 w-2 rounded-full bg-emerald-500"></div>
-                                    <div className="flex-1">
-                                        <p className="font-medium text-slate-900">Envío Trama HIS - Enero 2024</p>
-                                        <p className="text-xs text-muted-foreground">Enviado por Admin el 05/02/2024</p>
-                                    </div>
-                                    <Button variant="link" size="sm" className="text-indigo-600">Ver Ticket</Button>
+                        <div className="space-y-4 max-h-[300px] overflow-y-auto pr-2">
+                            {isLoadingRecords ? (
+                                <div className="space-y-3">
+                                    <Skeleton className="h-10 w-full" />
+                                    <Skeleton className="h-10 w-full" />
                                 </div>
-                            ))}
+                            ) : hisRecords?.data?.length > 0 ? (
+                                hisRecords.data.map((record: any) => (
+                                    <div key={record.id} className="flex items-center gap-4 text-sm pb-4 border-b last:border-0 border-slate-100">
+                                        <div className="h-2 w-2 rounded-full bg-emerald-500"></div>
+                                        <div className="flex-1">
+                                            <p className="font-medium text-slate-900">Registro HIS - Paciente DNI: {record.patient?.documentNumber}</p>
+                                            <p className="text-xs text-muted-foreground">Diagnóstico Principal: {record.diagnoses[0]?.code}</p>
+                                        </div>
+                                        <div className="text-xs text-muted-foreground">
+                                            {format(new Date(record.attentionDate), "dd MMM HH:mm", { locale: es })}
+                                        </div>
+                                    </div>
+                                ))
+                            ) : (
+                                <p className="text-sm text-muted-foreground text-center py-4">No hay registros HIS grabados.</p>
+                            )}
                         </div>
                     </CardContent>
                 </Card>

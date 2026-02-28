@@ -6,7 +6,7 @@ import { PrismaModule } from './prisma/prisma.module';
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 import { PatientsModule } from './patients/patients.module';
-import { DoctorsModule } from './doctors/doctors.module';
+import { HealthStaffModule } from './health-staff/health-staff.module';
 import { AppointmentsModule } from './appointments/appointments.module';
 import { AiModule } from './ai/ai.module';
 import { PharmacyModule } from './pharmacy/pharmacy.module';
@@ -33,6 +33,11 @@ import { ProgramasMinsaModule } from './programas-minsa/programas-minsa.module';
 import { EncountersModule } from './encounters/encounters.module';
 import { CommonModule } from './common/common.module';
 import { ThrottlerGuard } from '@nestjs/throttler';
+import { ReferralsModule } from './referrals/referrals.module';
+import { HisModule } from './his/his.module';
+import { EpidemiologyModule } from './epidemiology/epidemiology.module';
+import { SisModule } from './sis/sis.module';
+import { ObservationRoomModule } from './observation-room/observation-room.module';
 
 
 @Module({
@@ -59,7 +64,7 @@ import { ThrottlerGuard } from '@nestjs/throttler';
         AuthModule,
         UsersModule,
         PatientsModule,
-        DoctorsModule,
+        HealthStaffModule,
         AppointmentsModule,
         PharmacyModule,
         LaboratoryModule,
@@ -85,6 +90,11 @@ import { ThrottlerGuard } from '@nestjs/throttler';
         ProgramasMinsaModule,
         EncountersModule,
         CommonModule,
+        ReferralsModule,
+        HisModule,
+        EpidemiologyModule,
+        SisModule,
+        ObservationRoomModule,
     ],
     controllers: [HealthController],
     providers: [

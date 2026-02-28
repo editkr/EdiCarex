@@ -79,28 +79,28 @@ const menuSections: MenuSection[] = [
                 icon: Users,
                 label: 'Pacientes',
                 path: '/patients',
-                roles: ['ADMIN', 'DOCTOR', 'LAB', 'PHARMACY', 'RECEPTIONIST'],
+                roles: ['ADMIN', 'STAFF', 'LAB', 'PHARMACY', 'RECEPTIONIST'],
                 permission: 'PATIENTS_VIEW'
             },
             {
                 icon: Stethoscope,
                 label: 'Personal de Salud',
                 path: '/health-staff',
-                roles: ['ADMIN', 'DOCTOR', 'RECEPTIONIST', 'MANAGEMENT', 'AUDIT'],
+                roles: ['ADMIN', 'STAFF', 'RECEPTIONIST', 'MANAGEMENT', 'AUDIT'],
                 permission: 'STAFF_VIEW'
             },
             {
                 icon: Calendar,
                 label: 'Citas',
                 path: '/appointments',
-                roles: ['ADMIN', 'DOCTOR', 'RECEPTIONIST', 'MANAGEMENT'],
+                roles: ['ADMIN', 'STAFF', 'RECEPTIONIST', 'MANAGEMENT'],
                 permission: 'APPOINTMENTS_VIEW'
             },
             {
                 icon: Clock,
                 label: 'Sala de Espera',
                 path: '/waiting-room',
-                roles: ['ADMIN', 'DOCTOR', 'RECEPTIONIST', 'MANAGEMENT'],
+                roles: ['ADMIN', 'STAFF', 'RECEPTIONIST', 'MANAGEMENT'],
                 permission: 'WAITING_VIEW'
             },
         ],
@@ -113,7 +113,7 @@ const menuSections: MenuSection[] = [
                 icon: AlertTriangle,
                 label: 'Urgencias',
                 path: '/urgencies',
-                roles: ['ADMIN', 'DOCTOR', 'NURSE', 'MANAGEMENT'],
+                roles: ['ADMIN', 'STAFF', 'NURSE', 'MANAGEMENT'],
                 permission: 'EMERGENCY_VIEW'
             },
             {
@@ -127,7 +127,7 @@ const menuSections: MenuSection[] = [
                 icon: Bed,
                 label: 'Sala de Observación',
                 path: '/observation-room',
-                roles: ['ADMIN', 'DOCTOR', 'RECEPTIONIST', 'HR', 'MANAGEMENT', 'NURSE'],
+                roles: ['ADMIN', 'STAFF', 'RECEPTIONIST', 'HR', 'MANAGEMENT', 'NURSE'],
                 permission: 'BEDS_VIEW'
             },
             {
@@ -141,14 +141,14 @@ const menuSections: MenuSection[] = [
                 icon: ClipboardList,
                 label: 'Prog. MINSA',
                 path: '/programas-minsa',
-                roles: ['ADMIN', 'DOCTOR', 'NURSE', 'MANAGEMENT'],
+                roles: ['ADMIN', 'STAFF', 'NURSE', 'MANAGEMENT'],
                 permission: 'PROGRAMS_VIEW'
             },
             {
                 icon: FileSymlink,
                 label: 'Referencias',
                 path: '/referral-system',
-                roles: ['ADMIN', 'DOCTOR', 'RECEPTIONIST'],
+                roles: ['ADMIN', 'STAFF', 'RECEPTIONIST'],
                 permission: 'REFERRAL_VIEW'
             },
             {
@@ -162,7 +162,7 @@ const menuSections: MenuSection[] = [
                 icon: FlaskConical,
                 label: 'Laboratorio',
                 path: '/laboratory',
-                roles: ['ADMIN', 'DOCTOR', 'LAB', 'MANAGEMENT', 'NURSE'],
+                roles: ['ADMIN', 'STAFF', 'LAB', 'MANAGEMENT', 'NURSE'],
                 permission: 'LAB_VIEW'
             },
         ],
@@ -175,21 +175,21 @@ const menuSections: MenuSection[] = [
                 icon: FileText,
                 label: 'Registro HIS',
                 path: '/his-reporting',
-                roles: ['ADMIN', 'DOCTOR', 'NURSE'],
+                roles: ['ADMIN', 'STAFF', 'NURSE'],
                 permission: 'HIS_VIEW'
             },
             {
                 icon: Video,
                 label: 'Telesalud',
                 path: '/telemedicine',
-                roles: ['ADMIN', 'DOCTOR'],
+                roles: ['ADMIN', 'STAFF'],
                 permission: 'TELEMEDICINE_VIEW'
             },
             {
                 icon: Microscope,
                 label: 'Epidemiología',
                 path: '/epidemiology',
-                roles: ['ADMIN', 'DOCTOR', 'NURSE', 'MANAGEMENT'],
+                roles: ['ADMIN', 'STAFF', 'NURSE', 'MANAGEMENT'],
                 permission: 'EPIDEMIO_VIEW'
             },
             {
@@ -216,7 +216,7 @@ const menuSections: MenuSection[] = [
                 icon: FileText,
                 label: 'Reportes',
                 path: '/reports',
-                roles: ['ADMIN', 'DOCTOR', 'LAB', 'PHARMACY', 'HR', 'MANAGEMENT', 'BILLING', 'AUDIT'],
+                roles: ['ADMIN', 'STAFF', 'LAB', 'PHARMACY', 'HR', 'MANAGEMENT', 'BILLING', 'AUDIT'],
                 permission: 'REPORTS_VIEW'
             },
             {
@@ -257,7 +257,7 @@ const menuSections: MenuSection[] = [
                 icon: AILogoIcon,
                 label: 'IA Médica',
                 path: '/ai',
-                roles: ['ADMIN', 'DOCTOR', 'LAB'],
+                roles: ['ADMIN', 'STAFF', 'LAB'],
                 permission: 'AI_USE'
             },
         ],

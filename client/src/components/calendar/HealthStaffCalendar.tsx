@@ -10,7 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { useToast } from '@/components/ui/use-toast'
 import { appointmentsAPI } from '@/services/api'
-import './DoctorCalendar.css'
+import './HealthStaffCalendar.css'
 
 const locales = {
     'es': es,
@@ -27,8 +27,8 @@ const localizer = dateFnsLocalizer({
 // @ts-ignore
 const DnDCalendar = withDragAndDrop(Calendar)
 
-interface DoctorCalendarProps {
-    doctorId: string
+interface HealthStaffCalendarProps {
+    staffId: string
     appointments: any[]
     onRefresh: () => void
 }
@@ -48,7 +48,7 @@ const messages = {
     noEventsInRange: 'No hay eventos en este rango',
 }
 
-export default function DoctorCalendar({ doctorId, appointments, onRefresh }: DoctorCalendarProps) {
+export default function HealthStaffCalendar({ staffId, appointments, onRefresh }: HealthStaffCalendarProps) {
     const { toast } = useToast()
     const [view, setView] = useState<View>('week')
 
@@ -205,7 +205,7 @@ export default function DoctorCalendar({ doctorId, appointments, onRefresh }: Do
                 </div>
             </CardHeader>
             <CardContent>
-                <div className="doctor-calendar" style={{ height: '600px' }}>
+                <div className="staff-calendar" style={{ height: '600px' }}>
                     {/* @ts-ignore */}
                     <DnDCalendar
                         localizer={localizer}

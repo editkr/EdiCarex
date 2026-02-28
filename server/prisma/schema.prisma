@@ -40,8 +40,8 @@ model User {
   roleId String
   role   Role   @relation(fields: [roleId], references: [id])
 
-  // User can be a doctor
-  doctor  Doctor?
+  // User can be a health staff member
+  healthStaff  HealthStaff?
   // User can be a patient
   patient Patient?
 
@@ -244,6 +244,11 @@ model Patient {
   updatedAt         DateTime  @updatedAt
   deletedAt         DateTime?
 
+  // SIS Expanded Data
+  sisCode           String?
+  sisStatus         String    @default("NOT_AFFILIATED") // ACTIVO, INACTIVO, NOT_AFFILIATED
+  sisValidatedAt    DateTime?
+
   // Relations
   userId         String?         @unique
   user           User?           @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -265,11 +270,16 @@ model Patient {
   medications    PatientMedication[]
   diagnoses      PatientDiagnosis[]
 
-  // Módulos I-3
+  // Módulos I-3 / I-4
   triages            Triage[]
   vaccinations       Vaccination[]
   minsaProgramRecords MinsaProgramRecord[]
   observationStretcher ObservationStretcher?
+  
+  referralRecords    ReferralRecord[]
+  hisRecords         HISRecord[]
+  epidemiologyReports EpidemiologyReport[]
+  sisValidationLogs   SISValidationLog[]
 
   @@index([firstName, lastName])
   @@index([phone])
@@ -365,7 +375,7 @@ model PatientMedication {
   endDate      DateTime?
   
   prescribedById String?
-  prescribedBy   Doctor?   @relation(fields: [prescribedById], references: [id])
+  prescribedBy   HealthStaff?   @relation(fields: [prescribedById], references: [id])
   
   status       String?     @default("ACTIVE") // ACTIVE, INACTIVE
   isActive     Boolean     @default(true)
@@ -406,17 +416,20 @@ model Specialty {
   updatedAt   DateTime @updatedAt
 
   // Relations
-  doctors Doctor[]
+  staff       HealthStaff[]
 
   @@map("specialties")
 }
 
-model Doctor {
+model HealthStaff {
   id              String    @id @default(uuid())
   licenseNumber   String    @unique
   specialization  String?
   yearsExperience Int?
   consultationFee Decimal   @default(0) @db.Decimal(10, 2)
+  contractType    String?   
+  profession      String?   
+  minsaProgram    String?   
   bio             String?
   isAvailable     Boolean   @default(true)
   createdAt       DateTime  @default(now())
@@ -430,21 +443,22 @@ model Doctor {
   specialty   Specialty? @relation(fields: [specialtyId], references: [id])
 
   appointments   Appointment[]
-  schedules      DoctorSchedule[]
-  documents      DoctorDocument[]
+  schedules      StaffSchedule[]
+  documents      StaffDocument[]
   medicalRecords MedicalRecord[]
   emergencyCases EmergencyCase[]
   pharmacyOrders PharmacyOrder[]
   prescribedMedications PatientMedication[]
-  labOrders      LabOrder[] @relation("DoctorLabOrders")
+  labOrders      LabOrder[] @relation("StaffLabOrders")
   invoices       Invoice[]
   encounters     Encounter[]
+  hisRecords     HISRecord[]
 
   @@index([licenseNumber])
-  @@map("doctors")
+  @@map("health_staff")
 }
 
-model DoctorSchedule {
+model StaffSchedule {
   id        String   @id @default(uuid())
   dayOfWeek Int // 0 = Sunday, 6 = Saturday
   startTime String // HH:mm format
@@ -454,14 +468,14 @@ model DoctorSchedule {
   updatedAt DateTime @updatedAt
 
   // Relations
-  doctorId String
-  doctor   Doctor @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+  staffId  String
+  staff    HealthStaff @relation(fields: [staffId], references: [id], onDelete: Cascade)
 
-  @@index([doctorId])
-  @@map("doctor_schedules")
+  @@index([staffId])
+  @@map("staff_schedules")
 }
 
-model DoctorDocument {
+model StaffDocument {
   id        String   @id @default(uuid())
   title     String
   type      String // e.g., "CV", "Diploma", "License", "Contract"
@@ -470,11 +484,11 @@ model DoctorDocument {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  doctorId String
-  doctor   Doctor @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+  staffId  String
+  staff    HealthStaff @relation(fields: [staffId], references: [id], onDelete: Cascade)
 
-  @@index([doctorId])
-  @@map("doctor_documents")
+  @@index([staffId])
+  @@map("staff_documents")
 }
 
 // ============================================
@@ -501,8 +515,8 @@ model Appointment {
   // Relations
   patientId String
   patient   Patient @relation(fields: [patientId], references: [id])
-  doctorId  String
-  doctor    Doctor  @relation(fields: [doctorId], references: [id])
+  staffId   String
+  staff     HealthStaff @relation(fields: [staffId], references: [id])
 
   checkIn        AppointmentCheckIn?
   history        AppointmentHistory[]
@@ -513,7 +527,7 @@ model Appointment {
   encounter      Encounter?
 
   @@index([patientId])
-  @@index([doctorId])
+  @@index([staffId])
   @@index([appointmentDate])
   @@index([status])
   @@map("appointments")
@@ -613,15 +627,15 @@ model EstablishmentConfig {
   longitude       Float    @default(-70.13931455)
   altitude        Int      @default(3882)
   phone           String   @default("951515888")
-  email           String   @default("esjorgechavez@gmail.com")
-  operatingHours  String   @default("07:00 a 19:00")
+  email           String   @default("cs.jorgechavez@diresapuno.gob.pe")
+  operatingHours  String   @default("08:00-18:00")
   dependency      String   @default("DIRESA Puno")
   red             String   @default("San Román")
   microred        String   @default("Santa Adriana")
-  category        String   @default("I-3")
+  category        String   @default("I-4")
   isInternment    Boolean  @default(false)
   activityStart   DateTime @default("1990-11-08T00:00:00Z")
-  resolution      String   @default("R.D.R. 0964-09/DRS-PUNO-DEA-PER")
+  resolution      String   @default("R.D.R. Nº 0112-2019/DIRESE PUNO-DESP-DSS")
   
   updatedAt       DateTime @updatedAt
 
@@ -642,6 +656,14 @@ model ObservationStretcher {
   patient     Patient? @relation(fields: [patientId], references: [id])
   
   admittedAt  DateTime?
+  maxHours    Int      @default(12)
+  alertSentAt DateTime?
+  referredAt  DateTime?
+  referralDestination String?
+  dischargeReason String?
+  attendedBy  String?
+  diagnosis   String?
+  vitalSigns  Json?
   
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -671,8 +693,8 @@ model MedicalRecord {
   // Relations
   patientId     String
   patient       Patient      @relation(fields: [patientId], references: [id])
-  doctorId      String
-  doctor        Doctor       @relation(fields: [doctorId], references: [id])
+  staffId       String
+  staff         HealthStaff  @relation(fields: [staffId], references: [id])
   appointmentId String?
   appointment   Appointment? @relation(fields: [appointmentId], references: [id])
 
@@ -680,7 +702,7 @@ model MedicalRecord {
   encounter     Encounter?   @relation(fields: [encounterId], references: [id])
 
   @@index([patientId])
-  @@index([doctorId])
+  @@index([staffId])
   @@index([visitDate])
   @@map("medical_records")
 }
@@ -765,8 +787,8 @@ model PharmacyOrder {
   medicationId String
   medication   Medication @relation(fields: [medicationId], references: [id])
   quantity     Int
-  doctorId     String
-  doctor          Doctor?    @relation(fields: [doctorId], references: [id])
+  staffId      String
+  staff        HealthStaff? @relation(fields: [staffId], references: [id])
   patientId    String
   patient      Patient    @relation(fields: [patientId], references: [id])
 
@@ -785,7 +807,7 @@ model PharmacyOrder {
   updatedAt DateTime @updatedAt
 
   @@index([medicationId])
-  @@index([doctorId])
+  @@index([staffId])
   @@index([patientId])
   @@index([status])
   @@map("pharmacy_orders")
@@ -829,8 +851,8 @@ model LabOrder {
   patientId String
   patient   Patient @relation(fields: [patientId], references: [id])
   
-  doctorId  String? 
-  doctor    Doctor? @relation("DoctorLabOrders", fields: [doctorId], references: [id])
+  staffId  String? 
+  staff    HealthStaff? @relation("StaffLabOrders", fields: [staffId], references: [id])
 
   testId    String? 
   test      LabTest? @relation(fields: [testId], references: [id])
@@ -906,8 +928,8 @@ model Invoice {
   // Relations
   patientId String
   patient   Patient @relation(fields: [patientId], references: [id])
-  doctorId  String?
-  doctor    Doctor? @relation(fields: [doctorId], references: [id])
+  staffId   String?
+  staff     HealthStaff? @relation(fields: [staffId], references: [id])
   appointmentId String?
   appointment   Appointment? @relation("AppointmentInvoice", fields: [appointmentId], references: [id])
 
@@ -1116,6 +1138,10 @@ model Payroll {
 // BED MANAGEMENT
 // ============================================
 
+// [DEPRECATED] 
+// El modelo Bed se depreca porque el C.S. Jorge Chávez es un establecimiento I-4 SIN internamiento.
+// Usar ObservationStretcher para estadías cortas (max 12h) en Emergencias/Urgencias.
+// No usar este modelo en nuevos módulos.
 model Bed {
   id        String   @id @default(uuid())
   number    String   @unique // e.g., CAM-001
@@ -1181,9 +1207,9 @@ model EmergencyCase {
   bed             Bed?     @relation(fields: [bedId], references: [id])
   bedNumber String? // Keep for caching/display
 
-  doctorId   String?
-  doctor          Doctor?  @relation(fields: [doctorId], references: [id])
-  doctorName String? // Keep for caching/display
+  staffId    String?
+  staff            HealthStaff? @relation(fields: [staffId], references: [id])
+  staffName String? // Keep for caching/display
 
   status       String    @default("ADMITTED") // TRIAGE, ADMITTED, DISCHARGED, OBSERVATION
   notes        String?
@@ -1226,8 +1252,8 @@ model Encounter {
   // Relations
   patientId  String
   patient    Patient @relation(fields: [patientId], references: [id])
-  doctorId   String?
-  doctor     Doctor?  @relation(fields: [doctorId], references: [id])
+  staffId    String?
+  staff      HealthStaff?  @relation(fields: [staffId], references: [id])
   
   appointmentId String? @unique
   appointment   Appointment? @relation(fields: [appointmentId], references: [id])
@@ -1237,9 +1263,10 @@ model Encounter {
   labResults     LabResult[]
   labOrders      LabOrder[]
   medicalRecords MedicalRecord[] // Optional: for legacy transition
+  hisRecords     HISRecord[]
 
   @@index([patientId])
-  @@index([doctorId])
+  @@index([staffId])
   @@index([type])
   @@map("encounters")
 }
@@ -1443,6 +1470,13 @@ model Vaccination {
   notes         String?
   status        String   @default("APPLIED") // APPLIED, PENDING, CANCELLED
 
+  // Cold Chain and Event Tracking
+  coldChainTemp       Float? // Temperature of cooler in Celsius
+  coldChainVerifiedBy String?
+  vialNumber          String?
+  isAdverseEvent      Boolean @default(false)
+  adverseEventNotes   String?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -1533,3 +1567,97 @@ model MinsaProgramRecord {
   @@index([visitDate])
   @@map("minsa_program_records")
 }
+
+// ============================================
+// I-4 EXCLUSIVE MODULES (REFERRALS, HIS, EPIDEMIOLOGY, SIS)
+// ============================================
+
+model ReferralRecord {
+  id                  String   @id @default(uuid())
+  code                String   @unique // REF-CSJC-YYYYMMDD-[seq]
+  patientId           String
+  patient             Patient  @relation(fields: [patientId], references: [id])
+  originIpress        String   @default("00003308")
+  destinationIpress   String
+  diagnosis           String   // CIE-10 code/description
+  urgencyLevel        String   // ROUTINE, URGENT, EMERGENCY
+  status              String   @default("PENDING") // PENDING, ACCEPTED, REJECTED, ATTENDED
+  referredBy          String
+  date                DateTime @default(now())
+  counterReferralNote String?
+  vitalSigns          Json?
+  previousTreatment   String?
+  
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  @@index([patientId])
+  @@index([code])
+  @@map("referral_records")
+}
+
+model HISRecord {
+  id              String   @id @default(uuid())
+  ipressCode      String   @default("00003308")
+  attentionDate   DateTime
+  patientId       String?
+  patient         Patient? @relation(fields: [patientId], references: [id])
+  age             Int
+  gender          String
+  ubigeo          String
+  diagnosis       String   // CIE-10 (Obligatory in logic)
+  conditionType   String   // NEW, CONTINUING
+  fundingType     String   // SIS, ESSALUD, PARTICULAR, SOAT, OTROS
+  serviceType     String
+  staffId         String
+  staff           HealthStaff @relation(fields: [staffId], references: [id])
+  encounterId     String?
+  encounter       Encounter?  @relation(fields: [encounterId], references: [id])
+  exportFields    Json?
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([patientId])
+  @@index([staffId])
+  @@index([attentionDate])
+  @@map("his_records")
+}
+
+model EpidemiologyReport {
+  id              String   @id @default(uuid())
+  code            String   @unique // EPID-CSJC-YYYYMMDD-[seq]
+  disease         String
+  caseType        String   // SUSPECTED, PROBABLE, CONFIRMED
+  patientId       String
+  patient         Patient  @relation(fields: [patientId], references: [id])
+  symptomsDate    DateTime
+  notifier        String
+  status          String   @default("PENDING") // PENDING, NOTI-MINSA
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([patientId])
+  @@index([code])
+  @@map("epidemiology_reports")
+}
+
+model SISValidationLog {
+  id              String   @id @default(uuid())
+  documentNumber  String
+  sisCode         String
+  status          String
+  validatedBy     String
+  rawResponse     Json?
+  result          String
+  createdAt       DateTime @default(now())
+  
+  patientId       String?
+  patient         Patient? @relation(fields: [patientId], references: [id])
+
+  @@index([documentNumber])
+  @@index([patientId])
+  @@map("sis_validation_logs")
+}
+

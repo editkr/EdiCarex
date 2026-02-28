@@ -9,7 +9,7 @@ async function main() {
 
     const ROLE_DEFAULTS: Record<string, string[]> = {
         'Admin': ['ALL'],
-        'Doctor': ['DASHBOARD', 'PATIENTS_VIEW', 'PATIENTS_EDIT', 'MEDICAL_RECORDS_VIEW', 'MEDICAL_RECORDS_CREATE', 'MEDICAL_RECORDS_EDIT', 'PRESCRIPTIONS_CREATE', 'PRESCRIPTIONS_VIEW', 'APPOINTMENTS_VIEW', 'APPOINTMENTS_EDIT', 'EMERGENCY_VIEW', 'EMERGENCY_EDIT', 'EMERGENCY_DISCHARGE', 'BEDS_VIEW', 'BEDS_ASSIGN', 'LAB_VIEW', 'LAB_CREATE', 'LAB_RESULTS', 'PHARMACY_VIEW', 'REPORTS_VIEW', 'AI_USE', 'MESSAGES_VIEW', 'MESSAGES_SEND'],
+        'Staff': ['DASHBOARD', 'PATIENTS_VIEW', 'PATIENTS_EDIT', 'MEDICAL_RECORDS_VIEW', 'MEDICAL_RECORDS_CREATE', 'MEDICAL_RECORDS_EDIT', 'PRESCRIPTIONS_CREATE', 'PRESCRIPTIONS_VIEW', 'APPOINTMENTS_VIEW', 'APPOINTMENTS_EDIT', 'EMERGENCY_VIEW', 'EMERGENCY_EDIT', 'EMERGENCY_DISCHARGE', 'BEDS_VIEW', 'BEDS_ASSIGN', 'LAB_VIEW', 'LAB_CREATE', 'LAB_RESULTS', 'PHARMACY_VIEW', 'REPORTS_VIEW', 'AI_USE', 'MESSAGES_VIEW', 'MESSAGES_SEND'],
         'Nurse': ['DASHBOARD', 'PATIENTS_VIEW', 'PATIENTS_EDIT', 'MEDICAL_RECORDS_VIEW', 'MEDICAL_RECORDS_EDIT', 'PRESCRIPTIONS_VIEW', 'APPOINTMENTS_VIEW', 'EMERGENCY_VIEW', 'EMERGENCY_EDIT', 'EMERGENCY_DISCHARGE', 'BEDS_VIEW', 'BEDS_EDIT', 'BEDS_ASSIGN', 'PHARMACY_VIEW', 'PHARMACY_DISPENSE', 'LAB_VIEW', 'MESSAGES_VIEW', 'MESSAGES_SEND'],
         'Receptionist': ['DASHBOARD', 'PATIENTS_VIEW', 'PATIENTS_CREATE', 'PATIENTS_EDIT', 'APPOINTMENTS_VIEW', 'APPOINTMENTS_CREATE', 'APPOINTMENTS_EDIT', 'WAITING_VIEW', 'WAITING_MANAGE', 'BILLING_VIEW', 'MESSAGES_VIEW', 'MESSAGES_SEND'],
         'Lab': ['DASHBOARD', 'PATIENTS_VIEW', 'LAB_VIEW', 'LAB_CREATE', 'LAB_EDIT', 'LAB_RESULTS', 'REPORTS_VIEW', 'MESSAGES_VIEW', 'MESSAGES_SEND'],
@@ -31,12 +31,12 @@ async function main() {
         },
     });
 
-    const doctorRole = await prisma.role.upsert({
-        where: { name: 'Doctor' },
+    const staffRole = await prisma.role.upsert({
+        where: { name: 'Staff' },
         update: {},
         create: {
-            name: 'Doctor',
-            description: 'Medical doctor',
+            name: 'Staff',
+            description: 'Medical health staff',
             isSystem: true,
         },
     });
@@ -138,7 +138,7 @@ async function main() {
 
     const roleMap: Record<string, string> = {
         'Admin': adminRole.id,
-        'Doctor': doctorRole.id,
+        'Staff': staffRole.id,
         'Nurse': nurseRole.id,
         'Receptionist': receptionistRole.id,
         'Lab': labRole.id,
@@ -628,8 +628,8 @@ async function main() {
         'Deshidratación Moderada',
     ];
 
-    // Doctores de emergencia del centro
-    const erDoctors = ['Dr. Raúl Huanca Quispe', 'Dra. Flor María Condori Mamani'];
+    // Personal de salud de emergencia del centro
+    const erStaff = ['Dr. Raúl Huanca Quispe', 'Dra. Flor María Condori Mamani'];
 
     // Crear 3 casos de emergencia activos
     const patientNames = [
@@ -657,7 +657,7 @@ async function main() {
                 },
                 status: 'IN_PROGRESS',
                 bedNumber: observacionBeds[i]?.number || 'OBS-01',
-                doctorName: erDoctors[i % erDoctors.length],
+                staffName: erStaff[i % erStaff.length],
                 admissionDate: new Date()
             }
         });
@@ -678,7 +678,7 @@ async function main() {
     // ============================================
 
     // Get IDs
-    const allDoctors = await prisma.doctor.findMany();
+    const allStaff = await prisma.healthStaff.findMany();
     const allPatients = await prisma.patient.findMany();
 
     // Create Medications
@@ -720,10 +720,10 @@ async function main() {
     // Create Appointments & Invoices
     const appointmentStatuses = ['COMPLETED', 'PENDING', 'CANCELLED', 'SCHEDULED'];
 
-    if (allDoctors.length > 0 && allPatients.length > 0) {
+    if (allStaff.length > 0 && allPatients.length > 0) {
         // Generate 100 random appointments over the last 6 months
         for (let i = 0; i < 100; i++) {
-            const randomDoctor = allDoctors[Math.floor(Math.random() * allDoctors.length)];
+            const randomStaff = allStaff[Math.floor(Math.random() * allStaff.length)];
             const randomPatient = allPatients[Math.floor(Math.random() * allPatients.length)];
 
             // Random date in last 6 months or next 1 month
@@ -738,7 +738,7 @@ async function main() {
 
             const app = await prisma.appointment.create({
                 data: {
-                    doctorId: randomDoctor.id,
+                    staffId: randomStaff.id,
                     patientId: randomPatient.id,
                     appointmentDate: date,
                     startTime: `${hour}:00`,

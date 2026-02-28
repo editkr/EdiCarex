@@ -10,7 +10,7 @@ export class ReportsService {
     ) { }
 
     async getDashboardStats() {
-        const [todayAppointments, totalPatients, totalDoctors, pendingInvoices] = await Promise.all([
+        const [todayAppointments, totalPatients, totalStaff, pendingInvoices] = await Promise.all([
             this.prisma.appointment.count({
                 where: {
                     appointmentDate: {
@@ -20,14 +20,14 @@ export class ReportsService {
                 }
             }),
             this.prisma.patient.count({ where: { status: 'ACTIVE' } }),
-            this.prisma.doctor.count({ where: { deletedAt: null } }),
+            this.prisma.healthStaff.count({ where: { deletedAt: null } }),
             this.prisma.invoice.count({ where: { status: 'PENDING', deletedAt: null } })
         ]);
 
         return {
             todayAppointments,
             totalPatients,
-            totalDoctors,
+            totalStaff,
             pendingInvoices
         };
     }
@@ -187,10 +187,10 @@ export class ReportsService {
             .slice(0, 5);
     }
 
-    async getDoctorStats(params: any = {}) {
+    async getStaffStats(params: any = {}) {
         const { startDate, endDate } = this.getDateRange(params);
 
-        const doctors = await this.prisma.doctor.findMany({
+        const staff = await this.prisma.healthStaff.findMany({
             where: { deletedAt: null },
             include: {
                 user: {
@@ -218,19 +218,19 @@ export class ReportsService {
             }
         });
 
-        return doctors.map(d => {
-            const totalAppointments = d.appointments.length;
-            const completedAppointments = d.appointments.filter(a => a.status === 'COMPLETED').length;
+        return staff.map(s => {
+            const totalAppointments = s.appointments.length;
+            const completedAppointments = s.appointments.filter(a => a.status === 'COMPLETED').length;
 
             // Calculate satisfaction based on completion rate (real metric)
             const completionRate = totalAppointments > 0 ? completedAppointments / totalAppointments : 0;
             const satisfaction = totalAppointments > 0 ? (completionRate * 5).toFixed(1) : 0;
 
-            // Calculate real revenue from PAID invoices linked to this doctor
-            const revenue = d.invoices.reduce((sum, inv) => sum + Number(inv.total), 0);
+            // Calculate real revenue from PAID invoices linked to this staff
+            const revenue = s.invoices.reduce((sum, inv) => sum + Number(inv.total), 0);
 
             return {
-                name: `${d.user.firstName} ${d.user.lastName}`,
+                name: `${s.user.firstName} ${s.user.lastName}`,
                 patients: totalAppointments,
                 satisfaction: Number(satisfaction) || 0,
                 revenue: revenue
@@ -422,14 +422,14 @@ export class ReportsService {
                 },
                 include: {
                     patient: true,
-                    doctor: { include: { user: true } }
+                    staff: { include: { user: true } }
                 }
             });
 
             let csv = '\ufeff'; // BOM
-            csv += 'Fecha,Hora,Paciente,Doctor,Tipo,Estado,Notas\n';
+            csv += 'Fecha,Hora,Paciente,Personal,Tipo,Estado,Notas\n';
             appointments.forEach(a => {
-                csv += `"${new Date(a.appointmentDate).toLocaleDateString()}","${a.startTime}","${a.patient.firstName} ${a.patient.lastName}","${a.doctor.user.firstName} ${a.doctor.user.lastName}","${a.type}","${a.status}","${a.notes || ''}"\n`;
+                csv += `"${new Date(a.appointmentDate).toLocaleDateString()}","${a.startTime}","${a.patient.firstName} ${a.patient.lastName}","${a.staff.user.firstName} ${a.staff.user.lastName}","${a.type}","${a.status}","${a.notes || ''}"\n`;
             });
 
             return {
@@ -494,8 +494,8 @@ export class ReportsService {
             };
         }
 
-        if (type === 'doctors') {
-            const doctors = await this.prisma.doctor.findMany({
+        if (type === 'staff') {
+            const staff = await this.prisma.healthStaff.findMany({
                 include: {
                     user: true,
                     _count: {
@@ -505,14 +505,14 @@ export class ReportsService {
             });
 
             let csv = '\ufeff'; // BOM
-            csv += 'Doctor,Especialidad,Licencia,Email,Pacientes Atendidos,Tarifa Consulta\n';
-            doctors.forEach(d => {
-                csv += `"${d.user.firstName} ${d.user.lastName}","${d.specialization || ''}","${d.licenseNumber}","${d.user.email}","${d._count.appointments}","${d.consultationFee}"\n`;
+            csv += 'Personal,Especialidad,Licencia,Email,Pacientes Atendidos,Tarifa Consulta\n';
+            staff.forEach(s => {
+                csv += `"${s.user.firstName} ${s.user.lastName}","${s.specialization || ''}","${s.licenseNumber}","${s.user.email}","${s._count.appointments}","${s.consultationFee}"\n`;
             });
 
             return {
                 buffer: Buffer.from(csv, 'utf-8'),
-                filename: `Reporte_Doctores_${new Date().toISOString().split('T')[0]}.csv`
+                filename: `Reporte_Personal_${new Date().toISOString().split('T')[0]}.csv`
             };
         }
 
@@ -526,15 +526,15 @@ export class ReportsService {
                 },
                 include: {
                     patient: true,
-                    doctor: { include: { user: true } }
+                    staff: { include: { user: true } }
                 }
             });
 
             let csv = '\ufeff'; // BOM
-            csv += 'Paciente,Doctor,Nivel Triage,Estado,Queja Principal,Entrada,Salida\n';
+            csv += 'Paciente,Personal,Nivel Triage,Estado,Queja Principal,Entrada,Salida\n';
             cases.forEach(c => {
                 const patientName = c.patient ? `${c.patient.firstName} ${c.patient.lastName}` : c.patientName;
-                csv += `"${patientName}","${c.doctor?.user.firstName || 'N/A'} ${c.doctor?.user.lastName || ''}","${c.triageLevel}","${c.status}","${c.chiefComplaint || ''}","${new Date(c.createdAt).toLocaleDateString()} ${new Date(c.createdAt).toLocaleTimeString()}","${c.dischargedAt ? new Date(c.dischargedAt).toLocaleString() : 'En curso'}"\n`;
+                csv += `"${patientName}","${c.staff?.user.firstName || 'N/A'} ${c.staff?.user.lastName || ''}","${c.triageLevel}","${c.status}","${c.chiefComplaint || ''}","${new Date(c.createdAt).toLocaleDateString()} ${new Date(c.createdAt).toLocaleTimeString()}","${c.dischargedAt ? new Date(c.dischargedAt).toLocaleString() : 'En curso'}"\n`;
             });
 
             return {

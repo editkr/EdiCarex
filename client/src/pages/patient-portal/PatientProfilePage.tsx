@@ -16,7 +16,7 @@ import {
     Camera,
 } from 'lucide-react'
 import { useToast } from '@/components/ui/use-toast'
-import { usersAPI, patientsAPI } from '@/services/api'
+import { usersAPI, patientsAPI, authAPI } from '@/services/api'
 import { Switch } from '@/components/ui/switch'
 
 export default function PatientProfilePage() {
@@ -147,13 +147,22 @@ export default function PatientProfilePage() {
         }
 
         setLoading(true)
-        await new Promise(r => setTimeout(r, 1000))
-        toast({
-            title: 'Contraseña actualizada',
-            description: 'Tu contraseña ha sido cambiada',
-        })
-        setPasswords({ current: '', new: '', confirm: '' })
-        setLoading(false)
+        try {
+            await authAPI.changePassword(passwords.current, passwords.new)
+            toast({
+                title: 'Contraseña actualizada',
+                description: 'Tu contraseña ha sido cambiada',
+            })
+            setPasswords({ current: '', new: '', confirm: '' })
+        } catch (error: any) {
+            toast({
+                title: 'Error',
+                description: error.response?.data?.message || 'Error al cambiar la contraseña',
+                variant: 'destructive',
+            })
+        } finally {
+            setLoading(false)
+        }
     }
 
     return (

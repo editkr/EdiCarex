@@ -32,9 +32,9 @@ import {
     Phone,
     Moon,
 } from 'lucide-react'
-import { doctorsAPI, appointmentsAPI } from '@/services/api'
+import { healthStaffAPI, appointmentsAPI } from '@/services/api'
 import { useToast } from '@/components/ui/use-toast'
-import DoctorModal from '@/components/modals/DoctorModal'
+import HealthStaffModal from '@/components/modals/HealthStaffModal'
 import {
     AlertDialog,
     AlertDialogAction,
@@ -96,11 +96,11 @@ export default function HealthStaffPage() {
     const navigate = useNavigate()
     const { hasPermission } = usePermissions()
     const [searchTerm, setSearchTerm] = useState('')
-    const [doctors, setDoctors] = useState<any[]>([])
+    const [staff, setStaff] = useState<any[]>([])
     const [appointments, setAppointments] = useState<any[]>([])
     const [loading, setLoading] = useState(true)
     const [modalOpen, setModalOpen] = useState(false)
-    const [selectedDoctor, setSelectedDoctor] = useState<any>(null)
+    const [selectedStaff, setSelectedStaff] = useState<any>(null)
     const [deleteId, setDeleteId] = useState<string | null>(null)
     const { toast } = useToast()
 
@@ -111,11 +111,11 @@ export default function HealthStaffPage() {
     const loadData = async () => {
         try {
             setLoading(true)
-            const [doctorsRes, appointmentsRes] = await Promise.all([
-                doctorsAPI.getAll(),
+            const [staffRes, appointmentsRes] = await Promise.all([
+                healthStaffAPI.getAll(),
                 appointmentsAPI.getAll().catch(() => ({ data: { data: [] } })),
             ])
-            setDoctors(doctorsRes.data.data || [])
+            setStaff(staffRes.data.data || [])
             setAppointments(appointmentsRes.data?.data || [])
         } catch (error: any) {
             toast({
@@ -131,7 +131,7 @@ export default function HealthStaffPage() {
     const handleDelete = async () => {
         if (!deleteId) return
         try {
-            await doctorsAPI.delete(deleteId)
+            await healthStaffAPI.delete(deleteId)
             toast({
                 title: 'Éxito',
                 description: 'Personal de salud eliminado correctamente',
@@ -148,13 +148,13 @@ export default function HealthStaffPage() {
         }
     }
 
-    const handleEdit = (doctor: any) => {
-        setSelectedDoctor(doctor)
+    const handleEdit = (member: any) => {
+        setSelectedStaff(member)
         setModalOpen(true)
     }
 
     const handleAdd = () => {
-        setSelectedDoctor(null)
+        setSelectedStaff(null)
         setModalOpen(true)
     }
 
@@ -163,24 +163,24 @@ export default function HealthStaffPage() {
         setModalOpen(false)
     }
 
-    const handleViewProfile = (doctorId: string) => {
-        navigate(`/health-staff/${doctorId}`)
+    const handleViewProfile = (staffId: string) => {
+        navigate(`/health-staff/${staffId}`)
     }
 
 
 
-    const handleToggleAvailability = async (doctor: any) => {
+    const handleToggleAvailability = async (member: any) => {
         try {
-            await doctorsAPI.update(doctor.id, {
-                isAvailable: !doctor.isAvailable
+            await healthStaffAPI.update(member.id, {
+                isAvailable: !member.isAvailable
             })
             // Optimistic update or reload
-            setDoctors(prev => prev.map(d =>
-                d.id === doctor.id ? { ...d, isAvailable: !d.isAvailable } : d
+            setStaff(prev => prev.map(d =>
+                d.id === member.id ? { ...d, isAvailable: !member.isAvailable } : d
             ))
             toast({
                 title: 'Estado actualizado',
-                description: `Personal ${!doctor.isAvailable ? 'marcado como disponible' : 'marcado como no disponible'}`,
+                description: `Personal ${!member.isAvailable ? 'marcado como disponible' : 'marcado como no disponible'}`,
             })
         } catch (error) {
             toast({
@@ -191,10 +191,10 @@ export default function HealthStaffPage() {
             loadData() // Revert on error
         }
     }
-    const getPatientsToday = (doctorId: string) => {
+    const getPatientsToday = (staffId: string) => {
         return appointments.filter((apt: any) => {
             try {
-                return apt.doctorId === doctorId &&
+                return apt.staffId === staffId &&
                     isToday(new Date(apt.appointmentDate)) &&
                     // Count all valid appointments (not cancelled)
                     apt.status !== 'CANCELLED'
@@ -204,14 +204,14 @@ export default function HealthStaffPage() {
         }).length
     }
 
-    // Obtener estado del doctor
-    const getDoctorStatus = (doctor: any) => {
-        if (!doctor.isAvailable) return { status: 'NO DISPONIBLE', color: 'text-gray-500', bgColor: 'bg-gray-100' }
+    // Obtener estado del personal
+    const getStaffStatus = (member: any) => {
+        if (!member.isAvailable) return { status: 'NO DISPONIBLE', color: 'text-gray-500', bgColor: 'bg-gray-100' }
 
         const now = new Date()
         const currentAppointment = appointments.find((apt: any) => {
             try {
-                if (apt.doctorId !== doctor.id) return false
+                if (apt.staffId !== member.id) return false
                 if (apt.status !== 'SCHEDULED' && apt.status !== 'CONFIRMED' && apt.status !== 'IN_PROGRESS') return false
 
                 const aptTime = new Date(apt.appointmentDate)
@@ -247,10 +247,10 @@ export default function HealthStaffPage() {
         return { days: dayStr, hours }
     }
 
-    const filteredDoctors = doctors.filter((doctor: any) =>
-        `${doctor.user?.firstName} ${doctor.user?.lastName}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        doctor.specialization?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        doctor.licenseNumber?.includes(searchTerm)
+    const filteredMembers = staff.filter((member: any) =>
+        `${member.user?.firstName} ${member.user?.lastName}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        member.specialization?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        member.licenseNumber?.includes(searchTerm)
     )
 
     if (loading) {
@@ -268,7 +268,7 @@ export default function HealthStaffPage() {
                 <div>
                     <h1 className="text-3xl font-bold tracking-tight">Personal de Salud</h1>
                     <p className="text-muted-foreground">
-                        Gestionar personal asistencial y horarios • {filteredDoctors.length} total
+                        Gestionar personal asistencial y horarios • {filteredMembers.length} total
                     </p>
                 </div>
                 {hasPermission('STAFF_CREATE') && (
@@ -308,53 +308,53 @@ export default function HealthStaffPage() {
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {filteredDoctors.length === 0 ? (
+                        {filteredMembers.length === 0 ? (
                             <TableRow>
                                 <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
                                     No se encontraron registros
                                 </TableCell>
                             </TableRow>
                         ) : (
-                            filteredDoctors.map((doctor: any) => {
-                                const statusInfo = getDoctorStatus(doctor)
-                                const patientsToday = getPatientsToday(doctor.id)
+                            filteredMembers.map((member: any) => {
+                                const statusInfo = getStaffStatus(member)
+                                const patientsToday = getPatientsToday(member.id)
 
                                 return (
-                                    <TableRow key={doctor.id} className="hover:bg-accent/50">
+                                    <TableRow key={member.id} className="hover:bg-accent/50 transition-colors">
                                         <TableCell>
-                                            {doctor.user?.avatar ? (
+                                            {member.user?.avatar ? (
                                                 <img
-                                                    src={doctor.user.avatar}
-                                                    alt={`${doctor.user.firstName} ${doctor.user.lastName}`}
+                                                    src={member.user.avatar}
+                                                    alt={`${member.user.firstName} ${member.user.lastName}`}
                                                     className="h-10 w-10 rounded-full object-cover"
                                                 />
                                             ) : (
                                                 <div className="h-10 w-10 rounded-full bg-gradient-to-br from-green-400 to-blue-500 flex items-center justify-center text-white font-semibold">
-                                                    {doctor.user?.firstName?.[0]}{doctor.user?.lastName?.[0]}
+                                                    {member.user?.firstName?.[0]}{member.user?.lastName?.[0]}
                                                 </div>
                                             )}
                                         </TableCell>
                                         <TableCell className="font-medium">
                                             <div>
-                                                <p>Dr. {doctor.user?.firstName} {doctor.user?.lastName}</p>
+                                                <p>{member.user?.firstName} {member.user?.lastName}</p>
                                                 <p className="text-xs text-muted-foreground">
-                                                    Licencia: {doctor.licenseNumber}
+                                                    Licencia: {member.licenseNumber}
                                                 </p>
                                             </div>
                                         </TableCell>
                                         <TableCell>
                                             <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-blue-100 text-blue-800">
-                                                {doctor.specialization || 'General'}
+                                                {member.specialization || 'General'}
                                             </span>
                                         </TableCell>
                                         <TableCell>
-                                            <ScheduleBadges schedules={doctor.schedules} />
+                                            <ScheduleBadges schedules={member.schedules} />
                                         </TableCell>
                                         <TableCell>
                                             <div className="flex items-center gap-2">
                                                 <Switch
-                                                    checked={doctor.isAvailable}
-                                                    onCheckedChange={() => handleToggleAvailability(doctor)}
+                                                    checked={member.isAvailable}
+                                                    onCheckedChange={() => handleToggleAvailability(member)}
                                                 />
                                                 <span className={`text-xs px-2 py-1 rounded-full ${statusInfo.bgColor} ${statusInfo.color}`}>
                                                     {statusInfo.status}
@@ -372,7 +372,7 @@ export default function HealthStaffPage() {
                                         <TableCell>
                                             <div className="flex items-center gap-1 text-sm">
                                                 <Phone className="h-3 w-3 text-muted-foreground" />
-                                                <span>{doctor.user?.phone || 'N/A'}</span>
+                                                <span>{member.user?.phone || 'N/A'}</span>
                                             </div>
                                         </TableCell>
                                         <TableCell className="text-right">
@@ -380,7 +380,7 @@ export default function HealthStaffPage() {
                                                 <Button
                                                     variant="ghost"
                                                     size="sm"
-                                                    onClick={() => handleViewProfile(doctor.id)}
+                                                    onClick={() => handleViewProfile(member.id)}
                                                 >
                                                     <Eye className="h-4 w-4" />
                                                 </Button>
@@ -388,7 +388,7 @@ export default function HealthStaffPage() {
                                                     <Button
                                                         variant="ghost"
                                                         size="sm"
-                                                        onClick={() => handleEdit(doctor)}
+                                                        onClick={() => handleEdit(member)}
                                                     >
                                                         <Edit className="h-4 w-4" />
                                                     </Button>
@@ -397,7 +397,7 @@ export default function HealthStaffPage() {
                                                     <Button
                                                         variant="ghost"
                                                         size="sm"
-                                                        onClick={() => setDeleteId(doctor.id)}
+                                                        onClick={() => setDeleteId(member.id)}
                                                     >
                                                         <Trash2 className="h-4 w-4 text-red-500" />
                                                     </Button>
@@ -413,10 +413,10 @@ export default function HealthStaffPage() {
             </Card>
 
             {/* Modal */}
-            <DoctorModal
+            <HealthStaffModal
                 open={modalOpen}
                 onOpenChange={setModalOpen}
-                doctor={selectedDoctor}
+                staff={selectedStaff}
                 onSuccess={handleSuccess}
             />
 
@@ -426,7 +426,7 @@ export default function HealthStaffPage() {
                     <AlertDialogHeader>
                         <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
                         <AlertDialogDescription>
-                            Esta acción no se puede deshacer. Esto eliminará permanentemente el registro del doctor.
+                            Esta acción no se puede deshacer. Esto eliminará permanentemente el registro del personal de salud.
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>

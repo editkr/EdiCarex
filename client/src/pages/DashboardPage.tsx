@@ -14,13 +14,12 @@ import {
     FileText,
     Loader2,
     CheckCircle2,
-    XCircle,
     AlertCircle,
     DollarSign,
     Euro,
     Coins
 } from 'lucide-react'
-import { analyticsAPI, appointmentsAPI, patientsAPI, doctorsAPI, usersAPI, billingAPI } from '@/services/api'
+import { analyticsAPI, appointmentsAPI, patientsAPI, healthStaffAPI, usersAPI, billingAPI } from '@/services/api'
 import { useToast } from '@/components/ui/use-toast'
 import {
     LineChart,
@@ -39,7 +38,7 @@ import {
     Legend,
     ResponsiveContainer
 } from 'recharts'
-import { format, isToday, parseISO } from 'date-fns'
+import { format, isToday } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { formatCurrency } from '@/utils/financialUtils'
 import { useOrganization } from '@/contexts/OrganizationContext'
@@ -63,11 +62,11 @@ export default function DashboardPage() {
     const [kpis, setKpis] = useState({
         patientsToday: 0,
         activeAppointments: 0,
-        availableDoctors: 0,
+        availableStaff: 0,
         bedOccupancy: 0,
         avgWaitTime: 0,
         emergencyCases: 0,
-        dailyIncome: 0,  // NEW: Daily income from paid invoices
+        dailyIncome: 0,
     })
 
     // Gráficos
@@ -114,20 +113,20 @@ export default function DashboardPage() {
                 dashboardRes,
                 appointmentsRes,
                 patientsRes,
-                doctorsRes,
+                staffRes,
                 billingStatsRes,
             ] = await Promise.all([
                 analyticsAPI.getDashboard().catch(() => ({ data: {} })),
                 appointmentsAPI.getAll().catch(() => ({ data: { data: [] } })),
                 patientsAPI.getAll().catch(() => ({ data: { data: [] } })),
-                doctorsAPI.getAll().catch(() => ({ data: { data: [] } })),
+                healthStaffAPI.getAll().catch(() => ({ data: { data: [] } })),
                 billingAPI.getStats().catch(() => ({ data: { totalRevenue: 0 } })),
             ])
 
             const dashboard = dashboardRes.data || {}
             const allAppointments = appointmentsRes.data?.data || []
             const allPatients = patientsRes.data?.data || []
-            const allDoctors = doctorsRes.data?.data || []
+            const allStaff = staffRes.data?.data || []
 
             // ========== KPIs ==========
             const today = new Date()
@@ -150,18 +149,18 @@ export default function DashboardPage() {
                 }
             })
 
-            // Doctores disponibles (activos)
-            const availableDoctors = allDoctors.filter((d: any) => d.isAvailable !== false)
+            // Staff disponible
+            const availableStaff = allStaff.filter((d: any) => d.isAvailable !== false)
 
-            // Camillas de Observación / Urgencias activos (dato viene del dashboard o estimado)
+            // Camillas de Observación / Urgencias activos
             const camillasOcupadas = Math.min(
-                typeof dashboard.emergencyCases === 'number' ? dashboard.emergencyCases : 0,
-                5 // máx 5 camillas en centro I-3
+                Number(dashboard.emergencyCases || 0),
+                5 // máx 5 camillas
             )
 
-            // Tiempo promedio de espera estimado desde citas activas de hoy
+            // Tiempo promedio de espera estimado
             const avgWaitTime = activeAppointments.length > 0
-                ? Math.round(activeAppointments.length * 8 + 10) // 8 min/cita + 10 base
+                ? Math.round(activeAppointments.length * 8 + 10)
                 : 12
 
             const emergencyCases = dashboard.emergencyCases ?? activeAppointments.filter((a: any) => a.type === 'EMERGENCY').length
@@ -171,7 +170,7 @@ export default function DashboardPage() {
             setKpis({
                 patientsToday: todayPatients.length,
                 activeAppointments: activeAppointments.length,
-                availableDoctors: availableDoctors.length,
+                availableStaff: availableStaff.length,
                 bedOccupancy: camillasOcupadas,
                 avgWaitTime,
                 emergencyCases,
@@ -195,9 +194,9 @@ export default function DashboardPage() {
             }).filter(d => d.appointments > 0 || (parseInt(d.hour) >= 8 && parseInt(d.hour) <= 18))
             setAppointmentsByHour(hourlyData)
 
-            // ========== GRÁFICO 2: Especialidades más solicitadas ==========
+            // ========== GRÁFICO 2: Especialidades ==========
             const specialtyCounts: Record<string, number> = {}
-            allDoctors.forEach((d: any) => {
+            allStaff.forEach((d: any) => {
                 const spec = d.specialization || 'General'
                 specialtyCounts[spec] = (specialtyCounts[spec] || 0) + 1
             })
@@ -212,10 +211,10 @@ export default function DashboardPage() {
                 { name: 'Alta', value: allAppointments.filter((a: any) => a.priority === 'HIGH').length || 0 },
                 { name: 'Normal', value: allAppointments.filter((a: any) => a.priority === 'NORMAL' || !a.priority).length || 0 },
                 { name: 'Urgente', value: allAppointments.filter((a: any) => a.priority === 'URGENT').length || 0 },
-            ].map(p => ({ ...p, value: p.value || Math.floor(Math.random() * 5) + 1 }))
+            ]
             setPriorityChart(priorities)
 
-            // ========== GRÁFICO 4: Pacientes por día (últimos 7 días) ==========
+            // ========== GRÁFICO 4: Pacientes por día ==========
             const last7Days = Array.from({ length: 7 }, (_, i) => {
                 const date = new Date()
                 date.setDate(date.getDate() - (6 - i))
@@ -239,67 +238,44 @@ export default function DashboardPage() {
             setPatientsPerDay(last7Days)
 
             // ========== LISTAS RÁPIDAS ==========
-
-            // Próximas citas del día
             const upcoming = activeAppointments
                 .sort((a: any, b: any) => new Date(a.appointmentDate).getTime() - new Date(b.appointmentDate).getTime())
                 .slice(0, 5)
                 .map((a: any) => ({
                     id: a.id,
                     time: format(new Date(a.appointmentDate), 'HH:mm'),
-                    patient: `${a.patient?.firstName || 'Unknown'} ${a.patient?.lastName || 'Patient'}`,
-                    player: `Dr. ${a.doctor?.user?.firstName || 'Desconocido'}`,
-                    status: ({
-                        'SCHEDULED': 'PROGRAMADA',
-                        'CONFIRMED': 'CONFIRMADA',
-                        'COMPLETED': 'COMPLETADA',
-                        'CANCELLED': 'CANCELADA',
-                        'NO_SHOW': 'NO ASISTIÓ'
-                    } as Record<string, string>)[a.status] || a.status,
-                    reason: a.reason || 'Chequeo general',
+                    patient: `${a.patient?.firstName || ''} ${a.patient?.lastName || ''}`,
+                    status: a.status,
+                    reason: a.reason || 'Consulta',
                 }))
             setUpcomingAppointments(upcoming)
 
-            // Últimos pacientes registrados
-            const recent = allPatients
+            const recentPatientsData = allPatients
                 .sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
                 .slice(0, 5)
                 .map((p: any) => ({
                     id: p.id,
                     name: `${p.firstName} ${p.lastName}`,
-                    age: p.dateOfBirth ? new Date().getFullYear() - new Date(p.dateOfBirth).getFullYear() : 'N/A',
-                    gender: p.gender || 'N/A',
                     time: format(new Date(p.createdAt), 'HH:mm'),
                 }))
-            setRecentPatients(recent)
+            setRecentPatients(recentPatientsData)
 
-            // Últimas notas médicas (de médicos del centro)
             setRecentNotes([
-                { id: 1, patient: 'Carmen Rosa Quispe', note: 'Control prenatal – 32 semanas, signos normales', time: '14:30' },
-                { id: 2, patient: 'Juan Carlos Mamani', note: 'Tratamiento de hipertensión arterial controlado', time: '13:15' },
-                { id: 3, patient: 'María Elena Huanca', note: 'Resultados de laboratorio basicco pendientes', time: '11:45' },
+                { id: 1, patient: 'Carmen Rosa Quispe', note: 'Control prenatal exitoso', time: '14:30' },
+                { id: 2, patient: 'Juan Carlos Mamani', note: 'Chequeo de presión arterial', time: '13:15' },
             ])
 
-            // Últimos reportes del centro
             setRecentReports([
-                { id: 1, type: 'Estadísticas Mensuales MINSA', generated: 'hace 2 horas' },
-                { id: 2, type: 'Control Prenatal – Obstetricia', generated: 'hace 4 horas' },
-                { id: 3, type: 'Reporte de Atenciones Diarias', generated: 'hace 1 día' },
+                { id: 1, type: 'Estadísticas MINSA', generated: 'hace 2 horas' },
+                { id: 2, type: 'Control Prenatal', generated: 'hace 4 horas' },
             ])
 
-            // ========== PANEL IA ==========
-            const saturation = Math.min(100, Math.floor((activeAppointments.length / 30) * 100)) // I-3 tiene capacidad ~30 citas/día
-            const staffNeeded = saturation > 70 ? 'Considerar refuerzo de personal médico y enfermería' : 'Personal actual adecuado para demanda del centro'
-            const alerts: string[] = []
-
-            if (emergencyCases > 3) alerts.push('Alta concurrencia en Urgencias detectada')
-            if (avgWaitTime > 25) alerts.push('Tiempo de espera supera el objetivo (25 min)')
-            if (kpis.bedOccupancy >= 4) alerts.push('Camillas de observación cerca de capacidad')
-
+            // Panel IA
+            const saturation = Math.min(100, Math.floor((activeAppointments.length / 30) * 100))
             setAiPredictions({
                 saturationLevel: saturation,
-                staffRecommendation: staffNeeded,
-                riskAlerts: alerts,
+                staffRecommendation: saturation > 70 ? 'Refuerzo de personal recomendado' : 'Capacidad adecuada',
+                riskAlerts: saturation > 85 ? ['Riesgo de saturación crítico'] : []
             })
 
         } catch (error: any) {
@@ -322,328 +298,113 @@ export default function DashboardPage() {
         )
     }
 
-    const getStatusColor = (status: string) => {
-        switch (status) {
-            case 'COMPLETED':
-                return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
-            case 'CANCELLED':
-                return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
-            case 'CONFIRMED':
-                return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
-            default:
-                return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200'
-        }
-    }
-
     return (
         <div className="space-y-6">
-            {/* Header */}
             <div>
                 <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
                 <p className="text-muted-foreground">
-                    {config?.hospitalName || 'Centro de Salud Jorge Chávez'} · Gestión Ambulatoria en Tiempo Real · Actualizado: {format(new Date(), 'HH:mm:ss')}
+                    {config?.hospitalName || 'Centro de Salud Jorge Chávez'} · Panel de Control en Tiempo Real
                 </p>
             </div>
 
-            {/* ========== A. KPIs (6 Cards) ========== */}
-            <div className={
-                dashboardLayout === 'list'
-                    ? 'grid gap-4 grid-cols-1'
-                    : dashboardLayout === 'compact'
-                        ? 'grid gap-2 md:grid-cols-3 lg:grid-cols-6'
-                        : 'grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6'
-            }>
-                <Card className={cn("overflow-hidden border-none shadow-xl transition-all hover:scale-[1.02]", dashboardLayout === 'compact' ? 'p-2' : '')}>
-                    <div className="absolute top-0 left-0 w-1 h-full bg-edicarex" />
-                    <CardHeader className={`flex flex-row items-center justify-between space-y-0 ${dashboardLayout === 'compact' ? 'pb-1 pt-2 px-3' : 'pb-2'}`}>
-                        <CardTitle className={`font-semibold tracking-tight ${dashboardLayout === 'compact' ? 'text-xs' : 'text-sm text-muted-foreground'}`}>Pacientes Hoy</CardTitle>
-                        <div className="p-2 bg-blue-500/10 rounded-lg">
-                            <Users className={`text-blue-500 ${dashboardLayout === 'compact' ? 'h-3 w-3' : 'h-5 w-5'}`} />
-                        </div>
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                <Card>
+                    <CardHeader className="flex flex-row items-center justify-between pb-2">
+                        <CardTitle className="text-sm font-medium">Pacientes Hoy</CardTitle>
+                        <Users className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
-                    <CardContent className={dashboardLayout === 'compact' ? 'px-3 pb-2' : ''}>
-                        <div className={`font-bold ${dashboardLayout === 'compact' ? 'text-lg' : 'text-2xl'}`}>{kpis.patientsToday}</div>
-                        <p className="text-xs text-muted-foreground flex items-center gap-1">
-                            <TrendingUp className="h-3 w-3 text-green-500" /> +12% vs ayer
-                        </p>
+                    <CardContent>
+                        <div className="text-2xl font-bold">{kpis.patientsToday}</div>
+                        <p className="text-xs text-muted-foreground">+12% vs ayer</p>
                     </CardContent>
                 </Card>
-
-                <Card className="overflow-hidden border-none shadow-xl transition-all hover:scale-[1.02]">
-                    <div className="absolute top-0 left-0 w-1 h-full bg-edicarex" />
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-semibold text-muted-foreground tracking-tight">Citas Activas</CardTitle>
-                        <div className="p-2 bg-cyan-500/10 rounded-lg">
-                            <Calendar className="h-5 w-5 text-cyan-500" />
-                        </div>
+                <Card>
+                    <CardHeader className="flex flex-row items-center justify-between pb-2">
+                        <CardTitle className="text-sm font-medium">Citas Activas</CardTitle>
+                        <Calendar className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-bold">{kpis.activeAppointments}</div>
-                        <p className="text-xs text-muted-foreground">Programadas para hoy</p>
+                        <p className="text-xs text-muted-foreground">Para el turno actual</p>
                     </CardContent>
                 </Card>
-
-                <Card className="overflow-hidden border-none shadow-xl transition-all hover:scale-[1.02]">
-                    <div className="absolute top-0 left-0 w-1 h-full bg-edicarex" />
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-semibold text-muted-foreground tracking-tight">Doctores Disponibles</CardTitle>
-                        <div className="p-2 bg-emerald-500/10 rounded-lg">
-                            <Stethoscope className="h-5 w-5 text-emerald-500" />
-                        </div>
+                <Card>
+                    <CardHeader className="flex flex-row items-center justify-between pb-2">
+                        <CardTitle className="text-sm font-medium">Personal Disponible</CardTitle>
+                        <Stethoscope className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">{kpis.availableDoctors}</div>
-                        <p className="text-xs text-muted-foreground">En turno ahora</p>
+                        <div className="text-2xl font-bold">{kpis.availableStaff}</div>
+                        <p className="text-xs text-muted-foreground">En el centro ahora</p>
                     </CardContent>
                 </Card>
-
-                <Card className="overflow-hidden border-none shadow-xl transition-all hover:scale-[1.02]">
-                    <div className="absolute top-0 left-0 w-1 h-full bg-edicarex" />
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-semibold text-muted-foreground tracking-tight">Camillas Observación</CardTitle>
-                        <div className="p-2 bg-indigo-500/10 rounded-lg">
-                            <Bed className="h-5 w-5 text-indigo-500" />
-                        </div>
+                <Card>
+                    <CardHeader className="flex flex-row items-center justify-between pb-2">
+                        <CardTitle className="text-sm font-medium">Ingresos Diarios</CardTitle>
+                        <DollarSign className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">{kpis.bedOccupancy}/5</div>
-                        <p className="text-xs text-muted-foreground flex items-center gap-1">
-                            {kpis.bedOccupancy >= 4 ? (
-                                <><AlertCircle className="h-3 w-3 text-orange-500" /> Alta ocupación</>
-                            ) : (
-                                <><CheckCircle2 className="h-3 w-3 text-green-500" /> Disponible</>
-                            )}
-                        </p>
-                    </CardContent>
-                </Card>
-
-                <Card className="overflow-hidden border-none shadow-xl transition-all hover:scale-[1.02]">
-                    <div className="absolute top-0 left-0 w-1 h-full bg-edicarex" />
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-semibold text-muted-foreground tracking-tight">Tiempo Espera Prom.</CardTitle>
-                        <div className="p-2 bg-blue-400/10 rounded-lg">
-                            <Clock className="h-5 w-5 text-blue-400" />
-                        </div>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">{kpis.avgWaitTime} min</div>
-                        <p className="text-xs text-muted-foreground flex items-center gap-1">
-                            <TrendingDown className="h-3 w-3 text-green-500" /> -5 min del prom
-                        </p>
-                    </CardContent>
-                </Card>
-
-                <Card className="overflow-hidden border-none shadow-xl transition-all hover:scale-[1.02]">
-                    <div className="absolute top-0 left-0 w-1 h-full bg-edicarex" />
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-semibold text-muted-foreground tracking-tight">Casos de Emergencia</CardTitle>
-                        <div className="p-2 bg-red-500/10 rounded-lg">
-                            <AlertTriangle className="h-5 w-5 text-red-500" />
-                        </div>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">{kpis.emergencyCases}</div>
-                        <p className="text-xs text-muted-foreground flex items-center gap-1">
-                            {kpis.emergencyCases > 5 ? (
-                                <><AlertCircle className="h-3 w-3 text-red-500" /> Alto volumen</>
-                            ) : (
-                                <><CheckCircle2 className="h-3 w-3 text-green-500" /> Normal</>
-                            )}
-                        </p>
-                    </CardContent>
-                </Card>
-
-                <Card className="overflow-hidden border-none shadow-xl transition-all hover:scale-[1.02]">
-                    <div className="absolute top-0 left-0 w-1 h-full bg-emerald-500" />
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-semibold text-muted-foreground tracking-tight">Ingresos del Día</CardTitle>
-                        <div className="p-2 bg-emerald-500/10 rounded-lg">
-                            {config?.billing?.currency === 'EUR' ? (
-                                <Euro className="h-5 w-5 text-emerald-500" />
-                            ) : config?.billing?.currency === 'PEN' ? (
-                                <Coins className="h-5 w-5 text-emerald-500" />
-                            ) : (
-                                <DollarSign className="h-5 w-5 text-emerald-500" />
-                            )}
-                        </div>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">{formatCurrency(kpis.dailyIncome || 0, config)}</div>
-                        <p className="text-xs text-muted-foreground flex items-center gap-1">
-                            <Activity className="h-3 w-3 text-emerald-500" /> Actualizado en tiempo real
-                        </p>
+                        <div className="text-2xl font-bold">{formatCurrency(kpis.dailyIncome, config)}</div>
+                        <p className="text-xs text-muted-foreground">Recaudación proyectada</p>
                     </CardContent>
                 </Card>
             </div>
 
-            {/* ========== B. GRÁFICOS ========== */}
-            <div className="grid gap-4 md:grid-cols-2">
-                {/* Gráfico 1: Citas por hora */}
-                <Card>
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
+                <Card className="col-span-4">
                     <CardHeader>
-                        <CardTitle>Citas por Hora</CardTitle>
-                        <CardDescription>Distribución de citas de hoy</CardDescription>
+                        <CardTitle>Citas del Día</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <ResponsiveContainer width="100%" height={250}>
+                        <ResponsiveContainer width="100%" height={300}>
                             <LineChart data={appointmentsByHour}>
                                 <CartesianGrid strokeDasharray="3 3" />
                                 <XAxis dataKey="hour" />
-                                <YAxis tickFormatter={(val) => formatCurrency(val, config)} />
+                                <YAxis />
                                 <Tooltip />
-                                <Legend />
-                                <Line
-                                    type="monotone"
-                                    dataKey="appointments"
-                                    stroke={COLORS.primary}
-                                    strokeWidth={2}
-                                    name="Citas"
-                                />
+                                <Line type="monotone" dataKey="appointments" stroke={COLORS.primary} strokeWidth={2} />
                             </LineChart>
                         </ResponsiveContainer>
                     </CardContent>
                 </Card>
-
-                {/* Gráfico 2: Especialidades más solicitadas */}
-                <Card>
+                <Card className="col-span-3">
                     <CardHeader>
-                        <CardTitle>Especialidades Más Solicitadas</CardTitle>
-                        <CardDescription>Top 5 especialidades médicas</CardDescription>
+                        <CardTitle>Distribución por Especialidad</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <ResponsiveContainer width="100%" height={250}>
+                        <ResponsiveContainer width="100%" height={300}>
                             <BarChart data={specialtiesChart}>
                                 <CartesianGrid strokeDasharray="3 3" />
                                 <XAxis dataKey="name" />
                                 <YAxis />
                                 <Tooltip />
-                                <Legend />
-                                <Bar dataKey="value" fill={COLORS.success} name="Doctores" />
+                                <Bar dataKey="value" fill={COLORS.success} radius={[4, 4, 0, 0]} />
                             </BarChart>
                         </ResponsiveContainer>
                     </CardContent>
                 </Card>
-
-                {/* Gráfico 3: Prioridades */}
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Distribución de Prioridad de Pacientes</CardTitle>
-                        <CardDescription>Por nivel de urgencia</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <ResponsiveContainer width="100%" height={250}>
-                            <PieChart>
-                                <Pie
-                                    data={priorityChart}
-                                    cx="50%"
-                                    cy="50%"
-                                    labelLine={false}
-                                    label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                                    outerRadius={80}
-                                    fill="#8884d8"
-                                    dataKey="value"
-                                >
-                                    {priorityChart.map((entry, index) => (
-                                        <Cell key={`cell-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />
-                                    ))}
-                                </Pie>
-                                <Tooltip />
-                            </PieChart>
-                        </ResponsiveContainer>
-                    </CardContent>
-                </Card>
-
-                {/* Gráfico 4: Pacientes por día */}
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Pacientes por Día</CardTitle>
-                        <CardDescription>Tendencia últimos 7 días</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <ResponsiveContainer width="100%" height={250}>
-                            <AreaChart data={patientsPerDay}>
-                                <CartesianGrid strokeDasharray="3 3" />
-                                <XAxis dataKey="date" />
-                                <YAxis tickFormatter={(val) => formatCurrency(val, config)} />
-                                <Tooltip />
-                                <Legend />
-                                <Area
-                                    type="monotone"
-                                    dataKey="patients"
-                                    stroke={COLORS.primary}
-                                    fill={COLORS.primary}
-                                    fillOpacity={0.1}
-                                    name="Pacientes"
-                                />
-                            </AreaChart>
-                        </ResponsiveContainer>
-                    </CardContent>
-                </Card>
             </div>
 
-            {/* ========== C. LISTAS RÁPIDAS ========== */}
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                {/* Próximas citas */}
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                 <Card>
                     <CardHeader>
-                        <CardTitle className="text-base">Agenda de Hoy</CardTitle>
+                        <CardTitle>Agenda Próxima</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <div className="space-y-3">
-                            {upcomingAppointments.length === 0 ? (
-                                <p className="text-sm text-muted-foreground text-center py-4">No hay citas próximas</p>
-                            ) : (
-                                upcomingAppointments.map((apt) => (
-                                    <div key={apt.id} className="flex items-start space-x-3 text-sm">
-                                        <div className="flex-shrink-0 font-mono text-xs text-muted-foreground">{apt.time}</div>
-                                        <div className="flex-1 min-w-0">
-                                            <p className="font-medium truncate">{apt.patient}</p>
-                                            <p className="text-xs text-muted-foreground truncate">{apt.reason}</p>
-                                        </div>
+                        <div className="space-y-4">
+                            {upcomingAppointments.map((apt) => (
+                                <div key={apt.id} className="flex items-center">
+                                    <div className="w-12 text-sm font-medium">{apt.time}</div>
+                                    <div className="ml-4 space-y-1">
+                                        <p className="text-sm font-medium leading-none">{apt.patient}</p>
+                                        <p className="text-xs text-muted-foreground">{apt.reason}</p>
                                     </div>
-                                ))
-                            )}
-                        </div>
-                    </CardContent>
-                </Card>
-
-                {/* Últimos pacientes */}
-                <Card>
-                    <CardHeader>
-                        <CardTitle className="text-base">Pacientes Recientes</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="space-y-3">
-                            {recentPatients.length === 0 ? (
-                                <p className="text-sm text-muted-foreground text-center py-4">No hay pacientes recientes</p>
-                            ) : (
-                                recentPatients.map((p) => (
-                                    <div key={p.id} className="flex items-start space-x-3 text-sm">
-                                        <Users className="h-4 w-4 text-blue-500 flex-shrink-0 mt-0.5" />
-                                        <div className="flex-1 min-w-0">
-                                            <p className="font-medium truncate">{p.name}</p>
-                                            <p className="text-xs text-muted-foreground">{p.age} años • {p.gender} • {p.time}</p>
+                                    <div className="ml-auto">
+                                        <div className={cn("px-2 py-1 rounded text-[10px]",
+                                            apt.status === 'CONFIRMED' ? 'bg-green-100 text-green-800' : 'bg-slate-100'
+                                        )}>
+                                            {apt.status}
                                         </div>
-                                    </div>
-                                ))
-                            )}
-                        </div>
-                    </CardContent>
-                </Card>
-
-                {/* Últimas notas */}
-                <Card>
-                    <CardHeader>
-                        <CardTitle className="text-base">Notas Recientes</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="space-y-3">
-                            {recentNotes.map((note) => (
-                                <div key={note.id} className="flex items-start space-x-3 text-sm">
-                                    <FileText className="h-4 w-4 text-cyan-500 flex-shrink-0 mt-0.5" />
-                                    <div className="flex-1 min-w-0">
-                                        <p className="font-medium truncate">{note.patient}</p>
-                                        <p className="text-xs text-muted-foreground truncate">{note.note}</p>
                                     </div>
                                 </div>
                             ))}
@@ -651,98 +412,34 @@ export default function DashboardPage() {
                     </CardContent>
                 </Card>
 
-                {/* Últimos reportes */}
-                <Card>
+                <Card className="col-span-1 lg:col-span-2">
                     <CardHeader>
-                        <CardTitle className="text-base">Reportes Recientes</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="space-y-3">
-                            {recentReports.map((report) => (
-                                <div key={report.id} className="flex items-start space-x-3 text-sm">
-                                    <Activity className="h-4 w-4 text-blue-500 flex-shrink-0 mt-0.5" />
-                                    <div className="flex-1 min-w-0">
-                                        <p className="font-medium truncate">{report.type}</p>
-                                        <p className="text-xs text-muted-foreground">{report.generated}</p>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </CardContent>
-                </Card>
-            </div>
-
-            {/* ========== D. PANEL IA ========== */}
-            <Card className="border-2 border-purple-200 dark:border-purple-900">
-                <CardHeader>
-                    <div className="flex items-center gap-4">
-                        <div className="flex items-center justify-center p-2">
-                            <img
-                                src="/assets/logoIA.png"
-                                alt="AI Logo"
-                                className="h-20 w-20 object-contain drop-shadow-[0_0_15px_rgba(168,85,247,0.5)]"
-                            />
-                        </div>
-                        <div>
-                            <CardTitle className="text-xl">Análisis y Predicciones IA</CardTitle>
-                            <CardDescription>Potenciado por algoritmos de aprendizaje automático</CardDescription>
-                        </div>
-                    </div>
-                </CardHeader>
-                <CardContent>
-                    <div className="grid gap-4 md:grid-cols-3">
-                        {/* Predicción de saturación */}
-                        <div className="space-y-2">
-                            <h4 className="text-sm font-medium flex items-center gap-2">
-                                <Activity className="h-4 w-4" />
-                                Predicción de Saturación
-                            </h4>
-                            <div className="flex items-end gap-2">
-                                <div className="text-3xl font-bold">{aiPredictions.saturationLevel}%</div>
-                                <div className={`text-sm ${aiPredictions.saturationLevel > 70 ? 'text-orange-500' : 'text-green-500'}`}>
-                                    {aiPredictions.saturationLevel > 70 ? 'Alta' : 'Normal'}
-                                </div>
+                        <div className="flex items-center gap-4">
+                            <img src="/assets/logoIA.png" alt="IA" className="h-10 w-10 object-contain" />
+                            <div>
+                                <CardTitle>Análisis Predictivo IA</CardTitle>
+                                <CardDescription>Nivel de saturación proyectado</CardDescription>
                             </div>
-                            <div className="w-full bg-muted rounded-full h-2">
+                        </div>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="space-y-4">
+                            <div className="flex items-center justify-between">
+                                <div className="text-2xl font-bold">{aiPredictions.saturationLevel}%</div>
+                                <div className="text-sm font-medium text-muted-foreground">{aiPredictions.staffRecommendation}</div>
+                            </div>
+                            <div className="w-full bg-slate-100 rounded-full h-2">
                                 <div
-                                    className={cn("h-2 rounded-full transition-all duration-1000", aiPredictions.saturationLevel > 70 ? 'bg-orange-500' : 'bg-edicarex')}
+                                    className={cn("h-full rounded-full transition-all duration-500",
+                                        aiPredictions.saturationLevel > 70 ? 'bg-orange-500' : 'bg-cyan-500'
+                                    )}
                                     style={{ width: `${aiPredictions.saturationLevel}%` }}
                                 />
                             </div>
                         </div>
-
-                        {/* Recomendación de personal */}
-                        <div className="space-y-2">
-                            <h4 className="text-sm font-medium flex items-center gap-2">
-                                <Users className="h-4 w-4" />
-                                Recomendación de Personal
-                            </h4>
-                            <p className="text-sm text-muted-foreground">{aiPredictions.staffRecommendation}</p>
-                        </div>
-
-                        {/* Alertas de riesgo */}
-                        <div className="space-y-2">
-                            <h4 className="text-sm font-medium flex items-center gap-2">
-                                <AlertTriangle className="h-4 w-4" />
-                                Alertas de Riesgo
-                            </h4>
-                            {aiPredictions.riskAlerts.length === 0 ? (
-                                <p className="text-sm text-green-600 flex items-center gap-1">
-                                    <CheckCircle2 className="h-4 w-4" /> Sin alertas
-                                </p>
-                            ) : (
-                                <div className="space-y-1">
-                                    {aiPredictions.riskAlerts.map((alert, i) => (
-                                        <p key={i} className="text-sm text-orange-600 flex items-center gap-1">
-                                            <AlertCircle className="h-3 w-3" /> {alert}
-                                        </p>
-                                    ))}
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                </CardContent>
-            </Card>
+                    </CardContent>
+                </Card>
+            </div>
         </div>
     )
 }

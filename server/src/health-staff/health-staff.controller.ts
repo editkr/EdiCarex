@@ -1,6 +1,6 @@
 import { Controller, Get, Post, Patch, Delete, Body, Param, Query, UseInterceptors, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
-import { DoctorsService } from './doctors.service';
+import { HealthStaffService } from './health-staff.service';
 import { AuditInterceptor } from '../common/interceptors/audit.interceptor';
 import { Audit } from '../common/decorators';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -9,21 +9,21 @@ import { MaintenanceGuard } from '../common/guards/maintenance.guard';
 import { PermissionsGuard } from '../auth/guards/permissions.guard';
 import { RequirePermission } from '../auth/decorators/permissions.decorator';
 
-@ApiTags('Doctors')
+@ApiTags('Health Staff')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard, MaintenanceGuard, PermissionsGuard)
 @UseInterceptors(AuditInterceptor)
-@Controller('doctors')
-export class DoctorsController {
-    constructor(private readonly doctorsService: DoctorsService) { }
+@Controller('health-staff')
+export class HealthStaffController {
+    constructor(private readonly healthStaffService: HealthStaffService) { }
 
     @Get()
-    @ApiOperation({ summary: 'Get all doctors' })
+    @ApiOperation({ summary: 'Get all health staff' })
     @RequirePermission('STAFF_VIEW')
     @ApiQuery({ name: 'page', required: false, type: Number })
     @ApiQuery({ name: 'limit', required: false, type: Number })
     findAll(@Query('page') page?: string, @Query('limit') limit?: string) {
-        return this.doctorsService.findAll(
+        return this.healthStaffService.findAll(
             page ? parseInt(page) : 1,
             limit ? parseInt(limit) : 20,
         );
@@ -31,61 +31,60 @@ export class DoctorsController {
 
     @Get('specialties')
     @ApiOperation({ summary: 'Get all specialties' })
-    // Specialties might be needed for dropdowns, so maybe lax permission or STAFF_VIEW
     @RequirePermission('STAFF_VIEW')
     findSpecialties() {
-        return this.doctorsService.findSpecialties();
+        return this.healthStaffService.findSpecialties();
     }
 
     @Get(':id')
-    @ApiOperation({ summary: 'Get doctor by ID' })
+    @ApiOperation({ summary: 'Get staff member by ID' })
     @RequirePermission('STAFF_VIEW')
     findOne(@Param('id') id: string) {
-        return this.doctorsService.findOne(id);
+        return this.healthStaffService.findOne(id);
     }
 
     @Post()
-    @ApiOperation({ summary: 'Create doctor' })
+    @ApiOperation({ summary: 'Create staff member' })
     @RequirePermission('STAFF_CREATE')
-    @Audit('CREATE_DOCTOR', 'doctors')
+    @Audit('CREATE_STAFF', 'health-staff')
     create(@Body() data: any) {
-        return this.doctorsService.create(data);
+        return this.healthStaffService.create(data);
     }
 
     @Patch(':id')
-    @ApiOperation({ summary: 'Update doctor' })
+    @ApiOperation({ summary: 'Update staff member' })
     @RequirePermission('STAFF_EDIT')
-    @Audit('UPDATE_DOCTOR', 'doctors')
+    @Audit('UPDATE_STAFF', 'health-staff')
     update(@Param('id') id: string, @Body() data: any) {
-        return this.doctorsService.update(id, data);
+        return this.healthStaffService.update(id, data);
     }
 
     @Delete(':id')
-    @ApiOperation({ summary: 'Delete doctor' })
+    @ApiOperation({ summary: 'Delete staff member' })
     @RequirePermission('STAFF_DELETE')
-    @Audit('DELETE_DOCTOR', 'doctors')
+    @Audit('DELETE_STAFF', 'health-staff')
     remove(@Param('id') id: string) {
-        return this.doctorsService.remove(id);
+        return this.healthStaffService.remove(id);
     }
 
     @Post(':id/documents')
-    @ApiOperation({ summary: 'Add document to doctor' })
+    @ApiOperation({ summary: 'Add document to staff member' })
     @RequirePermission('STAFF_EDIT')
     addDocument(@Param('id') id: string, @Body() data: any) {
-        return this.doctorsService.addDocument(id, data);
+        return this.healthStaffService.addDocument(id, data);
     }
 
     @Get(':id/documents')
-    @ApiOperation({ summary: 'Get doctor documents' })
+    @ApiOperation({ summary: 'Get staff member documents' })
     @RequirePermission('STAFF_VIEW')
     getDocuments(@Param('id') id: string) {
-        return this.doctorsService.getDocuments(id);
+        return this.healthStaffService.getDocuments(id);
     }
 
     @Delete(':id/documents/:docId')
-    @ApiOperation({ summary: 'Delete doctor document' })
+    @ApiOperation({ summary: 'Delete staff document' })
     @RequirePermission('STAFF_EDIT')
     removeDocument(@Param('id') id: string, @Param('docId') docId: string) {
-        return this.doctorsService.removeDocument(id, docId);
+        return this.healthStaffService.removeDocument(id, docId);
     }
 }

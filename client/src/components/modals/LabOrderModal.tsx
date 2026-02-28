@@ -18,14 +18,14 @@ import {
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import { useToast } from '@/components/ui/use-toast'
-import { laboratoryAPI, doctorsAPI, patientsAPI } from '@/services/api'
+import { laboratoryAPI, healthStaffAPI, patientsAPI } from '@/services/api'
 import { Loader2, TestTube2, AlertCircle } from 'lucide-react'
 
 interface LabOrderModalProps {
     open: boolean
     onOpenChange: (open: boolean) => void
     defaultPatientId?: string
-    defaultDoctorId?: string
+    defaultStaffId?: string
     onSuccess?: () => void
 }
 
@@ -33,19 +33,19 @@ export default function LabOrderModal({
     open,
     onOpenChange,
     defaultPatientId,
-    defaultDoctorId,
+    defaultStaffId,
     onSuccess
 }: LabOrderModalProps) {
     const { toast } = useToast()
     const [loading, setLoading] = useState(false)
     const [patients, setPatients] = useState<any[]>([])
-    const [doctors, setDoctors] = useState<any[]>([])
+    const [staff, setStaff] = useState<any[]>([])
     const [tests, setTests] = useState<any[]>([])
 
     // Form Data
     const [formData, setFormData] = useState({
         patientId: defaultPatientId || '',
-        doctorId: defaultDoctorId || '',
+        staffId: defaultStaffId || '',
         testId: '',
         priority: 'NORMAL',
         notes: ''
@@ -56,26 +56,26 @@ export default function LabOrderModal({
         if (open) {
             const loadData = async () => {
                 try {
-                    const [patientsRes, doctorsRes, testsRes] = await Promise.all([
+                    const [patientsRes, staffRes, testsRes] = await Promise.all([
                         patientsAPI.getAll(),
-                        doctorsAPI.getAll(),
+                        healthStaffAPI.getAll(),
                         laboratoryAPI.getTests(),
                     ])
 
                     // Safely extract data handling potential { data: [...] } structure or direct array
                     const patientsList = Array.isArray(patientsRes.data) ? patientsRes.data : (patientsRes.data?.data || [])
-                    const doctorsList = Array.isArray(doctorsRes.data) ? doctorsRes.data : (doctorsRes.data?.data || [])
+                    const staffList = Array.isArray(staffRes.data) ? staffRes.data : (staffRes.data?.data || [])
                     const testsList = Array.isArray(testsRes.data) ? testsRes.data : (testsRes.data?.data || [])
 
                     setPatients(patientsList)
-                    setDoctors(doctorsList)
+                    setStaff(staffList)
                     setTests(testsList)
 
                     // Update local state if props change
                     setFormData(prev => ({
                         ...prev,
                         patientId: defaultPatientId || prev.patientId,
-                        doctorId: defaultDoctorId || prev.doctorId
+                        staffId: defaultStaffId || prev.staffId
                     }))
                 } catch (error) {
                     console.error("Error loading modal data", error)
@@ -86,26 +86,26 @@ export default function LabOrderModal({
                     })
                     // Ensure empty arrays on error to prevent map errors
                     setPatients([])
-                    setDoctors([])
+                    setStaff([])
                     setTests([])
                 }
             }
             loadData()
         }
-    }, [open, defaultPatientId, defaultDoctorId])
+    }, [open, defaultPatientId, defaultStaffId])
 
     // Update form when defaults change
     useEffect(() => {
         setFormData(prev => ({
             ...prev,
             patientId: defaultPatientId || prev.patientId,
-            doctorId: defaultDoctorId || prev.doctorId
+            staffId: defaultStaffId || prev.staffId
         }))
-    }, [defaultPatientId, defaultDoctorId])
+    }, [defaultPatientId, defaultStaffId])
 
     const handleSubmit = async () => {
         // Validation
-        if (!formData.patientId || !formData.doctorId || !formData.testId) {
+        if (!formData.patientId || !formData.staffId || !formData.testId) {
             toast({
                 title: "Campos Incompletos",
                 description: "Por favor seleccione paciente, médico y tipo de examen.",
@@ -134,7 +134,7 @@ export default function LabOrderModal({
             // Reset form
             setFormData({
                 patientId: defaultPatientId || '',
-                doctorId: defaultDoctorId || '',
+                staffId: defaultStaffId || '',
                 testId: '',
                 priority: 'NORMAL',
                 notes: ''
@@ -188,20 +188,20 @@ export default function LabOrderModal({
                             </Select>
                         </div>
 
-                        {/* Doctor Selection */}
+                        {/* Staff Selection */}
                         <div className="space-y-2">
-                            <Label className="text-zinc-300">Médico Solicitante</Label>
+                            <Label className="text-zinc-300">Personal de Salud</Label>
                             <Select
-                                value={formData.doctorId}
-                                onValueChange={(v) => setFormData({ ...formData, doctorId: v })}
+                                value={formData.staffId}
+                                onValueChange={(v) => setFormData({ ...formData, staffId: v })}
                             >
                                 <SelectTrigger className="bg-zinc-900 border-zinc-800 focus:ring-red-500/20 text-zinc-100">
                                     <SelectValue placeholder="Seleccionar..." />
                                 </SelectTrigger>
                                 <SelectContent className="bg-zinc-900 border-zinc-800 text-zinc-100">
-                                    {doctors.map(d => (
+                                    {staff.map((d: any) => (
                                         <SelectItem key={d.id} value={d.id} className="focus:bg-zinc-800 focus:text-zinc-100">
-                                            Dr. {d.user?.lastName || d.specialty}
+                                            {d.user?.firstName} {d.user?.lastName} ({d.specialization || d.specialty || 'General'})
                                         </SelectItem>
                                     ))}
                                 </SelectContent>

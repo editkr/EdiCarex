@@ -34,7 +34,7 @@ import { usePermissions } from '@/hooks/usePermissions'
 interface WaitingPatient {
     id: string
     patient: any
-    doctor: any
+    staff: any
     appointmentDate: string
     startTime: string
     status: string
@@ -292,7 +292,7 @@ export default function WaitingRoomPage() {
                                     <div className="space-y-3 mb-6">
                                         <div className="flex items-center text-sm text-muted-foreground bg-muted/50 p-2 rounded-md">
                                             <Stethoscope className="h-4 w-4 mr-2 text-primary" />
-                                            <span className="font-medium truncate">Dr. {patient.doctor?.user?.firstName} {patient.doctor?.user?.lastName}</span>
+                                            <span className="font-medium truncate">Personal de Salud: {patient.staff?.user?.firstName} {patient.staff?.user?.lastName}</span>
                                         </div>
 
                                         <div className="flex items-center justify-between text-sm">
@@ -374,7 +374,7 @@ export default function WaitingRoomPage() {
                                                 </p>
                                                 <p className="text-sm text-muted-foreground flex items-center">
                                                     <Clock className="h-3 w-3 mr-1" />
-                                                    {apt.startTime} — Dr. {apt.doctor?.user?.lastName}
+                                                    {apt.startTime} — Personal de Salud: {apt.staff?.user?.lastName}
                                                 </p>
                                             </div>
                                         </div>

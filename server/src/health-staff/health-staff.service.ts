@@ -2,14 +2,14 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
-export class DoctorsService {
+export class HealthStaffService {
     constructor(private prisma: PrismaService) { }
 
     async findAll(page: number = 1, limit: number = 20) {
         const skip = (page - 1) * limit;
 
-        const [doctors, total] = await Promise.all([
-            this.prisma.doctor.findMany({
+        const [staff, total] = await Promise.all([
+            this.prisma.healthStaff.findMany({
                 where: { deletedAt: null },
                 include: {
                     user: { select: { id: true, firstName: true, lastName: true, email: true, phone: true, avatar: true, address: true } },
@@ -19,17 +19,17 @@ export class DoctorsService {
                 take: limit,
                 orderBy: { createdAt: 'desc' },
             }),
-            this.prisma.doctor.count({ where: { deletedAt: null } }),
+            this.prisma.healthStaff.count({ where: { deletedAt: null } }),
         ]);
 
         return {
-            data: doctors,
+            data: staff,
             meta: { total, page, limit, totalPages: Math.ceil(total / limit) },
         };
     }
 
     async findOne(id: string) {
-        const doctor = await this.prisma.doctor.findUnique({
+        const staff = await this.prisma.healthStaff.findUnique({
             where: { id },
             include: {
                 user: true,
@@ -42,11 +42,11 @@ export class DoctorsService {
             },
         });
 
-        if (!doctor || doctor.deletedAt) {
-            throw new NotFoundException('Doctor not found');
+        if (!staff || staff.deletedAt) {
+            throw new NotFoundException('Staff member not found');
         }
 
-        return doctor;
+        return staff;
     }
 
     async getSpecialties() {
@@ -55,42 +55,37 @@ export class DoctorsService {
         });
     }
 
-    // Explicitly adding findSpecialties to match controller call
     async findSpecialties() {
         return this.getSpecialties();
     }
 
     async create(data: any) {
-        const { firstName, lastName, email, phone, address, avatar, password, schedules, specialtyId, ...doctorData } = data;
+        const { firstName, lastName, email, phone, address, avatar, password, schedules, specialtyId, ...staffData } = data;
 
-        // If specialtyId is provided, let's also sync specialization string for backward compatibility
         if (specialtyId) {
             const specialty = await this.prisma.specialty.findUnique({ where: { id: specialtyId } });
             if (specialty) {
-                (doctorData as any).specialization = specialty.name;
+                (staffData as any).specialization = specialty.name;
             }
         }
 
-        // Check if user exists
         const existingUser = await this.prisma.user.findUnique({
             where: { email },
         });
 
         if (existingUser) {
-            // Check if already a doctor
-            const existingDoctor = await this.prisma.doctor.findUnique({
+            const existingStaff = await this.prisma.healthStaff.findUnique({
                 where: { userId: existingUser.id },
             });
-            if (existingDoctor) {
-                throw new Error('User is already a doctor');
+            if (existingStaff) {
+                throw new Error('User is already registered as health staff');
             }
 
-            // Create doctor profile for existing user
-            return this.prisma.doctor.create({
+            return this.prisma.healthStaff.create({
                 data: {
                     userId: existingUser.id,
                     specialtyId,
-                    ...doctorData,
+                    ...staffData,
                     schedules: schedules && schedules.length > 0 ? {
                         create: schedules.map((s: any) => ({
                             dayOfWeek: Number(s.dayOfWeek),
@@ -104,16 +99,12 @@ export class DoctorsService {
             });
         }
 
-        // Create new user and doctor in transaction
         return this.prisma.$transaction(async (prisma) => {
-            // 1. Get Doctor Role
-            let doctorRole = await prisma.role.findUnique({ where: { name: 'DOCTOR' } });
-            if (!doctorRole) {
-                // Fallback or create if not exists
-                doctorRole = await prisma.role.findFirst();
+            let staffRole = await prisma.role.findUnique({ where: { name: 'DOCTOR' } }); // Keep 'DOCTOR' role name if role system wasn't renamed, but service logically uses it
+            if (!staffRole) {
+                staffRole = await prisma.role.findFirst();
             }
 
-            // 2. Create User
             const user = await prisma.user.create({
                 data: {
                     firstName,
@@ -122,17 +113,16 @@ export class DoctorsService {
                     phone,
                     address,
                     avatar,
-                    password: password || 'Edicarex2024!', // Default password
-                    roleId: doctorRole?.id || '',
+                    password: password || 'Edicarex2024!',
+                    roleId: staffRole?.id || '',
                 },
             });
 
-            // 3. Create Doctor Profile
-            return prisma.doctor.create({
+            return prisma.healthStaff.create({
                 data: {
                     userId: user.id,
                     specialtyId,
-                    ...doctorData,
+                    ...staffData,
                     schedules: schedules && schedules.length > 0 ? {
                         create: schedules.map((s: any) => ({
                             dayOfWeek: Number(s.dayOfWeek),
@@ -148,41 +138,35 @@ export class DoctorsService {
     }
 
     async update(id: string, data: any) {
-        const { firstName, lastName, email, phone, address, avatar, schedules, specialtyId, ...doctorData } = data;
+        const { firstName, lastName, email, phone, address, avatar, schedules, specialtyId, ...staffData } = data;
 
-        // Sync specialization string if specialtyId changed
         if (specialtyId) {
             const specialty = await this.prisma.specialty.findUnique({ where: { id: specialtyId } });
             if (specialty) {
-                (doctorData as any).specialization = specialty.name;
+                (staffData as any).specialization = specialty.name;
             }
         }
 
-        // Update doctor and related user info
-        const doctor = await this.prisma.doctor.findUnique({ where: { id } });
-        if (!doctor) throw new NotFoundException('Doctor not found');
+        const staff = await this.prisma.healthStaff.findUnique({ where: { id } });
+        if (!staff) throw new NotFoundException('Staff member not found');
 
         return this.prisma.$transaction(async (prisma) => {
-            // Update User if needed
             if (firstName || lastName || email || phone || address || avatar !== undefined) {
                 await prisma.user.update({
-                    where: { id: doctor.userId },
+                    where: { id: staff.userId },
                     data: { firstName, lastName, email, phone, address, avatar },
                 });
             }
 
-            // Update Schedules if provided
             if (schedules && Array.isArray(schedules)) {
-                // Delete existing schedules
-                await prisma.doctorSchedule.deleteMany({
-                    where: { doctorId: id },
+                await prisma.staffSchedule.deleteMany({
+                    where: { staffId: id },
                 });
 
-                // Create new schedules
                 if (schedules.length > 0) {
-                    await prisma.doctorSchedule.createMany({
+                    await prisma.staffSchedule.createMany({
                         data: schedules.map((schedule: any) => ({
-                            doctorId: id,
+                            staffId: id,
                             dayOfWeek: Number(schedule.dayOfWeek),
                             startTime: schedule.startTime,
                             endTime: schedule.endTime,
@@ -192,12 +176,11 @@ export class DoctorsService {
                 }
             }
 
-            // Update Doctor
-            return prisma.doctor.update({
+            return prisma.healthStaff.update({
                 where: { id },
                 data: {
                     specialtyId,
-                    ...doctorData
+                    ...staffData
                 },
                 include: { user: true, specialty: true },
             });
@@ -205,19 +188,19 @@ export class DoctorsService {
     }
 
     async remove(id: string) {
-        return this.prisma.doctor.update({
+        return this.prisma.healthStaff.update({
             where: { id },
             data: { deletedAt: new Date() },
         });
     }
 
     async addDocument(id: string, data: any) {
-        const doctor = await this.prisma.doctor.findUnique({ where: { id } });
-        if (!doctor) throw new NotFoundException('Doctor not found');
+        const staff = await this.prisma.healthStaff.findUnique({ where: { id } });
+        if (!staff) throw new NotFoundException('Staff member not found');
 
-        return this.prisma.doctorDocument.create({
+        return this.prisma.staffDocument.create({
             data: {
-                doctorId: id,
+                staffId: id,
                 title: data.title,
                 type: data.type || 'Document',
                 url: data.url,
@@ -227,17 +210,17 @@ export class DoctorsService {
     }
 
     async getDocuments(id: string) {
-        return this.prisma.doctorDocument.findMany({
-            where: { doctorId: id },
+        return this.prisma.staffDocument.findMany({
+            where: { staffId: id },
             orderBy: { createdAt: 'desc' },
         });
     }
 
-    async removeDocument(doctorId: string, docId: string) {
-        return this.prisma.doctorDocument.deleteMany({
+    async removeDocument(staffId: string, docId: string) {
+        return this.prisma.staffDocument.deleteMany({
             where: {
                 id: docId,
-                doctorId: doctorId,
+                staffId: staffId,
             },
         });
     }

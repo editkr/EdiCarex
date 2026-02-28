@@ -1,7 +1,7 @@
 export interface LabOrder {
     id: string
     patientId: string
-    doctorId?: string
+    staffId?: string
     testType: string
     priority: 'NORMAL' | 'URGENT' | 'EMERGENCY'
     status: 'PENDING' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED'
@@ -11,7 +11,7 @@ export interface LabOrder {
     completedDate?: string
     createdAt: string
     updatedAt: string
-    doctor?: {
+    staff?: {
         id: string
         user: {
             firstName: string
@@ -22,7 +22,7 @@ export interface LabOrder {
 
 export interface CreateLabOrderDto {
     patientId: string
-    doctorId?: string
+    staffId?: string
     testType: string
     priority: string
     notes?: string

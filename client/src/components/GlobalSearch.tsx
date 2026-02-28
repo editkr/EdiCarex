@@ -25,11 +25,11 @@ import {
     DollarSign,
     Loader2,
 } from 'lucide-react'
-import { patientsAPI, doctorsAPI, appointmentsAPI } from '@/services/api'
+import { patientsAPI, healthStaffAPI, appointmentsAPI } from '@/services/api'
 import { useOrganization } from '@/contexts/OrganizationContext'
 
 interface SearchResult {
-    type: 'patient' | 'doctor' | 'appointment' | 'invoice' | 'medication'
+    type: 'patient' | 'staff' | 'appointment' | 'invoice' | 'medication'
     id: string
     title: string
     subtitle: string
@@ -101,16 +101,16 @@ export default function GlobalSearch() {
                 })
             })
 
-            // Search doctors
-            const doctorsRes = await doctorsAPI.getAll({ search: searchQuery, limit: 5 })
-            const doctors = doctorsRes.data.data || doctorsRes.data || []
-            doctors.forEach((d: any) => {
+            // Search health staff
+            const staffRes = await healthStaffAPI.getAll({ search: searchQuery, limit: 5 })
+            const staffMembers = staffRes.data.data || staffRes.data || []
+            staffMembers.forEach((d: any) => {
                 searchResults.push({
-                    type: 'doctor',
+                    type: 'staff',
                     id: d.id,
-                    title: `Dr. ${d.user?.firstName} ${d.user?.lastName}`,
-                    subtitle: d.specialty?.name || 'Médico',
-                    path: `/doctors/${d.id}`,
+                    title: `${d.user?.firstName} ${d.user?.lastName}`,
+                    subtitle: d.specialty?.name || d.specialization || 'Personal de Salud',
+                    path: `/health-staff/${d.id}`,
                 })
             })
 
@@ -144,7 +144,7 @@ export default function GlobalSearch() {
         switch (type) {
             case 'patient':
                 return <User className="h-4 w-4" />
-            case 'doctor':
+            case 'staff':
                 return <Stethoscope className="h-4 w-4" />
             case 'appointment':
                 return <Calendar className="h-4 w-4" />
@@ -159,7 +159,7 @@ export default function GlobalSearch() {
 
     const groupedResults = {
         patients: results.filter((r) => r.type === 'patient'),
-        doctors: results.filter((r) => r.type === 'doctor'),
+        staff: results.filter((r) => r.type === 'staff'),
         appointments: results.filter((r) => r.type === 'appointment'),
     }
 
@@ -192,7 +192,7 @@ export default function GlobalSearch() {
                         <div className="flex items-center border-b px-3">
                             <Search className="h-4 w-4 shrink-0 opacity-50 mr-2" />
                             <input
-                                placeholder="Buscar pacientes, doctores, citas..."
+                                placeholder="Buscar pacientes, personal, citas..."
                                 className="flex h-12 w-full rounded-md bg-transparent py-3 text-sm outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50"
                                 value={query}
                                 onChange={(e) => setQuery(e.target.value)}
@@ -233,11 +233,11 @@ export default function GlobalSearch() {
                                 </CommandGroup>
                             )}
 
-                            {groupedResults.doctors.length > 0 && (
+                            {groupedResults.staff.length > 0 && (
                                 <>
                                     <CommandSeparator />
-                                    <CommandGroup heading="Doctores">
-                                        {groupedResults.doctors.map((result) => (
+                                    <CommandGroup heading="Personal de Salud">
+                                        {groupedResults.staff.map((result) => (
                                             <CommandItem
                                                 key={result.id}
                                                 onSelect={() => handleSelect(result)}

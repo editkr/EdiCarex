@@ -120,22 +120,26 @@ export const patientsAPI = {
         api.delete(`/patients/${id}/documents/${documentId}`),
     // Notes
     addNote: (id: string, data: any) => api.post(`/patients/${id}/notes`, data),
+    // Ext
+    getVaccinations: (id: string) => api.get(`/patients/${id}/vaccinations`),
+    getEncounters: (id: string) => api.get(`/patients/${id}/encounters`),
+    getMinsaPrograms: (id: string) => api.get(`/patients/${id}/minsa-programs`),
 }
 
 // ============================================
-// DOCTORS API
+// HEALTH STAFF API
 // ============================================
-export const doctorsAPI = {
-    getAll: (params?: any) => api.get('/doctors', { params }),
-    getOne: (id: string) => api.get(`/doctors/${id}`),
-    create: (data: any) => api.post('/doctors', data),
-    update: (id: string, data: any) => api.patch(`/doctors/${id}`, data),
-    delete: (id: string) => api.delete(`/doctors/${id}`),
-    getSpecialties: () => api.get('/doctors/specialties'),
+export const healthStaffAPI = {
+    getAll: (params?: any) => api.get('/health-staff', { params }),
+    getOne: (id: string) => api.get(`/health-staff/${id}`),
+    create: (data: any) => api.post('/health-staff', data),
+    update: (id: string, data: any) => api.patch(`/health-staff/${id}`, data),
+    delete: (id: string) => api.delete(`/health-staff/${id}`),
+    getSpecialties: () => api.get('/health-staff/specialties'),
     // Documents
-    getDocuments: (id: string) => api.get(`/doctors/${id}/documents`),
-    addDocument: (id: string, data: any) => api.post(`/doctors/${id}/documents`, data),
-    deleteDocument: (id: string, docId: string) => api.delete(`/doctors/${id}/documents/${docId}`),
+    getDocuments: (id: string) => api.get(`/health-staff/${id}/documents`),
+    addDocument: (id: string, data: any) => api.post(`/health-staff/${id}/documents`, data),
+    deleteDocument: (id: string, docId: string) => api.delete(`/health-staff/${id}/documents/${docId}`),
 }
 
 // ============================================
@@ -377,7 +381,7 @@ export const reportsAPI = {
     getPatientStats: (params?: any) => api.get('/reports/patients', { params }),
     getFinancialStats: (params?: any) => api.get('/reports/finance', { params }),
     getMedicationStats: (params?: any) => api.get('/reports/medications', { params }),
-    getDoctorStats: (params?: any) => api.get('/reports/doctors', { params }),
+    getStaffStats: (params?: any) => api.get('/reports/staff', { params }),
     getEmergencyStats: (params?: any) => api.get('/reports/emergencies', { params }),
     getComparisonStats: (params?: any) => api.get('/reports/comparison', { params }),
     getAiPredictions: (params?: any) => api.get('/reports/ai-predictions', { params }),
@@ -494,5 +498,55 @@ export const programasMinsaAPI = {
         api.get(`/programas-minsa/${programId}/records`, { params: { month } }),
     createRecord: (data: any) => api.post('/programas-minsa/records', data),
     updateRecord: (id: string, data: any) => api.put(`/programas-minsa/records/${id}`, data),
+}
+
+// ============================================
+// REFERRALS API
+// ============================================
+export const referralsAPI = {
+    getAll: (params?: any) => api.get('/referrals', { params }),
+    getOne: (id: string) => api.get(`/referrals/${id}`),
+    create: (data: any) => api.post('/referrals', data),
+    update: (id: string, data: any) => api.patch(`/referrals/${id}`, data),
+}
+
+// ============================================
+// HIS API
+// ============================================
+export const hisAPI = {
+    getAll: (params?: any) => api.get('/his', { params }),
+    create: (data: any) => api.post('/his', data),
+    getStats: () => api.get('/his/stats'),
+    exportCsv: (date?: string) => api.post('/his/export', null, { params: { date }, responseType: 'blob' }),
+}
+
+// ============================================
+// EPIDEMIOLOGY API
+// ============================================
+export const epidemiologyAPI = {
+    getAll: () => api.get('/epidemiology'),
+    getOne: (id: string) => api.get(`/epidemiology/${id}`),
+    create: (data: any) => api.post('/epidemiology', data),
+    notifyMinsa: (id: string) => api.patch(`/epidemiology/${id}/notify`, {}),
+    getStats: () => api.get('/epidemiology/stats'),
+}
+
+// ============================================
+// SIS API
+// ============================================
+export const sisAPI = {
+    validate: (data: any) => api.post('/sis/validate', data),
+    getHistory: (patientId: string) => api.get(`/sis/patient/${patientId}/history`),
+}
+
+// ============================================
+// OBSERVATION ROOM API
+// ============================================
+export const observationRoomAPI = {
+    getAll: () => api.get('/observation-room'),
+    getOne: (id: string) => api.get(`/observation-room/${id}`),
+    admit: (id: string, data: any) => api.post(`/observation-room/${id}/admit`, data),
+    discharge: (id: string, reason: string) => api.post(`/observation-room/${id}/discharge`, { reason }),
+    refer: (id: string, data: any) => api.post(`/observation-room/${id}/refer`, data),
 }
 

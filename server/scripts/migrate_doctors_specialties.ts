@@ -3,7 +3,7 @@ import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 
 async function main() {
-    console.log('🌱 Starting Doctor Specialty Migration...');
+    console.log('🌱 Starting HealthStaff Specialty Migration...');
 
     // 1. Get all specialties to have a map
     const specialties = await prisma.specialty.findMany();
@@ -13,13 +13,13 @@ async function main() {
     });
 
     // 2. Get all doctors
-    const doctors = await prisma.doctor.findMany({
+    const staff = await prisma.healthStaff.findMany({
         where: { specialtyId: null }
     });
 
-    console.log(`Found ${doctors.length} doctors without specialtyId.`);
+    console.log(`Found ${staff.length} staff members without specialtyId.`);
 
-    for (const doc of doctors) {
+    for (const doc of staff) {
         const specName = doc.specialization?.toLowerCase() || '';
 
         // Try to match the name
@@ -32,8 +32,8 @@ async function main() {
             continue;
         }
 
-        console.log(`✅ Mapping doctor ${doc.licenseNumber} (${doc.specialization}) -> specialtyId ${targetId}`);
-        await prisma.doctor.update({
+        console.log(`✅ Mapping staff ${doc.licenseNumber} (${doc.specialization}) -> specialtyId ${targetId}`);
+        await prisma.healthStaff.update({
             where: { id: doc.id },
             data: { specialtyId: targetId }
         });

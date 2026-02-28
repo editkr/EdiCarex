@@ -19,11 +19,11 @@ export interface EmergencyCase {
     }
     bedId?: string
     bedNumber?: string
-    doctorId?: string
-    doctorName?: string
+    staffId?: string
+    staffName?: string
     status: 'TRIAGE' | 'ADMITTED' | 'DISCHARGED' | 'OBSERVATION'
     createdAt: string
-    doctor?: {
+    staff?: {
         user: {
             firstName: string
             lastName: string

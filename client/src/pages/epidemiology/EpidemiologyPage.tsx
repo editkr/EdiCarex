@@ -12,9 +12,31 @@ import {
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
+import { epidemiologyAPI } from '@/services/api';
+import { Skeleton } from '@/components/ui/skeleton';
+import { format } from 'date-fns';
+import { es } from 'date-fns/locale';
 
 const EpidemiologyPage: React.FC = () => {
     const navigate = useNavigate();
+
+    const { data: stats, isLoading: isLoadingStats } = useQuery({
+        queryKey: ['epi-stats'],
+        queryFn: async () => {
+            const res = await epidemiologyAPI.getStats();
+            return res.data;
+        }
+    });
+
+    const { data: reports, isLoading: isLoadingReports } = useQuery({
+        queryKey: ['epi-reports'],
+        queryFn: async () => {
+            const res = await epidemiologyAPI.getAll();
+            return res.data;
+        }
+    });
+
     return (
         <div className="p-6 space-y-6">
             <div className="flex justify-between items-start">
@@ -43,22 +65,26 @@ const EpidemiologyPage: React.FC = () => {
                 <Card className="border-t-4 border-t-red-600 shadow-sm">
                     <CardHeader className="pb-2">
                         <CardTitle className="text-xs font-bold uppercase text-red-600 flex items-center justify-between">
-                            Alertas Rojas
+                            Alertas (Brotes)
                             <ShieldAlert className="h-4 w-4" />
                         </CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <div className="text-3xl font-bold text-slate-900">0</div>
-                        <p className="text-[10px] text-muted-foreground mt-1 font-medium">Sin brotes activos detectados hoy</p>
+                        <div className="text-3xl font-bold text-slate-900">
+                            {isLoadingStats ? <Skeleton className="h-8 w-12" /> : stats?.outbreaks || 0}
+                        </div>
+                        <p className="text-[10px] text-muted-foreground mt-1 font-medium">Brotes activos detectados</p>
                     </CardContent>
                 </Card>
-                <Card className="border-t-4 border-t-amber-500 shadow-sm">
+                <Card className="border-t-4 border-t-emerald-600 shadow-sm">
                     <CardHeader className="pb-2">
-                        <CardTitle className="text-xs font-bold uppercase text-amber-600">Casos Febriles</CardTitle>
+                        <CardTitle className="text-xs font-bold uppercase text-emerald-600">Casos Notificados</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <div className="text-3xl font-bold text-amber-600">14</div>
-                        <p className="text-[10px] text-muted-foreground mt-1 font-medium">En observación (últimos 7 días)</p>
+                        <div className="text-3xl font-bold text-emerald-600">
+                            {isLoadingStats ? <Skeleton className="h-8 w-12" /> : stats?.totalReports || 0}
+                        </div>
+                        <p className="text-[10px] text-muted-foreground mt-1 font-medium">Total de reportes registrados</p>
                     </CardContent>
                 </Card>
                 <Card className="border-t-4 border-t-blue-500 shadow-sm">
@@ -66,17 +92,21 @@ const EpidemiologyPage: React.FC = () => {
                         <CardTitle className="text-xs font-bold uppercase text-blue-600">Zoonosis</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <div className="text-3xl font-bold text-blue-600">2</div>
-                        <p className="text-[10px] text-muted-foreground mt-1 font-medium">Reportes de mordeduras caninas</p>
+                        <div className="text-3xl font-bold text-blue-600">
+                            {isLoadingStats ? <Skeleton className="h-8 w-12" /> : stats?.zoonosis || 0}
+                        </div>
+                        <p className="text-[10px] text-muted-foreground mt-1 font-medium">Reportes de mordeduras caninas/otros</p>
                     </CardContent>
                 </Card>
-                <Card className="border-t-4 border-t-zinc-800 shadow-sm">
+                <Card className="border-t-4 border-t-amber-500 shadow-sm">
                     <CardHeader className="pb-2">
-                        <CardTitle className="text-xs font-bold uppercase text-zinc-900">Tasa Incidencia</CardTitle>
+                        <CardTitle className="text-xs font-bold uppercase text-amber-600">Febriles / Otros</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <div className="text-3xl font-bold text-slate-900">1.2%</div>
-                        <p className="text-[10px] text-muted-foreground mt-1 font-medium">Dentro del rango esperado (Endemia)</p>
+                        <div className="text-3xl font-bold text-slate-900">
+                            {isLoadingStats ? <Skeleton className="h-8 w-12" /> : stats?.febriles || 0}
+                        </div>
+                        <p className="text-[10px] text-muted-foreground mt-1 font-medium">Casos de vigilancia pasiva</p>
                     </CardContent>
                 </Card>
             </div>
@@ -105,27 +135,51 @@ const EpidemiologyPage: React.FC = () => {
                     </CardContent>
                 </Card>
 
-                <Card className="shadow-sm border-slate-100">
+                <Card className="shadow-sm border-slate-100 h-[400px] overflow-hidden flex flex-col">
                     <CardHeader>
-                        <CardTitle className="text-lg font-bold text-slate-900 tracking-tight">Eventos Recientes</CardTitle>
+                        <CardTitle className="text-lg font-bold text-slate-900 tracking-tight">Reportes de Vigilancia</CardTitle>
                     </CardHeader>
-                    <CardContent className="space-y-4">
-                        {[
-                            { label: 'Dengue', status: 'Negativo', date: 'Hace 2 horas', color: 'bg-green-100 text-green-700 border-green-200' },
-                            { label: 'IRA Grave', status: 'Monitoreo', date: 'Hace 5 horas', color: 'bg-indigo-100 text-indigo-700 border-indigo-200' },
-                            { label: 'TBC', status: 'Notificado', date: 'Ayer', color: 'bg-blue-100 text-blue-700 border-blue-200' },
-                        ].map((evt, i) => (
-                            <div key={i} className="flex flex-col p-4 border rounded-2xl space-y-3 hover:shadow-md transition-all border-slate-100 bg-white">
-                                <div className="flex justify-between items-start">
-                                    <Badge variant="outline" className={`${evt.color} font-bold text-[10px] px-2 py-0 border leading-none tracking-tight`}>{evt.status}</Badge>
-                                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">{evt.date}</span>
-                                </div>
-                                <p className="font-bold text-slate-900 text-base leading-none tracking-tight">{evt.label}</p>
-                                <Button variant="secondary" className="h-8 w-full justify-center text-[10px] font-bold uppercase tracking-widest text-slate-600 bg-slate-50 hover:bg-slate-100 border-none">
-                                    <FileSearch className="h-3.5 w-3.5 mr-2 text-indigo-500" /> Ficha NOTI
-                                </Button>
+                    <CardContent className="space-y-4 overflow-y-auto pr-2 pb-4 flex-1">
+                        {isLoadingReports ? (
+                            <div className="space-y-3">
+                                <Skeleton className="h-24 w-full rounded-2xl" />
+                                <Skeleton className="h-24 w-full rounded-2xl" />
+                                <Skeleton className="h-24 w-full rounded-2xl" />
                             </div>
-                        ))}
+                        ) : reports?.data?.length > 0 ? (
+                            reports.data.map((evt: any) => {
+                                let badgeColor = 'bg-slate-100 text-slate-700 border-slate-200';
+                                if (evt.disease.toLowerCase().includes('dengue')) badgeColor = 'bg-amber-100 text-amber-700 border-amber-200';
+                                if (evt.status === 'CONFIRMED') badgeColor = 'bg-red-100 text-red-700 border-red-200';
+                                if (evt.status === 'SUSPECTED') badgeColor = 'bg-amber-100 text-amber-700 border-amber-200';
+                                if (evt.status === 'DISCARDED') badgeColor = 'bg-green-100 text-green-700 border-green-200';
+
+                                return (
+                                    <div key={evt.id} className="flex flex-col p-4 border rounded-2xl space-y-3 hover:shadow-md transition-all border-slate-100 bg-white">
+                                        <div className="flex justify-between items-start">
+                                            <Badge variant="outline" className={`${badgeColor} font-bold text-[10px] px-2 py-0 border leading-none tracking-tight`}>
+                                                {evt.status}
+                                            </Badge>
+                                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">
+                                                {format(new Date(evt.notificationDate), "dd MMM HH:mm", { locale: es })}
+                                            </span>
+                                        </div>
+                                        <div>
+                                            <p className="font-bold text-slate-900 text-base leading-none tracking-tight">{evt.disease}</p>
+                                            <p className="text-[11px] text-muted-foreground mt-1 truncate">Pte: {evt.patient?.firstName} {evt.patient?.lastName}</p>
+                                        </div>
+                                        <Button variant="secondary" className="h-8 w-full justify-center text-[10px] font-bold uppercase tracking-widest text-slate-600 bg-slate-50 hover:bg-slate-100 border-none">
+                                            <FileSearch className="h-3.5 w-3.5 mr-2 text-indigo-500" /> Ficha NOTI
+                                        </Button>
+                                    </div>
+                                )
+                            })
+                        ) : (
+                            <div className="text-center py-10 opacity-50">
+                                <FileSearch className="h-8 w-8 mx-auto mb-2 text-slate-400" />
+                                <p className="text-sm font-medium">No hay registros epidemiológicos</p>
+                            </div>
+                        )}
                     </CardContent>
                 </Card>
             </div>

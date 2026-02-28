@@ -462,7 +462,7 @@ export default function UrgenciesPage() {
                                         <TableHead className="text-zinc-500 uppercase text-xs font-bold">Cama</TableHead>
                                         <TableHead className="text-zinc-500 uppercase text-xs font-bold">Paciente</TableHead>
                                         <TableHead className="text-zinc-500 uppercase text-xs font-bold">Diagnóstico</TableHead>
-                                        <TableHead className="text-zinc-500 uppercase text-xs font-bold">Doctor</TableHead>
+                                        <TableHead className="text-zinc-500 uppercase text-xs font-bold">Personal</TableHead>
                                         <TableHead className="text-zinc-500 uppercase text-xs font-bold">Signos Vitales</TableHead>
                                         <TableHead className="text-zinc-500 uppercase text-xs font-bold">Ingreso</TableHead>
                                         <TableHead className="text-right text-zinc-500 uppercase text-xs font-bold">Acciones</TableHead>
@@ -493,7 +493,7 @@ export default function UrgenciesPage() {
                                                     </div>
                                                 </TableCell>
                                                 <TableCell>{patient.diagnosis || patient.chiefComplaint}</TableCell>
-                                                <TableCell>{patient.doctorName || patient.doctor}</TableCell>
+                                                <TableCell>{patient.staffName || patient.doctorName || patient.doctor}</TableCell>
                                                 <TableCell>
                                                     {patient.vitalSigns && (
                                                         <div className="flex gap-3 text-xs">

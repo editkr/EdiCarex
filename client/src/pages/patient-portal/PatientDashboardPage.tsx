@@ -196,7 +196,7 @@ export default function PatientDashboardPage() {
                                         </div>
                                         <div>
                                             <p className="font-semibold text-lg text-foreground">
-                                                Dr. {data.nextAppointment.doctor?.user?.firstName} {data.nextAppointment.doctor?.user?.lastName}
+                                                Personal de Salud: {data.nextAppointment.staff?.user?.firstName} {data.nextAppointment.staff?.user?.lastName}
                                             </p>
                                             <p className="text-muted-foreground">{data.nextAppointment.reason}</p>
                                             <div className="flex items-center gap-2 mt-1 text-sm text-muted-foreground">

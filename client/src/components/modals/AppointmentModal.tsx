@@ -30,7 +30,7 @@ import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { useToast } from '@/components/ui/use-toast'
-import { appointmentsAPI, patientsAPI, doctorsAPI } from '@/services/api'
+import { appointmentsAPI, patientsAPI, healthStaffAPI } from '@/services/api'
 import { Loader2, CalendarIcon } from 'lucide-react'
 import { Calendar } from '@/components/ui/calendar'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
@@ -38,7 +38,7 @@ import { cn } from '@/lib/utils'
 
 const appointmentSchema = z.object({
     patientId: z.string().min(1, 'El paciente es requerido'),
-    doctorId: z.string().min(1, 'El doctor es requerido'),
+    staffId: z.string().min(1, 'El personal de salud es requerido'),
     appointmentDate: z.date({
         required_error: "La fecha es requerida",
     }),
@@ -71,14 +71,14 @@ export default function AppointmentModal({
 }: AppointmentModalProps) {
     const { toast } = useToast()
     const [patients, setPatients] = useState<any[]>([])
-    const [doctors, setDoctors] = useState<any[]>([])
+    const [staff, setStaff] = useState<any[]>([])
     const [loadingResources, setLoadingResources] = useState(false)
 
     const form = useForm<AppointmentFormData>({
         resolver: zodResolver(appointmentSchema),
         defaultValues: {
             patientId: '',
-            doctorId: '',
+            staffId: '',
             type: 'CHECKUP',
             reason: '',
             symptoms: '',
@@ -97,7 +97,7 @@ export default function AppointmentModal({
                 const date = new Date(appointment.appointmentDate)
                 form.reset({
                     patientId: appointment.patientId,
-                    doctorId: appointment.doctorId,
+                    staffId: appointment.staffId,
                     appointmentDate: date,
                     time: format(date, 'HH:mm'),
                     type: appointment.type || 'CHECKUP',
@@ -117,7 +117,7 @@ export default function AppointmentModal({
             } else {
                 form.reset({
                     patientId: defaultPatientId || '',
-                    doctorId: '',
+                    staffId: '',
                     type: 'CHECKUP',
                     reason: '',
                     symptoms: '',
@@ -134,17 +134,17 @@ export default function AppointmentModal({
     const fetchResources = async () => {
         try {
             setLoadingResources(true)
-            const [patientsRes, doctorsRes] = await Promise.all([
+            const [patientsRes, staffRes] = await Promise.all([
                 patientsAPI.getAll(),
-                doctorsAPI.getAll()
+                healthStaffAPI.getAll()
             ])
             setPatients(patientsRes.data.data || [])
-            setDoctors(doctorsRes.data.data || [])
+            setStaff(staffRes.data.data || [])
         } catch (error) {
             console.error('Failed to load resources', error)
             toast({
                 title: 'Error',
-                description: 'Error al cargar pacientes o doctores',
+                description: 'Error al cargar pacientes o personal',
                 variant: 'destructive',
             })
         } finally {
@@ -243,20 +243,20 @@ export default function AppointmentModal({
 
                             <FormField
                                 control={form.control}
-                                name="doctorId"
+                                name="staffId"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Doctor</FormLabel>
+                                        <FormLabel>Personal de Salud</FormLabel>
                                         <Select onValueChange={field.onChange} defaultValue={field.value}>
                                             <FormControl>
                                                 <SelectTrigger className="h-11">
-                                                    <SelectValue placeholder="Seleccionar doctor" />
+                                                    <SelectValue placeholder="Seleccionar personal" />
                                                 </SelectTrigger>
                                             </FormControl>
                                             <SelectContent>
-                                                {doctors.map((doc) => (
+                                                {staff.map((doc: any) => (
                                                     <SelectItem key={doc.id} value={doc.id}>
-                                                        Dr. {doc.user?.firstName} {doc.user?.lastName} ({doc.specialization})
+                                                        {doc.user?.firstName} {doc.user?.lastName} ({doc.specialization || 'General'})
                                                     </SelectItem>
                                                 ))}
                                             </SelectContent>

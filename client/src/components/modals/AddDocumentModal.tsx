@@ -109,7 +109,7 @@ export function AddDocumentModal({
                 url: base64Url,
                 mimeType: selectedFile.type,
                 size: selectedFile.size,
-                uploadedBy: 'Doctor', // In real app, get from auth context
+                uploadedBy: 'Personal de Salud', // In real app, get from auth context
             }
 
             await patientsAPI.addDocument(patientId, documentData)

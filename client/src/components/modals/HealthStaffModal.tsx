@@ -28,11 +28,11 @@ import {
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { useToast } from '@/components/ui/use-toast'
-import { doctorsAPI } from '@/services/api'
-import { Loader2, Upload, X, User, Clock, Check } from 'lucide-react'
+import { healthStaffAPI } from '@/services/api'
+import { Loader2, Upload, X, User, Clock } from 'lucide-react'
 
-// Schema for doctor form
-const doctorSchema = z.object({
+// Schema for staff form
+const staffSchema = z.object({
     // User fields
     firstName: z.string().min(2, 'El nombre es requerido'),
     lastName: z.string().min(2, 'El apellido es requerido'),
@@ -41,36 +41,39 @@ const doctorSchema = z.object({
     address: z.string().optional(),
     avatar: z.string().optional(),
 
-    // Doctor fields
+    // Professional fields
     specialtyId: z.string().min(1, 'La especialidad es requerida'),
     specialization: z.string().optional(),
     licenseNumber: z.string().min(5, 'El número de licencia es requerido'),
-    consultationFee: z.string().refine((val) => !isNaN(Number(val)) && Number(val) >= 0, {
+    contractType: z.string().optional(),
+    profession: z.string().optional(),
+    minsaProgram: z.string().optional(),
+    consultationFee: z.string().refine((val) => val === '' || (!isNaN(Number(val)) && Number(val) >= 0), {
         message: 'La tarifa debe ser un número positivo',
-    }),
-    yearsExperience: z.string().refine((val) => !isNaN(Number(val)) && Number(val) >= 0, {
+    }).optional(),
+    yearsExperience: z.string().refine((val) => val === '' || (!isNaN(Number(val)) && Number(val) >= 0), {
         message: 'La experiencia debe ser un número positivo',
-    }),
+    }).optional(),
     bio: z.string().optional(),
     isAvailable: z.boolean().default(true),
     schedules: z.array(z.any()).optional(),
 })
 
-type DoctorFormData = z.infer<typeof doctorSchema>
+type StaffFormData = z.infer<typeof staffSchema>
 
-interface DoctorModalProps {
+interface HealthStaffModalProps {
     open: boolean
     onOpenChange: (open: boolean) => void
-    doctor?: any // If provided, we are editing
+    staff?: any // If provided, we are editing
     onSuccess: () => void
 }
 
-export default function DoctorModal({
+export default function HealthStaffModal({
     open,
     onOpenChange,
-    doctor,
+    staff,
     onSuccess,
-}: DoctorModalProps) {
+}: HealthStaffModalProps) {
     const { toast } = useToast()
     const [scheduleItems, setScheduleItems] = useState<{ dayOfWeek: number; enabled: boolean; startTime: string; endTime: string }[]>([])
     const [specialties, setSpecialties] = useState<{ id: string; name: string }[]>([])
@@ -78,8 +81,8 @@ export default function DoctorModal({
 
     const DAYS = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado']
 
-    const form = useForm<DoctorFormData>({
-        resolver: zodResolver(doctorSchema),
+    const form = useForm<StaffFormData>({
+        resolver: zodResolver(staffSchema),
         defaultValues: {
             firstName: '',
             lastName: '',
@@ -87,8 +90,12 @@ export default function DoctorModal({
             phone: '',
             address: '',
             avatar: '',
+            specialtyId: '',
             specialization: '',
             licenseNumber: '',
+            contractType: '',
+            profession: '',
+            minsaProgram: '',
             consultationFee: '',
             yearsExperience: '',
             bio: '',
@@ -96,13 +103,13 @@ export default function DoctorModal({
         },
     })
 
-    // Reset/Populate form when opening/closing or changing doctor
+    // Reset/Populate form when opening/closing or changing staff
     useEffect(() => {
         if (open) {
             // Initialize Schedule State
-            if (doctor?.schedules && doctor.schedules.length > 0) {
+            if (staff?.schedules && staff.schedules.length > 0) {
                 const items = Array.from({ length: 7 }, (_, i) => {
-                    const existing = doctor.schedules.find((s: any) => s.dayOfWeek === i)
+                    const existing = staff.schedules.find((s: any) => s.dayOfWeek === i)
                     return {
                         dayOfWeek: i,
                         enabled: !!existing,
@@ -125,7 +132,7 @@ export default function DoctorModal({
             const fetchSpecialties = async () => {
                 try {
                     setLoadingSpecialties(true)
-                    const res = await doctorsAPI.getSpecialties()
+                    const res = await healthStaffAPI.getSpecialties()
                     setSpecialties(res.data || [])
                 } catch (error) {
                     console.error('Error fetching specialties:', error)
@@ -135,21 +142,24 @@ export default function DoctorModal({
             }
             fetchSpecialties()
 
-            if (doctor) {
+            if (staff) {
                 form.reset({
-                    firstName: doctor.user?.firstName || '',
-                    lastName: doctor.user?.lastName || '',
-                    email: doctor.user?.email || '',
-                    phone: doctor.user?.phone || '',
-                    address: doctor.user?.address || '',
-                    avatar: doctor.user?.avatar || '',
-                    specialtyId: doctor.specialtyId || '',
-                    specialization: doctor.specialization || '',
-                    licenseNumber: doctor.licenseNumber || '',
-                    consultationFee: doctor.consultationFee ? String(doctor.consultationFee) : '',
-                    yearsExperience: doctor.yearsExperience ? String(doctor.yearsExperience) : '',
-                    bio: doctor.bio || '',
-                    isAvailable: doctor.isAvailable ?? true,
+                    firstName: staff.user?.firstName || '',
+                    lastName: staff.user?.lastName || '',
+                    email: staff.user?.email || '',
+                    phone: staff.user?.phone || '',
+                    address: staff.user?.address || '',
+                    avatar: staff.user?.avatar || '',
+                    specialtyId: staff.specialtyId || '',
+                    specialization: staff.specialization || '',
+                    licenseNumber: staff.licenseNumber || '',
+                    contractType: staff.contractType || '',
+                    profession: staff.profession || '',
+                    minsaProgram: staff.minsaProgram || '',
+                    consultationFee: staff.consultationFee ? String(staff.consultationFee) : '',
+                    yearsExperience: staff.yearsExperience ? String(staff.yearsExperience) : '',
+                    bio: staff.bio || '',
+                    isAvailable: staff.isAvailable ?? true,
                 })
             } else {
                 form.reset({
@@ -162,6 +172,9 @@ export default function DoctorModal({
                     specialtyId: '',
                     specialization: '',
                     licenseNumber: '',
+                    contractType: '',
+                    profession: '',
+                    minsaProgram: '',
                     consultationFee: '',
                     yearsExperience: '',
                     bio: '',
@@ -169,7 +182,7 @@ export default function DoctorModal({
                 })
             }
         }
-    }, [open, doctor, form])
+    }, [open, staff, form])
 
     const handleScheduleChange = (index: number, field: 'enabled' | 'startTime' | 'endTime', value: any) => {
         const newItems = [...scheduleItems]
@@ -187,10 +200,8 @@ export default function DoctorModal({
         toast({ title: 'Horario Aplicado', description: 'Se ha restablecido al horario de oficina estándar (Lun-Vie 8-5).' })
     }
 
-    const onSubmit = async (data: DoctorFormData) => {
+    const onSubmit = async (data: StaffFormData) => {
         try {
-            // Convert types for API
-            // Convert types for API
             const payload = {
                 ...data,
                 consultationFee: Number(data.consultationFee),
@@ -202,17 +213,17 @@ export default function DoctorModal({
                 }))
             }
 
-            if (doctor) {
-                await doctorsAPI.update(doctor.id, payload)
+            if (staff) {
+                await healthStaffAPI.update(staff.id, payload)
                 toast({
                     title: 'Éxito',
-                    description: 'Doctor actualizado correctamente',
+                    description: 'Personal de Salud actualizado correctamente',
                 })
             } else {
-                await doctorsAPI.create(payload)
+                await healthStaffAPI.create(payload)
                 toast({
                     title: 'Éxito',
-                    description: 'Doctor creado correctamente',
+                    description: 'Personal de Salud creado correctamente',
                 })
             }
             onSuccess()
@@ -230,11 +241,11 @@ export default function DoctorModal({
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
-                    <DialogTitle>{doctor ? 'Editar Doctor' : 'Agregar Nuevo Doctor'}</DialogTitle>
+                    <DialogTitle>{staff ? 'Editar Personal de Salud' : 'Agregar Nuevo Personal de Salud'}</DialogTitle>
                     <DialogDescription>
-                        {doctor
-                            ? 'Actualizar información y configuración del doctor.'
-                            : 'Crear un nuevo perfil de doctor. También se creará una cuenta de usuario.'}
+                        {staff
+                            ? 'Actualizar información y configuración del personal.'
+                            : 'Crear un nuevo perfil de personal de salud. También se creará una cuenta de usuario.'}
                     </DialogDescription>
                 </DialogHeader>
 
@@ -281,7 +292,7 @@ export default function DoctorModal({
                                     <FormItem>
                                         <FormLabel>Correo Electrónico</FormLabel>
                                         <FormControl>
-                                            <Input type="email" placeholder="doctor@edicarex.com" {...field} />
+                                            <Input type="email" placeholder="staff@edicarex.com" {...field} />
                                         </FormControl>
                                         <FormMessage />
                                     </FormItem>
@@ -295,7 +306,7 @@ export default function DoctorModal({
                                     <FormItem>
                                         <FormLabel>Teléfono</FormLabel>
                                         <FormControl>
-                                            <Input placeholder="+1 234 567 890" {...field} />
+                                            <Input placeholder="999 999 999" {...field} />
                                         </FormControl>
                                         <FormMessage />
                                     </FormItem>
@@ -309,7 +320,7 @@ export default function DoctorModal({
                                     <FormItem className="md:col-span-2">
                                         <FormLabel>Dirección</FormLabel>
                                         <FormControl>
-                                            <Input placeholder="Av. Principal 123, Oficina 301" {...field} />
+                                            <Input placeholder="Jr. Ancash S/N" {...field} />
                                         </FormControl>
                                         <FormMessage />
                                     </FormItem>
@@ -321,76 +332,38 @@ export default function DoctorModal({
                                 name="avatar"
                                 render={({ field }) => (
                                     <FormItem className="md:col-span-2">
-                                        <FormLabel>Foto del Doctor (Opcional)</FormLabel>
+                                        <FormLabel>Foto (Opcional)</FormLabel>
                                         <FormControl>
                                             <div className="flex items-center gap-4">
-                                                {/* Preview */}
-                                                <div className="relative group shrink-0">
-                                                    <div className="h-20 w-20 rounded-full overflow-hidden border-2 border-slate-200 bg-slate-100 flex items-center justify-center">
-                                                        {field.value ? (
-                                                            <img
-                                                                src={field.value}
-                                                                alt="Preview"
-                                                                className="h-full w-full object-cover"
-                                                            />
-                                                        ) : (
-                                                            <User className="h-10 w-10 text-slate-400" />
-                                                        )}
-                                                    </div>
-                                                    {field.value && (
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => field.onChange('')}
-                                                            className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                                                            title="Eliminar foto"
-                                                        >
-                                                            <X className="h-3 w-3" />
-                                                        </button>
+                                                <div className="h-20 w-20 rounded-full overflow-hidden border-2 border-slate-200 bg-slate-100 flex items-center justify-center">
+                                                    {field.value ? (
+                                                        <img src={field.value} alt="Preview" className="h-full w-full object-cover" />
+                                                    ) : (
+                                                        <User className="h-10 w-10 text-slate-400" />
                                                     )}
                                                 </div>
-
-                                                {/* Upload Button */}
                                                 <div className="flex-1">
                                                     <Input
                                                         type="file"
                                                         accept="image/*"
                                                         className="hidden"
-                                                        id="doctor-photo-upload"
+                                                        id="staff-photo-upload"
                                                         onChange={(e) => {
                                                             const file = e.target.files?.[0]
                                                             if (file) {
-                                                                if (file.size > 5 * 1024 * 1024) {
-                                                                    toast({
-                                                                        title: "Error",
-                                                                        description: "La imagen es demasiado grande (máx 5MB)",
-                                                                        variant: "destructive"
-                                                                    })
-                                                                    return
-                                                                }
                                                                 const reader = new FileReader()
-                                                                reader.onloadend = () => {
-                                                                    field.onChange(reader.result as string)
-                                                                }
+                                                                reader.onloadend = () => field.onChange(reader.result as string)
                                                                 reader.readAsDataURL(file)
                                                             }
                                                         }}
                                                     />
-                                                    <label
-                                                        htmlFor="doctor-photo-upload"
-                                                        className="flex flex-col items-center justify-center w-full h-20 border-2 border-dashed border-slate-300 rounded-lg cursor-pointer bg-slate-50 hover:bg-slate-100 transition-colors"
-                                                    >
-                                                        <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                                                            <Upload className="w-6 h-6 text-slate-400 mb-1" />
-                                                            <p className="text-xs text-slate-500">
-                                                                <span className="font-semibold">Clic para subir foto</span>
-                                                            </p>
-                                                            <p className="text-[10px] text-slate-400">PNG, JPG (MAX. 5MB)</p>
-                                                        </div>
+                                                    <label htmlFor="staff-photo-upload" className="flex flex-col items-center justify-center w-full h-20 border-2 border-dashed border-slate-300 rounded-lg cursor-pointer hover:bg-slate-50">
+                                                        <Upload className="w-6 h-6 text-slate-400 mb-1" />
+                                                        <p className="text-xs text-slate-500">Subir foto</p>
                                                     </label>
                                                 </div>
                                             </div>
                                         </FormControl>
-                                        <FormMessage />
                                     </FormItem>
                                 )}
                             />
@@ -406,23 +379,15 @@ export default function DoctorModal({
                                 render={({ field }) => (
                                     <FormItem>
                                         <FormLabel>Especialidad</FormLabel>
-                                        <Select
-                                            disabled={loadingSpecialties}
-                                            onValueChange={field.onChange}
-                                            value={field.value}
-                                        >
+                                        <Select onValueChange={field.onChange} value={field.value}>
                                             <FormControl>
                                                 <SelectTrigger>
-                                                    <SelectValue placeholder={loadingSpecialties ? "Cargando..." : "Seleccionar especialidad"} />
+                                                    <SelectValue placeholder="Seleccionar especialidad" />
                                                 </SelectTrigger>
                                             </FormControl>
                                             <SelectContent>
                                                 {specialties.map((s) => (
-                                                    <SelectItem key={s.id} value={s.id}>
-                                                        {// Translation for labels if needed or just display as is
-                                                            s.name
-                                                        }
-                                                    </SelectItem>
+                                                    <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
                                                 ))}
                                             </SelectContent>
                                         </Select>
@@ -436,9 +401,9 @@ export default function DoctorModal({
                                 name="licenseNumber"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Número de Licencia</FormLabel>
+                                        <FormLabel>Número de Licencia / CMP</FormLabel>
                                         <FormControl>
-                                            <Input placeholder="MD-12345" {...field} />
+                                            <Input placeholder="123456" {...field} />
                                         </FormControl>
                                         <FormMessage />
                                     </FormItem>
@@ -452,8 +417,95 @@ export default function DoctorModal({
                                     <FormItem>
                                         <FormLabel>Años de Experiencia</FormLabel>
                                         <FormControl>
-                                            <Input type="number" placeholder="5" {...field} />
+                                            <Input type="number" {...field} />
                                         </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+
+                            <FormField
+                                control={form.control}
+                                name="profession"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Profesión / Ocupación</FormLabel>
+                                        <Select onValueChange={field.onChange} value={field.value}>
+                                            <FormControl>
+                                                <SelectTrigger>
+                                                    <SelectValue placeholder="Seleccionar profesión" />
+                                                </SelectTrigger>
+                                            </FormControl>
+                                            <SelectContent>
+                                                <SelectItem value="Médico Cirujano">Médico Cirujano</SelectItem>
+                                                <SelectItem value="Enfermero(a)">Licenciado(a) en Enfermería</SelectItem>
+                                                <SelectItem value="Obstetra">Obstetra</SelectItem>
+                                                <SelectItem value="Cirujano Dentista">Cirujano Dentista</SelectItem>
+                                                <SelectItem value="Psicólogo(a)">Psicólogo(a)</SelectItem>
+                                                <SelectItem value="Nutricionista">Nutricionista</SelectItem>
+                                                <SelectItem value="Asistenta Social">Asistenta Social</SelectItem>
+                                                <SelectItem value="Biólogo(a)">Biólogo(a)</SelectItem>
+                                                <SelectItem value="Químico Farmacéutico">Químico Farmacéutico</SelectItem>
+                                                <SelectItem value="Técnico(a) Enfermería">Técnico(a) en Enfermería</SelectItem>
+                                                <SelectItem value="Técnico(a) Laboratorio">Técnico(a) en Laboratorio</SelectItem>
+                                                <SelectItem value="Técnico(a) Farmacia">Técnico(a) en Farmacia</SelectItem>
+                                                <SelectItem value="Estadístico(a)">Estadístico(a) / Admisión</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+
+                            <FormField
+                                control={form.control}
+                                name="contractType"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Modalidad de Contrato</FormLabel>
+                                        <Select onValueChange={field.onChange} value={field.value}>
+                                            <FormControl>
+                                                <SelectTrigger>
+                                                    <SelectValue placeholder="Tipo de contrato" />
+                                                </SelectTrigger>
+                                            </FormControl>
+                                            <SelectContent>
+                                                <SelectItem value="Nombrado">Nombrado (D.L. 276)</SelectItem>
+                                                <SelectItem value="CAS Regular">CAS Regular</SelectItem>
+                                                <SelectItem value="CAS Confianza">CAS Confianza</SelectItem>
+                                                <SelectItem value="Terceros">Terceros / Locación</SelectItem>
+                                                <SelectItem value="SERUMS">SERUMS</SelectItem>
+                                                <SelectItem value="Internado">Internado</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+
+                            <FormField
+                                control={form.control}
+                                name="minsaProgram"
+                                render={({ field }) => (
+                                    <FormItem className="md:col-span-2">
+                                        <FormLabel>Programa Estratégico MINSA Asignado (Opcional)</FormLabel>
+                                        <Select onValueChange={field.onChange} value={field.value}>
+                                            <FormControl>
+                                                <SelectTrigger>
+                                                    <SelectValue placeholder="Sin asignar o coordinador general" />
+                                                </SelectTrigger>
+                                            </FormControl>
+                                            <SelectContent>
+                                                <SelectItem value="ninguno">Ninguno</SelectItem>
+                                                <SelectItem value="P.E. Articulado Nutricional">P.E. Articulado Nutricional (PAN)</SelectItem>
+                                                <SelectItem value="Salud Materno Neonatal">Salud Materno Neonatal</SelectItem>
+                                                <SelectItem value="Prevención de Cáncer">Prevención de Cáncer</SelectItem>
+                                                <SelectItem value="Enfermedades Metaxénicas y Zoonosis">Enfermedades Metaxénicas y Zoonosis</SelectItem>
+                                                <SelectItem value="TBC-VIH/SIDA">Prevención de TBC-VIH/SIDA</SelectItem>
+                                                <SelectItem value="Salud Mental">Salud Mental</SelectItem>
+                                                <SelectItem value="Enfermedades No Transmisibles">Enfermedades No Transmisibles</SelectItem>
+                                            </SelectContent>
+                                        </Select>
                                         <FormMessage />
                                     </FormItem>
                                 )}
@@ -464,9 +516,9 @@ export default function DoctorModal({
                                 name="consultationFee"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Tarifa de Consulta ($)</FormLabel>
+                                        <FormLabel>Tarifa de Consulta Privada (Opcional S/.)</FormLabel>
                                         <FormControl>
-                                            <Input type="number" placeholder="150.00" {...field} />
+                                            <Input type="number" {...field} />
                                         </FormControl>
                                         <FormMessage />
                                     </FormItem>
@@ -480,22 +532,15 @@ export default function DoctorModal({
                                     <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm md:col-span-2">
                                         <div className="space-y-0.5">
                                             <FormLabel>Disponibilidad</FormLabel>
-                                            <DialogDescription>
-                                                Mostrar al doctor como disponible para nuevas citas.
-                                            </DialogDescription>
+                                            <DialogDescription>¿Está activo para recibir citas?</DialogDescription>
                                         </div>
                                         <FormControl>
-                                            <div className="flex items-center space-x-2">
-                                                <input
-                                                    type="checkbox"
-                                                    checked={field.value}
-                                                    onChange={field.onChange}
-                                                    className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                                                />
-                                                <span className="text-sm text-gray-900">
-                                                    {field.value ? 'Disponible' : 'No Disponible'}
-                                                </span>
-                                            </div>
+                                            <input
+                                                type="checkbox"
+                                                checked={field.value}
+                                                onChange={field.onChange}
+                                                className="h-4 w-4 rounded border-gray-300 text-blue-600"
+                                            />
                                         </FormControl>
                                     </FormItem>
                                 )}
@@ -506,13 +551,9 @@ export default function DoctorModal({
                                 name="bio"
                                 render={({ field }) => (
                                     <FormItem className="md:col-span-2">
-                                        <FormLabel>Biografía</FormLabel>
+                                        <FormLabel>Biografía / Resumen</FormLabel>
                                         <FormControl>
-                                            <Textarea
-                                                placeholder="Breve trayectoria profesional..."
-                                                className="resize-none"
-                                                {...field}
-                                            />
+                                            <Textarea placeholder="Breve descripción..." className="resize-none" {...field} />
                                         </FormControl>
                                         <FormMessage />
                                     </FormItem>
@@ -523,55 +564,42 @@ export default function DoctorModal({
                         {/* Schedules Section */}
                         <div className="space-y-4 pt-4 border-t">
                             <div className="flex justify-between items-center">
-                                <div>
-                                    <h3 className="text-lg font-medium mb-1 flex items-center gap-2">
-                                        <Clock className="h-5 w-5 text-indigo-500" />
-                                        Horario de Consulta
-                                    </h3>
-                                    <p className="text-sm text-slate-500">Define los días y horas de consulta médica.</p>
-                                </div>
-                                <Button type="button" variant="ghost" size="sm" onClick={applyStandardSchedule} className="text-xs text-indigo-600 hover:bg-indigo-50">
-                                    Aplicar Estándar (L-V 8-5)
+                                <h3 className="text-lg font-medium flex items-center gap-2">
+                                    <Clock className="h-5 w-5 text-indigo-500" />
+                                    Horario de Atención
+                                </h3>
+                                <Button type="button" variant="ghost" size="sm" onClick={applyStandardSchedule} className="text-xs text-indigo-600">
+                                    Aplicar Estándar (L-V 8-1)
                                 </Button>
                             </div>
 
                             <div className="grid gap-3 bg-slate-50 p-4 rounded-xl border">
                                 {scheduleItems.map((item, index) => (
-                                    <div key={item.dayOfWeek} className={`flex items-center gap-4 p-2 rounded-lg transition-colors ${item.enabled ? 'bg-white shadow-sm border-l-4 border-l-indigo-500' : 'opacity-60'}`}>
+                                    <div key={item.dayOfWeek} className="flex items-center gap-4 p-2 rounded-lg bg-white border">
                                         <div className="w-28 flex items-center gap-2">
                                             <input
                                                 type="checkbox"
                                                 checked={item.enabled}
                                                 onChange={(e) => handleScheduleChange(index, 'enabled', e.target.checked)}
-                                                className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
                                             />
-                                            <span className={`text-sm font-medium ${item.enabled ? 'text-gray-900' : 'text-gray-500'}`}>
-                                                {DAYS[item.dayOfWeek]}
-                                            </span>
+                                            <span className="text-sm font-medium">{DAYS[item.dayOfWeek]}</span>
                                         </div>
-
-                                        {item.enabled ? (
-                                            <div className="flex items-center gap-2 flex-1 animate-in fade-in duration-300">
-                                                <div className="relative">
-                                                    <Input
-                                                        type="time"
-                                                        value={item.startTime}
-                                                        onChange={(e) => handleScheduleChange(index, 'startTime', e.target.value)}
-                                                        className="w-28 h-8 text-xs font-mono"
-                                                    />
-                                                </div>
-                                                <span className="text-slate-400 text-xs">-</span>
-                                                <div className="relative">
-                                                    <Input
-                                                        type="time"
-                                                        value={item.endTime}
-                                                        onChange={(e) => handleScheduleChange(index, 'endTime', e.target.value)}
-                                                        className="w-28 h-8 text-xs font-mono"
-                                                    />
-                                                </div>
+                                        {item.enabled && (
+                                            <div className="flex items-center gap-2 flex-1">
+                                                <Input
+                                                    type="time"
+                                                    value={item.startTime}
+                                                    onChange={(e) => handleScheduleChange(index, 'startTime', e.target.value)}
+                                                    className="w-28 h-8 text-xs"
+                                                />
+                                                <span className="text-slate-400">-</span>
+                                                <Input
+                                                    type="time"
+                                                    value={item.endTime}
+                                                    onChange={(e) => handleScheduleChange(index, 'endTime', e.target.value)}
+                                                    className="w-28 h-8 text-xs"
+                                                />
                                             </div>
-                                        ) : (
-                                            <div className="flex-1 text-xs text-slate-400 italic">No laborable</div>
                                         )}
                                     </div>
                                 ))}
@@ -579,18 +607,10 @@ export default function DoctorModal({
                         </div>
 
                         <div className="flex justify-end gap-3">
-                            <Button
-                                type="button"
-                                variant="outline"
-                                onClick={() => onOpenChange(false)}
-                            >
-                                Cancelar
-                            </Button>
+                            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
                             <Button type="submit" disabled={form.formState.isSubmitting}>
-                                {form.formState.isSubmitting && (
-                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                )}
-                                {doctor ? 'Guardar Cambios' : 'Crear Doctor'}
+                                {form.formState.isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                {staff ? 'Guardar Cambios' : 'Crear Personal'}
                             </Button>
                         </div>
                     </form>

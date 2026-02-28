@@ -52,7 +52,7 @@ export class AppointmentsService {
                 },
                 include: {
                     patient: true,
-                    doctor: { include: { user: true, specialty: true } },
+                    staff: { include: { user: true, specialty: true } },
                 },
             });
 
@@ -65,10 +65,10 @@ export class AppointmentsService {
                 },
             });
 
-            // Create notification for the doctor
-            if (appointment.doctor?.user?.id) {
+            // Create notification for the staff member
+            if (appointment.staff?.user?.id) {
                 await this.notificationsService.create({
-                    userId: appointment.doctor.user.id,
+                    userId: appointment.staff.user.id,
                     title: 'Nueva Cita Agendada',
                     message: `Tienes una nueva cita con ${appointment.patient.firstName} ${appointment.patient.lastName} para el ${new Date(appointment.startTime).toLocaleDateString()} a las ${appointment.startTime.toString().split('T')[1]?.substring(0, 5) || 'hora agendada'}.`,
                     type: 'APPOINTMENT_REMINDER',
@@ -91,7 +91,7 @@ export class AppointmentsService {
             const where: any = { deletedAt: null };
 
             if (filters?.status && filters.status !== 'all') where.status = filters.status;
-            if (filters?.doctorId && filters.doctorId !== 'all') where.doctorId = filters.doctorId;
+            if (filters?.staffId && filters.staffId !== 'all') where.staffId = filters.staffId;
             if (filters?.patientId) where.patientId = filters.patientId;
             if (filters?.date) {
                 const date = new Date(filters.date);
@@ -108,7 +108,7 @@ export class AppointmentsService {
                     where,
                     include: {
                         patient: true,
-                        doctor: { include: { user: true, specialty: true } },
+                        staff: { include: { user: true, specialty: true } },
                         history: { orderBy: { createdAt: 'desc' } }, // Include history for accurate tracking
                     },
                     skip,
@@ -137,7 +137,7 @@ export class AppointmentsService {
             where: { id },
             include: {
                 patient: true,
-                doctor: { include: { user: true, specialty: true } },
+                staff: { include: { user: true, specialty: true } },
                 history: { orderBy: { createdAt: 'desc' } },
                 medicalRecords: true,
             },
@@ -158,7 +158,7 @@ export class AppointmentsService {
             data: { status },
             include: {
                 patient: true,
-                doctor: { include: { user: true } },
+                staff: { include: { user: true } },
             },
         });
 
@@ -187,7 +187,7 @@ export class AppointmentsService {
             data: updateData,
             include: {
                 patient: true,
-                doctor: { include: { user: true, specialty: true } },
+                staff: { include: { user: true, specialty: true } },
             },
         });
     }

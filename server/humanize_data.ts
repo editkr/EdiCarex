@@ -15,7 +15,7 @@ const REAL_PATIENT_NAMES = [
     'Elena Vargas'
 ];
 
-const REAL_DOCTORS = [
+const REAL_STAFF = [
     'Dr. Juan Pérez',
     'Dra. Laura Gómez',
     'Dr. Ricardo Fernández',
@@ -45,20 +45,20 @@ async function main() {
 
         // Pick random realistic data
         const patientName = REAL_PATIENT_NAMES[i % REAL_PATIENT_NAMES.length];
-        const doctorName = REAL_DOCTORS[i % REAL_DOCTORS.length];
+        const staffName = REAL_STAFF[i % REAL_STAFF.length];
         const diagnosis = REAL_DIAGNOSES[i % REAL_DIAGNOSES.length];
 
         // Variation in age
         const age = 20 + Math.floor(Math.random() * 60);
 
-        console.log(`Updating Case ${kase.id}: ${patientName} handled by ${doctorName}`);
+        console.log(`Updating Case ${kase.id}: ${patientName} handled by ${staffName}`);
 
         await prisma.emergencyCase.update({
             where: { id: kase.id },
             data: {
                 patientName: patientName,
                 patientAge: age,
-                doctorName: doctorName,
+                staffName: staffName,
                 diagnosis: diagnosis,
                 // Also update chief complaint to match diagnosis loosely
                 chiefComplaint: `Paciente presenta ${diagnosis.toLowerCase()}`

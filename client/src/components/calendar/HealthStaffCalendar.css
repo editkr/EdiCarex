@@ -1,61 +1,61 @@
 /* Custom styles for react-big-calendar */
-.doctor-calendar .rbc-calendar {
+.staff-calendar .rbc-calendar {
   font-family: inherit;
 }
 
-.doctor-calendar .rbc-header {
+.staff-calendar .rbc-header {
   padding: 10px 3px;
   font-weight: 600;
   font-size: 14px;
   border-bottom: 2px solid hsl(var(--border));
 }
 
-.doctor-calendar .rbc-today {
+.staff-calendar .rbc-today {
   background-color: hsl(var(--accent));
 }
 
-.doctor-calendar .rbc-event {
+.staff-calendar .rbc-event {
   padding: 4px 6px;
   font-size: 12px;
   cursor: move;
 }
 
-.doctor-calendar .rbc-event:hover {
+.staff-calendar .rbc-event:hover {
   opacity: 1 !important;
 }
 
-.doctor-calendar .rbc-event-label {
+.staff-calendar .rbc-event-label {
   font-size: 11px;
 }
 
-.doctor-calendar .rbc-time-slot {
+.staff-calendar .rbc-time-slot {
   min-height: 40px;
 }
 
-.doctor-calendar .rbc-timeslot-group {
+.staff-calendar .rbc-timeslot-group {
   min-height: 80px;
   border-left: 1px solid hsl(var(--border));
 }
 
-.doctor-calendar .rbc-day-slot .rbc-time-slot {
+.staff-calendar .rbc-day-slot .rbc-time-slot {
   border-top: 1px solid hsl(var(--border));
 }
 
-.doctor-calendar .rbc-time-header-content {
+.staff-calendar .rbc-time-header-content {
   border-left: 1px solid hsl(var(--border));
 }
 
-.doctor-calendar .rbc-current-time-indicator {
+.staff-calendar .rbc-current-time-indicator {
   background-color: hsl(var(--primary));
   height: 2px;
 }
 
-.doctor-calendar .rbc-toolbar {
+.staff-calendar .rbc-toolbar {
   padding: 10px 0;
   margin-bottom: 10px;
 }
 
-.doctor-calendar .rbc-toolbar button {
+.staff-calendar .rbc-toolbar button {
   color: hsl(var(--foreground));
   border: 1px solid hsl(var(--border));
   padding: 6px 12px;
@@ -64,35 +64,35 @@
   transition: all 0.2s;
 }
 
-.doctor-calendar .rbc-toolbar button:hover {
+.staff-calendar .rbc-toolbar button:hover {
   background-color: hsl(var(--accent));
 }
 
-.doctor-calendar .rbc-toolbar button.rbc-active {
+.staff-calendar .rbc-toolbar button.rbc-active {
   background-color: hsl(var(--primary));
   color: hsl(var(--primary-foreground));
   border-color: hsl(var(--primary));
 }
 
-.doctor-calendar .rbc-selected-cell {
+.staff-calendar .rbc-selected-cell {
   background-color: hsl(var(--accent));
 }
 
-.doctor-calendar .rbc-show-more {
+.staff-calendar .rbc-show-more {
   background-color: transparent;
   color: hsl(var(--primary));
   font-weight: 600;
   padding: 4px;
 }
 
-.doctor-calendar .rbc-overlay {
+.staff-calendar .rbc-overlay {
   background-color: hsl(var(--card));
   border: 1px solid hsl(var(--border));
   border-radius: 8px;
   box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1);
 }
 
-.doctor-calendar .rbc-overlay-header {
+.staff-calendar .rbc-overlay-header {
   border-bottom: 1px solid hsl(var(--border));
   padding: 8px 12px;
   font-weight: 600;

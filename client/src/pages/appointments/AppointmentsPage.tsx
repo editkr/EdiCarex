@@ -20,7 +20,7 @@ import {
     SelectValue,
 } from '@/components/ui/select'
 import { Calendar as CalendarIcon, Plus, Search, Loader2, Edit, Trash2, Eye, TableIcon, Filter, Download, CheckCircle, XCircle, Clock, TrendingUp, CalendarCheck } from 'lucide-react'
-import { appointmentsAPI, patientsAPI, doctorsAPI } from '@/services/api'
+import { appointmentsAPI, patientsAPI, healthStaffAPI } from '@/services/api'
 import { useToast } from '@/components/ui/use-toast'
 import AppointmentModal from '@/components/modals/AppointmentModal'
 import { format, isToday, isThisWeek, differenceInMinutes, isPast } from 'date-fns'
@@ -38,7 +38,7 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import DoctorCalendar from '@/components/calendar/DoctorCalendar'
+import HealthStaffCalendar from '@/components/calendar/HealthStaffCalendar'
 import { usePermissions } from '@/hooks/usePermissions'
 
 export default function AppointmentsPage() {
@@ -47,7 +47,7 @@ export default function AppointmentsPage() {
     const [searchTerm, setSearchTerm] = useState('')
     const [appointments, setAppointments] = useState<any[]>([])
     const [patients, setPatients] = useState<any[]>([])
-    const [doctors, setDoctors] = useState<any[]>([])
+    const [staff, setStaff] = useState<any[]>([])
     const [loading, setLoading] = useState(true)
     const [modalOpen, setModalOpen] = useState(false)
     const [selectedAppointment, setSelectedAppointment] = useState<any>(null)
@@ -60,7 +60,7 @@ export default function AppointmentsPage() {
     const [filters, setFilters] = useState({
         status: 'all',
         priority: 'all',
-        doctorId: 'all',
+        staffId: 'all',
     })
 
     useEffect(() => {
@@ -70,14 +70,14 @@ export default function AppointmentsPage() {
     const loadData = async () => {
         try {
             setLoading(true)
-            const [appointmentsRes, patientsRes, doctorsRes] = await Promise.all([
+            const [appointmentsRes, patientsRes, staffRes] = await Promise.all([
                 appointmentsAPI.getAll(),
                 patientsAPI.getAll().catch(() => ({ data: { data: [] } })),
-                doctorsAPI.getAll().catch(() => ({ data: { data: [] } })),
+                healthStaffAPI.getAll().catch(() => ({ data: { data: [] } })),
             ])
             setAppointments(appointmentsRes.data.data || [])
             setPatients(patientsRes.data?.data || [])
-            setDoctors(doctorsRes.data?.data || [])
+            setStaff(staffRes.data?.data || [])
         } catch (error: any) {
             toast({
                 title: 'Error',
@@ -136,13 +136,13 @@ export default function AppointmentsPage() {
             const searchMatch = searchTerm === '' ||
                 apt.patient?.firstName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                 apt.patient?.lastName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                apt.doctor?.user?.firstName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                apt.doctor?.user?.lastName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                (apt.healthStaff?.user?.firstName || apt.doctor?.user?.firstName)?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                (apt.healthStaff?.user?.lastName || apt.doctor?.user?.lastName)?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                 apt.reason?.toLowerCase().includes(searchTerm.toLowerCase())
 
             // Filtros
             const statusMatch = filters.status === 'all' || apt.status === filters.status
-            const doctorMatch = filters.doctorId === 'all' || apt.doctorId === filters.doctorId
+            const staffMatch = filters.staffId === 'all' || apt.staffId === filters.staffId
 
             // Normalizar prioridad: NORMAL en DB = MEDIUM en UI, tratar null como MEDIUM
             const rawPriority = apt.priority || 'NORMAL'
@@ -150,7 +150,7 @@ export default function AppointmentsPage() {
             const filterPriority = filters.priority.toUpperCase()
             const priorityMatch = filterPriority === 'ALL' || aptPriority === filterPriority
 
-            return searchMatch && statusMatch && doctorMatch && priorityMatch
+            return searchMatch && statusMatch && staffMatch && priorityMatch
         })
     }, [appointments, searchTerm, filters])
 
@@ -198,7 +198,7 @@ export default function AppointmentsPage() {
     const exportToExcel = () => {
         const data = filteredAppointments.map(apt => ({
             Paciente: apt.patient ? `${apt.patient.firstName} ${apt.patient.lastName}` : 'Desconocido',
-            Doctor: apt.doctor ? `Dr. ${apt.doctor.user?.firstName} ${apt.doctor.user?.lastName}` : 'Desconocido',
+            Personal: apt.staff ? `${apt.staff.user?.firstName} ${apt.staff.user?.lastName}` : 'Desconocido',
             Fecha: apt.appointmentDate ? format(new Date(apt.appointmentDate), 'dd/MM/yyyy HH:mm') : 'N/A',
             Estado: apt.status,
             Motivo: apt.reason || 'Consulta General',
@@ -221,7 +221,7 @@ export default function AppointmentsPage() {
 
         const tableData = filteredAppointments.map(apt => [
             apt.patient ? `${apt.patient.firstName} ${apt.patient.lastName}` : 'Desconocido',
-            apt.doctor ? `Dr. ${apt.doctor.user?.firstName} ${apt.doctor.user?.lastName}` : 'Desconocido',
+            apt.staff ? `${apt.staff.user?.firstName} ${apt.staff.user?.lastName}` : 'Desconocido',
             apt.appointmentDate ? format(new Date(apt.appointmentDate), 'dd/MM/yyyy HH:mm') : 'N/A',
             apt.status,
             apt.reason || 'Consulta General'
@@ -229,7 +229,7 @@ export default function AppointmentsPage() {
 
         autoTable(doc, {
             startY: 28,
-            head: [['Paciente', 'Doctor', 'Fecha', 'Estado', 'Motivo']],
+            head: [['Paciente', 'Personal', 'Fecha', 'Estado', 'Motivo']],
             body: tableData,
         })
 
@@ -374,7 +374,7 @@ export default function AppointmentsPage() {
                         <div className="relative">
                             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                             <Input
-                                placeholder="Buscar por paciente, doctor, o motivo..."
+                                placeholder="Buscar por paciente, personal, o motivo..."
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
                                 className="pl-10"
@@ -408,15 +408,15 @@ export default function AppointmentsPage() {
                             </SelectContent>
                         </Select>
 
-                        <Select value={filters.doctorId} onValueChange={(v) => setFilters({ ...filters, doctorId: v })}>
+                        <Select value={filters.staffId} onValueChange={(v) => setFilters({ ...filters, staffId: v })}>
                             <SelectTrigger>
-                                <SelectValue placeholder="Doctor" />
+                                <SelectValue placeholder="Personal de Salud" />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="all">Todos los Doctores</SelectItem>
-                                {doctors.map((doctor: any) => (
-                                    <SelectItem key={doctor.id} value={doctor.id}>
-                                        Dr. {doctor.user?.firstName} {doctor.user?.lastName}
+                                <SelectItem value="all">Todo el Personal</SelectItem>
+                                {staff.map((member: any) => (
+                                    <SelectItem key={member.id} value={member.id}>
+                                        {member.user?.firstName} {member.user?.lastName}
                                     </SelectItem>
                                 ))}
                             </SelectContent>
@@ -452,8 +452,8 @@ export default function AppointmentsPage() {
 
                 {/* Calendar View */}
                 <TabsContent value="calendar" className="mt-4">
-                    <DoctorCalendar
-                        doctorId="all"
+                    <HealthStaffCalendar
+                        staffId="all"
                         appointments={filteredAppointments}
                         onRefresh={loadData}
                     />
@@ -466,7 +466,7 @@ export default function AppointmentsPage() {
                             <TableHeader>
                                 <TableRow>
                                     <TableHead>Paciente</TableHead>
-                                    <TableHead>Doctor</TableHead>
+                                    <TableHead>Personal de Salud</TableHead>
                                     <TableHead>Fecha</TableHead>
                                     <TableHead>Hora</TableHead>
                                     <TableHead>Tipo</TableHead>
@@ -499,7 +499,7 @@ export default function AppointmentsPage() {
                                                     </div>
                                                 </TableCell>
                                                 <TableCell>
-                                                    {apt.doctor ? `Dr. ${apt.doctor.user?.firstName} ${apt.doctor.user?.lastName}` : 'Desconocido'}
+                                                    {apt.healthStaff ? `${apt.healthStaff.user?.firstName} ${apt.healthStaff.user?.lastName}` : (apt.staff ? `${apt.staff.user?.firstName} ${apt.staff.user?.lastName}` : (apt.doctor ? `${apt.doctor.user?.firstName} ${apt.doctor.user?.lastName}` : 'Desconocido'))}
                                                 </TableCell>
                                                 <TableCell>
                                                     {apt.appointmentDate ? format(new Date(apt.appointmentDate), 'dd MMM yyyy', { locale: es }) : 'N/A'}

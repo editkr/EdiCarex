@@ -67,11 +67,11 @@ export default function PublicHealthPage() {
         patientCycle: [],
         capacity: [],
         historical: [],
-        topDoctors: [],
+        topStaff: [],
         patientStats: { total: 0, byGender: [], byStatus: [] },
         ageDist: [],
         revenueStats: { totalRevenue: 0, pendingRevenue: 0, thisMonthRevenue: 0 },
-        dashboard: { appointments: [], patients: { total: 0, byGender: [], byStatus: [] }, topDoctors: [] },
+        dashboard: { appointments: [], patients: { total: 0, byGender: [], byStatus: [] }, topStaff: [] },
         appointmentTypes: [],
         labStats: [],
         topMeds: []
@@ -121,7 +121,7 @@ export default function PublicHealthPage() {
                 patientCycle: cycleRes.data,
                 capacity: capacityRes.data,
                 historical: historicalRes.data,
-                topDoctors: dashboardRes.data?.topDoctors || [],
+                topStaff: dashboardRes.data?.topStaff || [],
                 patientStats: patientStatsRes.data,
                 appointmentTypes: appTypesRes.data,
                 labStats: labStatsRes.data,
@@ -433,7 +433,7 @@ export default function PublicHealthPage() {
                             <CardContent>
                                 <ResponsiveContainer width="100%" height={350}>
                                     <BarChart
-                                        data={analyticsData.topDoctors || []}
+                                        data={analyticsData.topStaff || []}
                                         layout="vertical"
                                         margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
                                     >
@@ -449,7 +449,7 @@ export default function PublicHealthPage() {
                                         />
                                         <Tooltip />
                                         <Bar dataKey="revenue" fill="#6366f1" radius={[0, 4, 4, 0]} name="Total Atenciones" barSize={30}>
-                                            {(analyticsData.topDoctors || []).map((entry: any, index: number) => (
+                                            {(analyticsData.topStaff || []).map((entry: any, index: number) => (
                                                 <Cell key={`cell-${index}`} fill={index === 0 ? '#4f46e5' : '#818cf8'} />
                                             ))}
                                         </Bar>

@@ -46,7 +46,7 @@ export class EmergencyService {
             },
             include: {
                 bed: true,
-                doctor: {
+                staff: {
                     include: {
                         user: {
                             select: {
@@ -67,7 +67,7 @@ export class EmergencyService {
             include: {
                 patient: true,
                 bed: true,
-                doctor: {
+                staff: {
                     include: {
                         user: {
                             select: {
@@ -163,13 +163,13 @@ export class EmergencyService {
             });
         }
 
-        let doctorName = null;
+        let staffName = null;
         if (data.doctorId) {
-            const doctor = await this.prisma.doctor.findUnique({
+            const staff = await this.prisma.healthStaff.findUnique({
                 where: { id: data.doctorId },
                 include: { user: { select: { firstName: true, lastName: true } } }
             });
-            if (doctor) doctorName = `Dr. ${doctor.user.firstName} ${doctor.user.lastName}`;
+            if (staff) staffName = `${staff.user.firstName} ${staff.user.lastName}`;
         }
 
         const newCase = await this.prisma.emergencyCase.create({
@@ -182,8 +182,8 @@ export class EmergencyService {
                 diagnosis: data.diagnosis || null,
                 bedId: data.bedId || null,
                 bedNumber,
-                doctorId: data.doctorId || null,
-                doctorName,
+                staffId: data.doctorId || null,
+                staffName,
                 vitalSigns: data.vitalSigns || null,
                 status: 'ADMITTED'
             }
@@ -198,7 +198,7 @@ export class EmergencyService {
                 temp: vs.temp,
                 spo2: vs.spo2,
                 rr: vs.rr,
-                performedBy: doctorName || 'Admisión'
+                performedBy: staffName || 'Admisión'
             });
         }
 
@@ -210,7 +210,7 @@ export class EmergencyService {
         try {
             const currentCase = await this.prisma.emergencyCase.findUnique({
                 where: { id },
-                select: { bedId: true, doctorId: true, patientId: true }
+                select: { bedId: true, staffId: true, patientId: true }
             });
 
             if (!currentCase) {
@@ -241,14 +241,14 @@ export class EmergencyService {
             }
 
             // Staff & Bed Caching details
-            if (data.doctorId && data.doctorId !== currentCase.doctorId) {
-                const doctor = await this.prisma.doctor.findUnique({
+            if (data.doctorId && data.doctorId !== currentCase.staffId) {
+                const staffMember = await this.prisma.healthStaff.findUnique({
                     where: { id: data.doctorId },
                     include: { user: { select: { firstName: true, lastName: true } } }
                 });
-                if (doctor) {
-                    updateData.doctorId = data.doctorId;
-                    updateData.doctorName = `Dr. ${doctor.user.firstName} ${doctor.user.lastName}`;
+                if (staffMember) {
+                    updateData.staffId = data.doctorId;
+                    updateData.staffName = `${staffMember.user.firstName} ${staffMember.user.lastName}`;
                 }
             }
 
@@ -256,7 +256,7 @@ export class EmergencyService {
             if (data.vitalSigns) {
                 await this.addVitalSign(id, {
                     ...data.vitalSigns,
-                    performedBy: updateData.doctorName || 'Actualización Sistema'
+                    performedBy: updateData.staffName || 'Actualización Sistema'
                 });
             }
 
@@ -462,7 +462,7 @@ export class EmergencyService {
     async addMedication(caseId: string, data: any) {
         const emergencyCase = await this.prisma.emergencyCase.findUnique({
             where: { id: caseId },
-            select: { patientId: true, doctorId: true, doctorName: true }
+            select: { patientId: true, staffId: true, staffName: true }
         });
 
         // 1. Create clinical record
@@ -479,7 +479,7 @@ export class EmergencyService {
         });
 
         // 2. Create Pharmacy Order link
-        if (emergencyCase?.patientId && emergencyCase?.doctorId) {
+        if (emergencyCase?.patientId && emergencyCase?.staffId) {
             const orderCount = await this.prisma.pharmacyOrder.count();
             const orderNumber = `ORD-ER-${(orderCount + 1).toString().padStart(5, '0')}`;
 
@@ -502,7 +502,7 @@ export class EmergencyService {
                         medicationId: medication.id,
                         emergencyCaseId: caseId, // [NEW] Explicit Case Link
                         quantity: 1, // Default unit for ER
-                        doctorId: emergencyCase.doctorId,
+                        staffId: emergencyCase.staffId,
                         patientId: emergencyCase.patientId,
                         status: 'PENDIENTE'
                     }
@@ -632,11 +632,11 @@ export class EmergencyService {
         }
 
         // 3. Create a Medical Record entry for the transfer (Epicrisis de Traslado)
-        if (emergencyCase.patientId && emergencyCase.doctorId) {
+        if (emergencyCase.patientId && emergencyCase.staffId) {
             await this.prisma.medicalRecord.create({
                 data: {
                     patientId: emergencyCase.patientId,
-                    doctorId: emergencyCase.doctorId,
+                    staffId: emergencyCase.staffId,
                     visitDate: new Date(),
                     chiefComplaint: emergencyCase.chiefComplaint,
                     diagnosis: emergencyCase.diagnosis || 'Pendiente',

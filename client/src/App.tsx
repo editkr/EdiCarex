@@ -27,8 +27,8 @@ const DashboardPage = lazy(() => import('@/pages/DashboardPage'))
 // Clinical Modules
 const PatientsPage = lazy(() => import('@/pages/patients/PatientsPage'))
 const PatientProfilePage = lazy(() => import('@/pages/patients/PatientProfilePage'))
-const HealthStaffPage = lazy(() => import('@/pages/doctors/HealthStaffPage'))
-const HealthStaffProfilePage = lazy(() => import('@/pages/doctors/HealthStaffProfilePage'))
+const HealthStaffPage = lazy(() => import('@/pages/health-staff/HealthStaffPage'))
+const HealthStaffProfilePage = lazy(() => import('@/pages/health-staff/HealthStaffProfilePage'))
 const AppointmentsPage = lazy(() => import('@/pages/appointments/AppointmentsPage'))
 const AppointmentDetailsPage = lazy(() => import('@/pages/appointments/AppointmentDetailsPage'))
 const WaitingRoomPage = lazy(() => import('@/pages/waiting-room/WaitingRoomPage'))
@@ -42,7 +42,6 @@ const ReportsPage = lazy(() => import('@/pages/reports/ReportsPage'))
 const HRPage = lazy(() => import('@/pages/hr/HRPage'))
 const PharmacyPage = lazy(() => import('@/pages/pharmacy/PharmacyPage'))
 const LaboratoryPage = lazy(() => import('@/pages/laboratory/LaboratoryPage'))
-const ObservationRoomPage = lazy(() => import('@/pages/beds/ObservationRoomPage'))
 const AdminPage = lazy(() => import('@/pages/admin/AdminPage'))
 const AuditLogsPage = lazy(() => import('@/pages/admin/AuditLogsPage'))
 const MessagesPage = lazy(() => import('@/pages/messages/MessagesPage'))
@@ -71,8 +70,9 @@ const PatientVaccinationsPage = lazy(() => import('./pages/patients/PatientVacci
 const LabResultDetailsPage = lazy(() => import('./pages/laboratory/LabResultDetailsPage'))
 const LabOrderDetailsPage = lazy(() => import('./pages/laboratory/LabOrderDetailsPage'))
 
-// Observation Room Details
-const ObservationRoomDetailPage = lazy(() => import('./pages/beds/ObservationRoomDetailPage'))
+// Observation Room
+const ObservationRoomPage = lazy(() => import('@/pages/observation-room/ObservationRoomPage'))
+const ObservationRoomDetailPage = lazy(() => import('@/pages/observation-room/ObservationRoomDetailPage'))
 
 // Urgency Expansions
 const UrgencyReferralPage = lazy(() => import('./pages/emergency/UrgencyReferralPage'))

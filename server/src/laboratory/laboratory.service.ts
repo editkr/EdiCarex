@@ -8,7 +8,7 @@ export class LaboratoryService {
 
     async getOrders(query: any) {
         try {
-            const { page = 1, limit = 50, status, patientId, doctorId, search } = query || {};
+            const { page = 1, limit = 50, status, patientId, staffId, search } = query || {};
             const skip = (page - 1) * limit;
 
             const where: any = { deletedAt: null };
@@ -18,8 +18,8 @@ export class LaboratoryService {
             if (patientId) {
                 where.patientId = patientId;
             }
-            if (doctorId) {
-                where.doctorId = doctorId;
+            if (staffId) {
+                where.staffId = staffId;
             }
             if (search) {
                 where.OR = [
@@ -37,7 +37,7 @@ export class LaboratoryService {
                     take: parseInt(limit.toString()),
                     include: {
                         patient: true,
-                        doctor: { include: { user: true } },
+                        staff: { include: { user: true } },
                         test: true,
                         results: true
                     },
@@ -64,7 +64,7 @@ export class LaboratoryService {
             where: { id },
             include: {
                 patient: true,
-                doctor: { include: { user: true } },
+                staff: { include: { user: true } },
                 test: true,
                 results: true
             },
@@ -75,7 +75,7 @@ export class LaboratoryService {
 
     async createOrder(data: any) {
         try {
-            let { patientId, doctorId, testId, priority, notes } = data;
+            let { patientId, staffId, testId, priority, notes } = data;
 
             // Senior Robustness: Check if testType was sent instead of testId (frontend legacy or error)
             const isUUID = (str: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str);
@@ -99,7 +99,7 @@ export class LaboratoryService {
                 data: {
                     orderNumber: `LAB-${Date.now()}`,
                     patientId,
-                    doctorId,
+                    staffId,
                     testId,
                     testName,
                     testType,

@@ -7,30 +7,32 @@ import { FileText, Plus, ArrowLeft, Calendar, User } from 'lucide-react'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
 
+import { useQuery } from '@tanstack/react-query'
+import { patientsAPI } from '@/services/api'
+import { Loader2 } from 'lucide-react'
+
 interface Encounter {
     id: string
     type: string
     status: string
-    createdAt: Date
+    createdAt: string
     reason: string
-    doctorName: string
+    staff?: {
+        user: { firstName: string, lastName: string }
+    }
 }
 
 export default function PatientEncountersPage() {
     const { id } = useParams()
-    const [encounters, setEncounters] = useState<Encounter[]>([])
-    const [loading, setLoading] = useState(true)
-
-    useEffect(() => {
-        // Simulación de fetch
-        setTimeout(() => {
-            setEncounters([
-                { id: '1', type: 'TRIAGE', status: 'CLOSED', createdAt: new Date(), reason: 'Fiebre y dolor de garganta', doctorName: 'N/A (Enfermería)' },
-                { id: '2', type: 'CONSULTA', status: 'OPEN', createdAt: new Date(), reason: 'Seguimiento de cuadro viral', doctorName: 'Dr. García' }
-            ])
-            setLoading(false)
-        }, 800)
-    }, [id])
+    const { data: encounters = [], isLoading: loading } = useQuery({
+        queryKey: ['patient-encounters', id],
+        queryFn: async () => {
+            if (!id) return []
+            const res = await patientsAPI.getEncounters(id)
+            return res.data as Encounter[]
+        },
+        enabled: !!id
+    })
 
     return (
         <div className="p-6 space-y-6">
@@ -51,7 +53,13 @@ export default function PatientEncountersPage() {
 
             <div className="grid gap-4">
                 {loading ? (
-                    <p>Cargando encuentros...</p>
+                    <div className="flex justify-center p-8">
+                        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                    </div>
+                ) : encounters.length === 0 ? (
+                    <div className="text-center p-8 text-muted-foreground">
+                        No se encontraron encuentros clínicos para este paciente.
+                    </div>
                 ) : encounters.map((encounter) => (
                     <Card key={encounter.id} className="hover:bg-accent/5 transition-colors">
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -61,8 +69,8 @@ export default function PatientEncountersPage() {
                                     {encounter.type}
                                 </CardTitle>
                                 <CardDescription className="flex items-center gap-4">
-                                    <span className="flex items-center gap-1"><Calendar className="h-3 w-3" /> {format(encounter.createdAt, "PPP", { locale: es })}</span>
-                                    <span className="flex items-center gap-1"><User className="h-3 w-3" /> {encounter.doctorName}</span>
+                                    <span className="flex items-center gap-1"><Calendar className="h-3 w-3" /> {format(new Date(encounter.createdAt), "PPP", { locale: es })}</span>
+                                    <span className="flex items-center gap-1"><User className="h-3 w-3" /> {encounter.staff?.user ? `${encounter.staff.user.firstName} ${encounter.staff.user.lastName}` : 'No especificado'}</span>
                                 </CardDescription>
                             </div>
                             <Badge variant={encounter.status === 'OPEN' ? 'default' : 'secondary'}>
@@ -70,7 +78,7 @@ export default function PatientEncountersPage() {
                             </Badge>
                         </CardHeader>
                         <CardContent>
-                            <p className="text-sm font-medium">Motivo: {encounter.reason}</p>
+                            <p className="text-sm font-medium">Motivo: {encounter.reason || 'Sin especificar'}</p>
                             <div className="mt-4 flex gap-2">
                                 <Button variant="outline" size="sm">Ver Detalles</Button>
                                 {encounter.status === 'OPEN' && <Button size="sm">Registrar Evolución</Button>}

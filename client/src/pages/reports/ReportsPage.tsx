@@ -50,7 +50,7 @@ export default function ReportsPage() {
         emergencies: [],
         medications: [],
         economic: {},
-        doctors: [],
+        staff: [],
         comparison: [],
         aiPredictions: [],
     })
@@ -98,7 +98,7 @@ export default function ReportsPage() {
                 patientsRes,
                 financeRes,
                 medicationsRes,
-                doctorsRes,
+                staffRes,
                 emergenciesRes,
                 comparisonRes,
                 aiPredictionsRes
@@ -107,7 +107,7 @@ export default function ReportsPage() {
                 reportsAPI.getPatientStats(params),
                 reportsAPI.getFinancialStats(params),
                 reportsAPI.getMedicationStats(params), // Medications usually stock based, but passing params in case
-                reportsAPI.getDoctorStats(params),
+                reportsAPI.getStaffStats(params),
                 reportsAPI.getEmergencyStats(params),
                 reportsAPI.getComparisonStats(params),
                 reportsAPI.getAiPredictions(params)
@@ -119,7 +119,7 @@ export default function ReportsPage() {
                 emergencies: emergenciesRes.data,
                 medications: medicationsRes.data,
                 economic: financeRes.data,
-                doctors: doctorsRes.data,
+                staff: staffRes.data,
                 comparison: comparisonRes.data,
                 aiPredictions: aiPredictionsRes.data,
             })
@@ -182,9 +182,9 @@ export default function ReportsPage() {
                         item.name, item.quantity, formatCurrency(item.cost, config)
                     ])
                     break
-                case 'doctors':
-                    columns = ['Doctor', 'Pacientes', 'Satisfacción', 'Ingresos ($)']
-                    tableData = reportsData.doctors.map((item: any) => [
+                case 'staff':
+                    columns = ['Personal de Salud', 'Pacientes', 'Satisfacción', 'Ingresos ($)']
+                    tableData = reportsData.staff.map((item: any) => [
                         item.name, item.patients, item.satisfaction, formatCurrency(item.revenue, config)
                     ])
                     break
@@ -250,7 +250,7 @@ export default function ReportsPage() {
                 case 'emergencies': data = reportsData.emergencies; break;
                 case 'medications': data = reportsData.medications; break;
                 case 'economic': data = reportsData.economic.monthlyBreakdown || []; break;
-                case 'doctors': data = reportsData.doctors; break;
+                case 'staff': data = reportsData.staff; break;
                 case 'comparison': data = reportsData.comparison; break;
                 case 'aiPredictions': data = reportsData.aiPredictions; break;
             }
@@ -272,7 +272,7 @@ export default function ReportsPage() {
             emergencies: 'Casos de Emergencia',
             medications: 'Inventario Valorizado', // Changed to reflect source (Stock)
             economic: 'Resumen Económico',
-            doctors: 'Rendimiento de Doctores',
+            staff: 'Rendimiento de Personal de Salud',
             comparison: 'Comparación Mensual',
             aiPredictions: 'Predicciones IA',
         }
@@ -384,13 +384,13 @@ export default function ReportsPage() {
                 </Card>
 
                 <Card
-                    className={`cursor-pointer transition-all ${activeReport === 'doctors' ? 'border-primary shadow-lg' : ''}`}
-                    onClick={() => setActiveReport('doctors')}
+                    className={`cursor-pointer transition-all ${activeReport === 'staff' ? 'border-primary shadow-lg' : ''}`}
+                    onClick={() => setActiveReport('staff')}
                 >
                     <CardContent className="pt-6">
                         <div className="flex flex-col items-center text-center gap-2">
                             <TrendingUp className="h-8 w-8 text-blue-600" />
-                            <p className="font-semibold">Rendimiento Doctores</p>
+                            <p className="font-semibold">Rendimiento Personal</p>
                         </div>
                     </CardContent>
                 </Card>
@@ -673,10 +673,10 @@ export default function ReportsPage() {
                         </div>
                     )}
 
-                    {/* 6. Doctors Performance Report */}
-                    {activeReport === 'doctors' && (
+                    {/* 6. Health Staff Performance Report */}
+                    {activeReport === 'staff' && (
                         <ResponsiveContainer width="100%" height={400}>
-                            <BarChart data={reportsData.doctors} margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
+                            <BarChart data={reportsData.staff} margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
                                 <defs>
                                     <linearGradient id="colorPatients" x1="0" y1="0" x2="0" y2="1">
                                         <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.8} />

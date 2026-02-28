@@ -23,10 +23,10 @@ export class EncountersController {
     @RequirePermission('ENC_VIEW')
     findAll(
         @Query('patientId') patientId?: string,
-        @Query('doctorId') doctorId?: string,
+        @Query('staffId') staffId?: string,
         @Query('status') status?: string,
     ) {
-        return this.encountersService.findAll({ patientId, doctorId, status });
+        return this.encountersService.findAll({ patientId, staffId, status });
     }
 
     @Get(':id')

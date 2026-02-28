@@ -8,7 +8,7 @@ async function main() {
         take: 10,
         orderBy: { createdAt: 'desc' },
         include: {
-            doctor: {
+            staff: {
                 include: {
                     specialty: true
                 }
@@ -21,9 +21,9 @@ async function main() {
         console.log(`Number: ${inv.invoiceNumber}`);
         console.log(`Status: ${inv.status}`);
         console.log(`Total: ${inv.total}`);
-        console.log(`Doctor ID: ${inv.doctorId}`);
-        console.log(`Doctor Name: ${inv.doctor?.specialization}`);
-        console.log(`Specialty: ${inv.doctor?.specialty?.name}`);
+        console.log(`Staff ID: ${inv.staffId}`);
+        console.log(`Staff Name: ${inv.staff?.specialization}`);
+        console.log(`Specialty: ${inv.staff?.specialty?.name}`);
         console.log('-------------------------');
     });
 }

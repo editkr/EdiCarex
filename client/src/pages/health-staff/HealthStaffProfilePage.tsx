@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { doctorsAPI, appointmentsAPI, messagesAPI } from '@/services/api'
+import { healthStaffAPI, appointmentsAPI, messagesAPI } from '@/services/api'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -28,8 +28,8 @@ import { format, isToday, startOfWeek, endOfWeek, eachDayOfInterval, addDays } f
 import { useToast } from '@/components/ui/use-toast'
 import { usePermissions } from '@/hooks/usePermissions'
 import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
-import DoctorCalendar from '@/components/calendar/DoctorCalendar'
-import DoctorModal from '@/components/modals/DoctorModal'
+import HealthStaffCalendar from '@/components/calendar/HealthStaffCalendar'
+import HealthStaffModal from '@/components/modals/HealthStaffModal'
 
 export default function HealthStaffProfilePage() {
     const { id } = useParams<{ id: string }>()
@@ -43,7 +43,7 @@ export default function HealthStaffProfilePage() {
     const fetchDocuments = async () => {
         if (!id) return
         try {
-            const res = await doctorsAPI.getDocuments(id)
+            const res = await healthStaffAPI.getDocuments(id)
             setDocuments(res.data)
         } catch (error) {
             console.error('Error fetching documents', error)
@@ -67,8 +67,8 @@ export default function HealthStaffProfilePage() {
             const uploadRes = await messagesAPI.uploadFile(file)
             const fileData = uploadRes.data
 
-            // 2. Add to doctor
-            await doctorsAPI.addDocument(id, {
+            // 2. Add to staff
+            await healthStaffAPI.addDocument(id, {
                 title: file.name,
                 url: fileData.url,
                 type: fileData.type,
@@ -88,7 +88,7 @@ export default function HealthStaffProfilePage() {
     const handleDeleteDocument = async (docId: string) => {
         if (!id) return
         try {
-            await doctorsAPI.deleteDocument(id, docId)
+            await healthStaffAPI.deleteDocument(id, docId)
             toast({ title: "Documento eliminado" })
             fetchDocuments()
         } catch (error) {
@@ -96,26 +96,26 @@ export default function HealthStaffProfilePage() {
         }
     }
 
-    // Cargar datos del doctor
-    const { data: doctorData, isLoading, refetch: refetchDoctor } = useQuery({
-        queryKey: ['doctor', id],
-        queryFn: () => doctorsAPI.getOne(id!),
+    // Cargar datos del personal
+    const { data: staffData, isLoading, refetch: refetchStaff } = useQuery({
+        queryKey: ['staff', id],
+        queryFn: () => healthStaffAPI.getOne(id!),
         enabled: !!id,
     })
 
-    // Cargar citas del doctor
+    // Cargar citas del personal
     const { data: appointmentsData, refetch: refetchAppointments } = useQuery({
-        queryKey: ['doctor-appointments', id],
+        queryKey: ['staff-appointments', id],
         queryFn: () => appointmentsAPI.getAll(),
         enabled: !!id,
     })
 
-    const doctor = doctorData?.data
+    const staffMember = staffData?.data
     const allAppointments = appointmentsData?.data?.data || []
-    const doctorAppointments = allAppointments.filter((apt: any) => apt.doctorId === id)
+    const staffAppointments = allAppointments.filter((apt: any) => apt.staffId === id)
 
     // Citas de hoy
-    const todayAppointments = doctorAppointments.filter((apt: any) => {
+    const todayAppointments = staffAppointments.filter((apt: any) => {
         try {
             return isToday(new Date(apt.appointmentDate))
         } catch {
@@ -124,9 +124,9 @@ export default function HealthStaffProfilePage() {
     })
 
     // Estadísticas
-    const completedAppointments = doctorAppointments.filter((apt: any) => apt.status === 'COMPLETED').length
-    const cancelledAppointments = doctorAppointments.filter((apt: any) => apt.status === 'CANCELLED').length
-    const upcomingAppointments = doctorAppointments.filter((apt: any) => {
+    const completedAppointments = staffAppointments.filter((apt: any) => apt.status === 'COMPLETED').length
+    const cancelledAppointments = staffAppointments.filter((apt: any) => apt.status === 'CANCELLED').length
+    const upcomingAppointments = staffAppointments.filter((apt: any) => {
         try {
             return new Date(apt.appointmentDate) > new Date() && apt.status !== 'CANCELLED'
         } catch {
@@ -140,7 +140,7 @@ export default function HealthStaffProfilePage() {
         end: endOfWeek(new Date())
     }).map(day => ({
         day: format(day, 'EEE'),
-        appointments: doctorAppointments.filter((apt: any) => {
+        appointments: staffAppointments.filter((apt: any) => {
             try {
                 const aptDate = new Date(apt.appointmentDate)
                 return aptDate.toDateString() === day.toDateString()
@@ -155,7 +155,7 @@ export default function HealthStaffProfilePage() {
         date.setMonth(date.getMonth() - (5 - i))
         const monthKey = format(date, 'yyyy-MM')
 
-        const count = doctorAppointments.filter((apt: any) => {
+        const count = staffAppointments.filter((apt: any) => {
             try {
                 return format(new Date(apt.appointmentDate), 'yyyy-MM') === monthKey && apt.status === 'COMPLETED'
             } catch {
@@ -177,7 +177,7 @@ export default function HealthStaffProfilePage() {
         )
     }
 
-    if (!doctor) {
+    if (!staffMember) {
         return (
             <div className="flex flex-col items-center justify-center h-96 space-y-4">
                 <p className="text-muted-foreground">Personal no encontrado</p>
@@ -194,7 +194,7 @@ export default function HealthStaffProfilePage() {
             apt.status === 'SCHEDULED' || apt.status === 'CONFIRMED'
         ).length
 
-        if (!doctor.isAvailable) {
+        if (!staffMember.isAvailable) {
             return { text: 'NO DISPONIBLE', color: 'bg-gray-100 text-gray-800', icon: XCircle }
         }
         if (activeToday > 0) {
@@ -217,10 +217,10 @@ export default function HealthStaffProfilePage() {
                     </Button>
                     <div>
                         <h1 className="text-3xl font-bold tracking-tight">
-                            {doctor.user?.firstName} {doctor.user?.lastName}
+                            {staffMember.user?.firstName} {staffMember.user?.lastName}
                         </h1>
                         <p className="text-muted-foreground">
-                            {doctor.specialization || 'Médico General'} • Licencia: {doctor.licenseNumber}
+                            {staffMember.specialization || 'Personal de Salud'} • Licencia: {staffMember.licenseNumber}
                         </p>
                     </div>
                 </div>
@@ -234,21 +234,20 @@ export default function HealthStaffProfilePage() {
                 </div>
             </div>
 
-            {/* Doctor Header Card */}
+            {/* Staff Header Card */}
             <Card>
                 <CardContent className="pt-6">
                     <div className="flex items-start gap-6">
                         {/* Avatar */}
-                        {/* Avatar */}
-                        {doctor.user?.avatar ? (
+                        {staffMember.user?.avatar ? (
                             <img
-                                src={doctor.user.avatar}
-                                alt={`${doctor.user.firstName} ${doctor.user.lastName}`}
+                                src={staffMember.user.avatar}
+                                alt={`${staffMember.user.firstName} ${staffMember.user.lastName}`}
                                 className="h-24 w-24 rounded-full object-cover border-4 border-white shadow-lg"
                             />
                         ) : (
                             <div className="h-24 w-24 rounded-full bg-gradient-to-br from-green-400 to-blue-500 flex items-center justify-center text-white text-3xl font-bold flex-shrink-0 shadow-lg">
-                                {doctor.user?.firstName?.[0]}{doctor.user?.lastName?.[0]}
+                                {staffMember.user?.firstName?.[0]}{staffMember.user?.lastName?.[0]}
                             </div>
                         )}
 
@@ -257,11 +256,11 @@ export default function HealthStaffProfilePage() {
                             <div className="space-y-3">
                                 <div className="flex items-center gap-2 text-sm">
                                     <Phone className="h-4 w-4 text-muted-foreground" />
-                                    <span>{doctor.user?.phone || 'No phone'}</span>
+                                    <span>{staffMember.user?.phone || 'No registrado'}</span>
                                 </div>
                                 <div className="flex items-center gap-2 text-sm">
                                     <Mail className="h-4 w-4 text-muted-foreground" />
-                                    <span>{doctor.user?.email || 'No email'}</span>
+                                    <span>{staffMember.user?.email || 'No email'}</span>
                                 </div>
                                 <div className="flex items-center gap-2 text-sm">
                                     <MapPin className="h-4 w-4 text-muted-foreground" />
@@ -272,15 +271,15 @@ export default function HealthStaffProfilePage() {
                             <div className="space-y-3">
                                 <div>
                                     <p className="text-xs text-muted-foreground">Especialidad</p>
-                                    <p className="font-medium">{doctor.specialization || 'General'}</p>
+                                    <p className="font-medium">{staffMember.specialization || 'General'}</p>
                                 </div>
                                 <div>
                                     <p className="text-xs text-muted-foreground">Número de Licencia</p>
-                                    <p className="font-medium">{doctor.licenseNumber}</p>
+                                    <p className="font-medium">{staffMember.licenseNumber}</p>
                                 </div>
                                 <div>
                                     <p className="text-xs text-muted-foreground">Experiencia</p>
-                                    <p className="font-medium">{doctor.yearsExperience || doctor.yearsOfExperience || 0} años</p>
+                                    <p className="font-medium">{staffMember.yearsExperience || staffMember.yearsOfExperience || 0} años</p>
                                 </div>
                             </div>
 
@@ -312,7 +311,7 @@ export default function HealthStaffProfilePage() {
                         <Calendar className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">{doctorAppointments.length}</div>
+                        <div className="text-2xl font-bold">{staffAppointments.length}</div>
                         <p className="text-xs text-muted-foreground">{completedAppointments} completadas</p>
                     </CardContent>
                 </Card>
@@ -335,8 +334,8 @@ export default function HealthStaffProfilePage() {
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-bold">
-                            {doctorAppointments.length > 0
-                                ? ((cancelledAppointments / doctorAppointments.length) * 100).toFixed(1)
+                            {staffAppointments.length > 0
+                                ? ((cancelledAppointments / staffAppointments.length) * 100).toFixed(1)
                                 : 0}%
                         </div>
                         <p className="text-xs text-muted-foreground">{cancelledAppointments} canceladas</p>
@@ -392,19 +391,19 @@ export default function HealthStaffProfilePage() {
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>
                                         <p className="text-sm text-muted-foreground">Nombre</p>
-                                        <p className="font-medium">{doctor.user?.firstName}</p>
+                                        <p className="font-medium">{staffMember.user?.firstName}</p>
                                     </div>
                                     <div>
                                         <p className="text-sm text-muted-foreground">Apellido</p>
-                                        <p className="font-medium">{doctor.user?.lastName}</p>
+                                        <p className="font-medium">{staffMember.user?.lastName}</p>
                                     </div>
                                     <div>
                                         <p className="text-sm text-muted-foreground">Email</p>
-                                        <p className="font-medium">{doctor.user?.email}</p>
+                                        <p className="font-medium">{staffMember.user?.email}</p>
                                     </div>
                                     <div>
                                         <p className="text-sm text-muted-foreground">Teléfono</p>
-                                        <p className="font-medium">{doctor.user?.phone || 'N/A'}</p>
+                                        <p className="font-medium">{staffMember.user?.phone || 'No registrado'}</p>
                                     </div>
                                 </div>
                             </CardContent>
@@ -417,15 +416,15 @@ export default function HealthStaffProfilePage() {
                             <CardContent className="space-y-3">
                                 <div>
                                     <p className="text-sm text-muted-foreground">Especialización</p>
-                                    <p className="font-medium">{doctor.specialization || 'Médico General'}</p>
+                                    <p className="font-medium">{staffMember.specialization || 'Personal de Salud'}</p>
                                 </div>
                                 <div>
                                     <p className="text-sm text-muted-foreground">Número de Licencia</p>
-                                    <p className="font-medium">{doctor.licenseNumber}</p>
+                                    <p className="font-medium">{staffMember.licenseNumber}</p>
                                 </div>
                                 <div>
                                     <p className="text-sm text-muted-foreground">Años de Experiencia</p>
-                                    <p className="font-medium">{doctor.yearsExperience || doctor.yearsOfExperience || 0} años</p>
+                                    <p className="font-medium">{staffMember.yearsExperience || staffMember.yearsOfExperience || 0} años</p>
                                 </div>
                             </CardContent>
                         </Card>
@@ -456,9 +455,9 @@ export default function HealthStaffProfilePage() {
 
                 {/* Tab: Interactive Calendar */}
                 <TabsContent value="calendar">
-                    <DoctorCalendar
-                        doctorId={id!}
-                        appointments={doctorAppointments}
+                    <HealthStaffCalendar
+                        staffId={id!}
+                        appointments={staffAppointments}
                         onRefresh={refetchAppointments}
                     />
                 </TabsContent>
@@ -542,7 +541,7 @@ export default function HealthStaffProfilePage() {
                                         <Award className="h-5 w-5 text-blue-600" />
                                     </div>
                                     <div>
-                                        <p className="font-semibold text-base">{doctor.specialty?.name || doctor.specialization || 'Medicina General'}</p>
+                                        <p className="font-semibold text-base">{staffMember.specialty?.name || staffMember.specialization || 'Medicina General'}</p>
                                         <p className="text-xs text-muted-foreground">Especialidad Principal</p>
                                     </div>
                                     <div className="ml-auto">
@@ -555,7 +554,7 @@ export default function HealthStaffProfilePage() {
                                     </div>
                                     <div>
                                         <p className="font-semibold text-base">Licencia Médica</p>
-                                        <p className="text-xs text-muted-foreground">{doctor.licenseNumber}</p>
+                                        <p className="text-xs text-muted-foreground">{staffMember.licenseNumber}</p>
                                     </div>
                                     <div className="ml-auto">
                                         <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full font-medium">Activa</span>
@@ -649,9 +648,9 @@ export default function HealthStaffProfilePage() {
                         </CardHeader>
                         <CardContent>
                             <div className="space-y-3">
-                                {doctor.schedules && doctor.schedules.length > 0 ? (
+                                {staffMember.schedules && staffMember.schedules.length > 0 ? (
                                     // Sort by day number
-                                    [...doctor.schedules].sort((a: any, b: any) => a.dayOfWeek - b.dayOfWeek).map((schedule: any) => {
+                                    [...staffMember.schedules].sort((a: any, b: any) => a.dayOfWeek - b.dayOfWeek).map((schedule: any) => {
                                         const dayName = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'][schedule.dayOfWeek]
                                         return (
                                             <div key={dayName} className="flex justify-between items-center p-4 border rounded-xl hover:bg-slate-50 transition-colors">
@@ -672,7 +671,7 @@ export default function HealthStaffProfilePage() {
                                     <div className="flex flex-col items-center justify-center p-8 border rounded-xl bg-slate-50 border-dashed text-center">
                                         <Clock className="h-8 w-8 text-slate-300 mb-2" />
                                         <span className="font-medium text-slate-600">Sin Horario Definido</span>
-                                        <span className="text-xs text-muted-foreground mt-1">Este doctor no tiene horarios configurados.</span>
+                                        <span className="text-xs text-muted-foreground mt-1">Este personal no tiene horarios configurados.</span>
                                         <Button variant="link" size="sm" className="mt-2 text-indigo-600" onClick={() => navigate('/health-staff')}>
                                             Ir a lista para configurar
                                         </Button>
@@ -685,12 +684,12 @@ export default function HealthStaffProfilePage() {
                 </TabsContent>
             </Tabs>
 
-            <DoctorModal
+            <HealthStaffModal
                 open={isModalOpen}
                 onOpenChange={setIsModalOpen}
-                doctor={doctor}
+                staff={staffMember}
                 onSuccess={() => {
-                    refetchDoctor()
+                    refetchStaff()
                     refetchAppointments()
                 }}
             />

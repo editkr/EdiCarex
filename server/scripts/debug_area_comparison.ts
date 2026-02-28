@@ -12,7 +12,7 @@ async function main() {
 
     const specialties = await prisma.specialty.findMany({
         include: {
-            doctors: {
+            staff: {
                 include: {
                     invoices: {
                         where: { status: 'PAID', invoiceDate: { gte: startDate } },
@@ -28,13 +28,13 @@ async function main() {
         let totalRevenue = 0;
         let totalPatients = 0;
 
-        spec.doctors.forEach(doc => {
+        spec.staff.forEach(doc => {
             const rev = doc.invoices.reduce((sum, inv) => sum + Number(inv.total), 0);
             totalRevenue += rev;
             totalPatients += doc._count.appointments;
 
             if (rev > 0) {
-                console.log(`Doctor ${doc.id} has ${rev} revenue in ${spec.name}`);
+                console.log(`Staff ${doc.id} has ${rev} revenue in ${spec.name}`);
             }
         });
 

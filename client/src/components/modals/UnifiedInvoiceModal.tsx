@@ -103,7 +103,7 @@ const formSchema = z.object({
     notes: z.string().optional(),
     invoiceDate: z.string().optional(),
     dueDate: z.string().optional(),
-    doctorId: z.string().optional().nullable(),
+    staffId: z.string().optional().nullable(),
     appointmentId: z.string().optional().nullable(),
 })
 
@@ -118,8 +118,8 @@ interface UnifiedInvoiceModalProps {
         patientId?: string
         serviceDescription?: string
         servicePrice?: number
-        doctorName?: string
-        doctorId?: string
+        staffName?: string
+        staffId?: string
         appointmentId?: string
     }
 }
@@ -209,7 +209,7 @@ export function UnifiedInvoiceModal({ open, onOpenChange, invoice, onSuccess, in
             notes: '',
             invoiceDate: new Date().toISOString().split('T')[0],
             dueDate: '',
-            doctorId: null,
+            staffId: null,
             appointmentId: null,
         },
     })
@@ -234,7 +234,7 @@ export function UnifiedInvoiceModal({ open, onOpenChange, invoice, onSuccess, in
                     notes: invoice.notes || '',
                     invoiceDate: invoice.invoiceDate ? new Date(invoice.invoiceDate).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
                     dueDate: invoice.dueDate ? new Date(invoice.dueDate).toISOString().split('T')[0] : '',
-                    doctorId: invoice.doctorId || null,
+                    staffId: invoice.staffId || invoice.doctorId || null,
                     appointmentId: invoice.appointmentId || null,
                 })
 
@@ -298,10 +298,10 @@ export function UnifiedInvoiceModal({ open, onOpenChange, invoice, onSuccess, in
                     destinationAccountId: '',
                     operationNumber: '',
                     discount: 0,
-                    notes: initialData.doctorName ? `Atención: ${initialData.doctorName}` : '',
+                    notes: initialData.staffName ? `Atención: ${initialData.staffName}` : '',
                     invoiceDate: new Date().toISOString().split('T')[0],
                     dueDate: '',
-                    doctorId: initialData.doctorId || null,
+                    staffId: initialData.staffId || null,
                     appointmentId: initialData.appointmentId || null,
                 })
             } else {
@@ -321,7 +321,7 @@ export function UnifiedInvoiceModal({ open, onOpenChange, invoice, onSuccess, in
                     notes: '',
                     invoiceDate: new Date().toISOString().split('T')[0],
                     dueDate: '',
-                    doctorId: null,
+                    staffId: null,
                     appointmentId: null,
                 })
             }
@@ -476,7 +476,7 @@ export function UnifiedInvoiceModal({ open, onOpenChange, invoice, onSuccess, in
                 invoiceDate: data.invoiceDate ? new Date(data.invoiceDate).toISOString() : new Date().toISOString(),
                 dueDate: data.dueDate ? new Date(data.dueDate).toISOString() : null,
                 notes: data.notes || null,
-                doctorId: data.doctorId || null,
+                staffId: data.staffId || null,
                 appointmentId: data.appointmentId || null,
                 currency: config?.billing?.currency || 'PEN',
             }

@@ -15,7 +15,7 @@ export class EncountersService {
             data,
             include: {
                 patient: true,
-                doctor: true,
+                staff: true,
             },
         });
 
@@ -30,16 +30,16 @@ export class EncountersService {
         return encounter;
     }
 
-    async findAll(query: { patientId?: string; doctorId?: string; status?: string }) {
+    async findAll(query: { patientId?: string; staffId?: string; status?: string }) {
         return this.prisma.encounter.findMany({
             where: {
                 patientId: query.patientId,
-                doctorId: query.doctorId,
+                staffId: query.staffId,
                 status: query.status,
             },
             include: {
                 patient: { select: { firstName: true, lastName: true, documentNumber: true } },
-                doctor: { select: { user: { select: { firstName: true, lastName: true } } } },
+                staff: { select: { user: { select: { firstName: true, lastName: true } } } },
             },
             orderBy: { createdAt: 'desc' },
         });
@@ -50,7 +50,7 @@ export class EncountersService {
             where: { id },
             include: {
                 patient: true,
-                doctor: true,
+                staff: true,
                 triage: true,
                 prescriptions: true,
                 labResults: true,
@@ -97,7 +97,7 @@ export class EncountersService {
         return this.prisma.encounter.findMany({
             where: { patientId },
             include: {
-                doctor: { select: { user: { select: { firstName: true, lastName: true } } } },
+                staff: { select: { user: { select: { firstName: true, lastName: true } } } },
                 triage: true,
                 prescriptions: true,
             },

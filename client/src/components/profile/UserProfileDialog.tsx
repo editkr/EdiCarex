@@ -136,7 +136,7 @@ export function UserProfileDialog({ open, onOpenChange, children }: UserProfileD
 
         const names: Record<string, string> = {
             'ADMIN': 'Administrador',
-            'DOCTOR': 'Doctor/a',
+            'STAFF': 'Personal de Salud',
             'NURSE': 'Enfermero/a',
             'RECEPTIONIST': 'Recepción',
             'LAB': 'Laboratorista',

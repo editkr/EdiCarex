@@ -36,7 +36,7 @@ export class AppointmentsController {
     @ApiQuery({ name: 'page', required: false })
     @ApiQuery({ name: 'limit', required: false })
     @ApiQuery({ name: 'status', required: false })
-    @ApiQuery({ name: 'doctorId', required: false })
+    @ApiQuery({ name: 'staffId', required: false })
     @ApiQuery({ name: 'patientId', required: false })
     @ApiQuery({ name: 'date', required: false })
     findAll(@Query() query: any) {

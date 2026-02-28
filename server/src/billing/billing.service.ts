@@ -95,7 +95,7 @@ export class BillingService {
                 invoiceDate,
                 dueDate,
                 notes,
-                doctorId,
+                staffId,
                 appointmentId
             } = data;
 
@@ -130,7 +130,7 @@ export class BillingService {
                     invoiceDate: invoiceDate ? new Date(invoiceDate) : new Date(),
                     dueDate: dueDate ? new Date(dueDate) : null,
                     notes: notes || null,
-                    doctorId: doctorId || null,
+                    staffId: staffId || null,
                     appointmentId: appointmentId || null,
                     items: {
                         create: items.map((item: any) => ({

@@ -214,12 +214,12 @@ export default function UrgencyCasePage() {
                     chiefComplaint: data.chiefComplaint,
                     vitalSigns: data.vitalSigns || null, // [NEW] Keep track of admission vitals
                 },
-                doctor: {
-                    name: data.doctor?.user ? `Dr. ${data.doctor.user.firstName} ${data.doctor.user.lastName}` : data.doctorName || 'Sin asignar',
-                    specialty: data.doctor?.specialty?.name || data.doctor?.specialization || 'Medicina de Emergencias',
+                staff: {
+                    name: data.healthStaff?.user ? `${data.healthStaff.user.firstName} ${data.healthStaff.user.lastName}` : data.doctorName || 'Sin asignar',
+                    specialty: data.healthStaff?.specialty?.name || data.healthStaff?.specialization || 'Medicina de Emergencias',
                 },
                 patientId: data.patientId,
-                doctorId: data.doctorId,
+                staffId: data.healthStaffId || data.doctorId,
                 bedId: data.bedId,
                 notes: data.notes,
                 raw: data // For the modal to have everything it needs
@@ -574,10 +574,10 @@ export default function UrgencyCasePage() {
 
                         <div className="space-y-3">
                             <div>
-                                <p className="text-sm text-muted-foreground">Médico Tratante</p>
-                                <p className="font-medium">{caseData.doctor.name}</p>
+                                <p className="text-sm text-muted-foreground">Personal Tratante</p>
+                                <p className="font-medium">{caseData.staff?.name || caseData.staffName || 'Sin asignar'}</p>
                                 <p className="text-[10px] font-bold uppercase tracking-wider text-primary/70 mt-1">Especialidad</p>
-                                <p className="text-sm font-medium text-zinc-300">{caseData.doctor.specialty}</p>
+                                <p className="text-sm font-medium text-zinc-300">{caseData.staff?.specialty || 'Especialista'}</p>
                             </div>
                         </div>
                     </div>
@@ -1028,11 +1028,11 @@ export default function UrgencyCasePage() {
                                                         </div>
                                                         <div className="flex items-center gap-2 pr-2">
                                                             <div className="text-right">
-                                                                <p className="text-xs font-bold text-zinc-300">{record.doctor?.user ? `Dr. ${record.doctor.user.firstName} ${record.doctor.user.lastName}` : 'Médico EdiCarex'}</p>
-                                                                <p className="text-[10px] text-zinc-500 uppercase tracking-tighter">{record.doctor?.specialty || 'Especialista'}</p>
+                                                                <p className="text-xs font-bold text-zinc-300">{record.healthStaff?.user ? `${record.healthStaff.user.firstName} ${record.healthStaff.user.lastName}` : (record.doctor?.user ? `${record.doctor.user.firstName} ${record.doctor.user.lastName}` : 'Personal EdiCarex')}</p>
+                                                                <p className="text-[10px] text-zinc-500 uppercase tracking-tighter">{record.healthStaff?.specialty || record.doctor?.specialty || 'Especialista'}</p>
                                                             </div>
                                                             <div className="h-8 w-8 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center text-primary font-black text-xs">
-                                                                {record.doctor?.user?.firstName?.charAt(0) || 'D'}
+                                                                {(record.healthStaff?.user?.firstName || record.doctor?.user?.firstName || 'P').charAt(0)}
                                                             </div>
                                                         </div>
                                                     </div>
@@ -1497,8 +1497,8 @@ export default function UrgencyCasePage() {
                     currentVitals={vitalSigns[0]}
                     news2Score={calculateNEWS2(vitalSigns[0]).score}
                     isCritical={calculateNEWS2(vitalSigns[0]).score >= 5 || caseData.admission.priority <= 2}
-                    doctorName={caseData.doctor.name}
-                    doctorSpecialty={caseData.doctor.specialty}
+                    staffName={caseData.staff?.name || caseData.staffName}
+                    staffSpecialty={caseData.staff?.specialty || caseData.staffSpecialty}
                     initialWard={referralInitialWard}
                     onSuccess={() => navigate(`/beds?ward=${referralInitialWard}`)}
                 />
@@ -1517,7 +1517,7 @@ export default function UrgencyCasePage() {
                 open={isLabOrderOpen}
                 onOpenChange={setIsLabOrderOpen}
                 defaultPatientId={caseData?.patient?.id}
-                defaultDoctorId={caseData?.doctor?.id}
+                defaultStaffId={caseData?.staff?.id || caseData?.staffId}
                 onSuccess={fetchCaseData}
             />
         </div>

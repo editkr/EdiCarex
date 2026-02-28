@@ -69,7 +69,7 @@ export default function Header() {
         // 4. Map to Spanish
         const roleMap: Record<string, string> = {
             'ADMIN': 'Administrador',
-            'DOCTOR': 'Doctor/a',
+            'STAFF': 'Personal de Salud',
             'NURSE': 'Enfermero/a',
             'RECEPTIONIST': 'Recepcionista',
             'LAB': 'Laboratorista',

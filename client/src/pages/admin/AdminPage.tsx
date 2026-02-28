@@ -141,7 +141,7 @@ export default function AdminPage() {
     // ROLES & DEFAULT PERMISSIONS MAPPING (10 Professional Roles)
     const ROLE_DEFAULTS: Record<string, string[]> = {
         'Admin': ['ALL'],
-        'Doctor': ['DASHBOARD', 'PATIENTS_VIEW', 'PATIENTS_EDIT', 'MEDICAL_RECORDS_VIEW', 'MEDICAL_RECORDS_CREATE', 'MEDICAL_RECORDS_EDIT', 'PRESCRIPTIONS_CREATE', 'PRESCRIPTIONS_VIEW', 'APPOINTMENTS_VIEW', 'APPOINTMENTS_EDIT', 'EMERGENCY_VIEW', 'EMERGENCY_EDIT', 'EMERGENCY_DISCHARGE', 'BEDS_VIEW', 'BEDS_ASSIGN', 'LAB_VIEW', 'LAB_CREATE', 'LAB_RESULTS', 'PHARMACY_VIEW', 'REPORTS_VIEW', 'AI_USE', 'MESSAGES_VIEW', 'MESSAGES_SEND'],
+        'Staff': ['DASHBOARD', 'PATIENTS_VIEW', 'PATIENTS_EDIT', 'MEDICAL_RECORDS_VIEW', 'MEDICAL_RECORDS_CREATE', 'MEDICAL_RECORDS_EDIT', 'PRESCRIPTIONS_CREATE', 'PRESCRIPTIONS_VIEW', 'APPOINTMENTS_VIEW', 'APPOINTMENTS_EDIT', 'EMERGENCY_VIEW', 'EMERGENCY_EDIT', 'EMERGENCY_DISCHARGE', 'BEDS_VIEW', 'BEDS_ASSIGN', 'LAB_VIEW', 'LAB_CREATE', 'LAB_RESULTS', 'PHARMACY_VIEW', 'REPORTS_VIEW', 'AI_USE', 'MESSAGES_VIEW', 'MESSAGES_SEND'],
         'Nurse': ['DASHBOARD', 'PATIENTS_VIEW', 'PATIENTS_EDIT', 'MEDICAL_RECORDS_VIEW', 'MEDICAL_RECORDS_EDIT', 'PRESCRIPTIONS_VIEW', 'APPOINTMENTS_VIEW', 'EMERGENCY_VIEW', 'EMERGENCY_EDIT', 'EMERGENCY_DISCHARGE', 'BEDS_VIEW', 'BEDS_EDIT', 'BEDS_ASSIGN', 'PHARMACY_VIEW', 'PHARMACY_DISPENSE', 'LAB_VIEW', 'MESSAGES_VIEW', 'MESSAGES_SEND'],
         'Receptionist': ['DASHBOARD', 'PATIENTS_VIEW', 'PATIENTS_CREATE', 'PATIENTS_EDIT', 'APPOINTMENTS_VIEW', 'APPOINTMENTS_CREATE', 'APPOINTMENTS_EDIT', 'WAITING_VIEW', 'WAITING_MANAGE', 'BILLING_VIEW', 'MESSAGES_VIEW', 'MESSAGES_SEND'],
         'Lab': ['DASHBOARD', 'PATIENTS_VIEW', 'LAB_VIEW', 'LAB_CREATE', 'LAB_EDIT', 'LAB_RESULTS', 'REPORTS_VIEW', 'MESSAGES_VIEW', 'MESSAGES_SEND'],
@@ -155,7 +155,7 @@ export default function AdminPage() {
     const ROLE_DISPLAY_NAMES: Record<string, string> = {
         // Roles exactos del backend (seed.ts)
         'Admin': 'Administrador',
-        'Doctor': 'Médico / Doctor',
+        'Staff': 'Personal de Salud',
         'Nurse': 'Enfermero/a',
         'Receptionist': 'Recepcionista / Admisión',
         'Lab': 'Técnico de Laboratorio',
@@ -469,7 +469,7 @@ export default function AdminPage() {
         // }
 
         // Validar Campos Profesionales
-        if (['Doctor', 'Nurse', 'Lab', 'Pharmacy'].some(r => {
+        if (['Staff', 'Nurse', 'Lab', 'Pharmacy'].some(r => {
             const role = adminData.roles.find((rl: any) => rl.id === userData.roleId);
             return role?.name.includes(r);
         })) {
@@ -740,7 +740,7 @@ export default function AdminPage() {
         const link = document.createElement("a");
         const url = URL.createObjectURL(blob);
         link.setAttribute("href", url);
-        link.setAttribute("download", `medisync_users_${format(new Date(), 'yyyyMMdd')}.csv`);
+        link.setAttribute("download", `edicarex_users_${format(new Date(), 'yyyyMMdd')}.csv`);
         link.style.visibility = 'hidden';
         document.body.appendChild(link);
         link.click();
@@ -993,11 +993,11 @@ export default function AdminPage() {
         // Simple mapping based on Role Name
         const colors: Record<string, string> = {
             'Admin': 'bg-indigo-100 text-indigo-800 dark:bg-indigo-500/20 dark:text-indigo-400 ring-indigo-500/40',
-            'Doctor': 'bg-blue-100 text-blue-800 dark:bg-blue-500/20 dark:text-blue-400 ring-blue-500/40',
+            'Staff': 'bg-blue-100 text-blue-800 dark:bg-blue-500/20 dark:text-blue-400 ring-blue-500/40',
             'Nurse': 'bg-cyan-100 text-cyan-800 dark:bg-cyan-500/20 dark:text-cyan-400 ring-cyan-500/40',
             'Receptionist': 'bg-emerald-100 text-emerald-800 dark:bg-emerald-500/20 dark:text-emerald-400 ring-emerald-500/40',
             'ADMIN': 'bg-indigo-100 text-indigo-800 dark:bg-indigo-500/20 dark:text-indigo-400 ring-indigo-500/40',
-            'DOCTOR': 'bg-blue-100 text-blue-800 dark:bg-blue-500/20 dark:text-blue-400 ring-blue-500/40',
+            'STAFF': 'bg-blue-100 text-blue-800 dark:bg-blue-500/20 dark:text-blue-400 ring-blue-500/40',
         }
         const match = Object.keys(colors).find(key => roleName?.includes(key))
         return match ? colors[match] : 'bg-gray-100 text-gray-800 dark:bg-gray-500/20 dark:text-gray-400 ring-gray-500/40'
@@ -2956,7 +2956,7 @@ export default function AdminPage() {
                                         groups: [
                                             { name: 'Panel Principal', filter: (k: string) => k === 'DASHBOARD' },
                                             { name: 'Página: Pacientes', filter: (k: string) => k.startsWith('PATIENTS_') },
-                                            { name: 'Página: Doctores', filter: (k: string) => k.startsWith('DOCTORS_') },
+                                            { name: 'Página: Personal', filter: (k: string) => k.startsWith('STAFF_') },
                                             { name: 'Página: Citas', filter: (k: string) => k.startsWith('APPOINTMENTS_') },
                                             { name: 'Página: Gestión de Camas', filter: (k: string) => k.startsWith('BEDS_') },
                                             { name: 'Página: Sala de Espera', filter: (k: string) => k.startsWith('WAITING') },

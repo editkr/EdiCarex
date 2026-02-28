@@ -25,7 +25,7 @@ import { Plus, Search, User, AlertTriangle, Loader2 } from 'lucide-react'
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { cn } from '@/lib/utils'
-import { patientsAPI, emergencyAPI, doctorsAPI } from '@/services/api'
+import { patientsAPI, emergencyAPI, healthStaffAPI } from '@/services/api'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState, useEffect } from 'react'
 import { useToast } from '@/components/ui/use-toast'
@@ -36,7 +36,7 @@ const emergencySchema = z.object({
     triageLevel: z.string().min(1, 'El nivel de triaje es requerido'),
     chiefComplaint: z.string().min(1, 'El motivo de consulta es requerido'),
     diagnosis: z.string().min(1, 'El diagnóstico inicial es requerido'),
-    doctorId: z.string().min(1, 'El médico tratante es requerido'),
+    staffId: z.string().min(1, 'El personal tratante es requerido'),
     bedId: z.string().min(1, 'La cama es requerida'),
     hr: z.string().optional(),
     bp: z.string().optional(),
@@ -73,9 +73,9 @@ export default function EmergencyModal({
         enabled: open && !defaultPatientId,
     })
 
-    const { data: doctorsData } = useQuery({
-        queryKey: ['doctors-emergency'],
-        queryFn: () => doctorsAPI.getAll(),
+    const { data: staffData } = useQuery({
+        queryKey: ['staff-emergency'],
+        queryFn: () => healthStaffAPI.getAll(),
         enabled: open,
     })
 
@@ -97,7 +97,7 @@ export default function EmergencyModal({
     })
 
     const patients = patientsData?.data?.data || []
-    const doctors = doctorsData?.data?.data || []
+    const staff = staffData?.data?.data || []
     const beds = (bedsData?.data || []).filter((bed: any) => bed.ward === 'Emergencia')
 
     // Default form values
@@ -108,7 +108,7 @@ export default function EmergencyModal({
             triageLevel: initialData?.triageLevel?.toString() || '3',
             chiefComplaint: initialData?.chiefComplaint || '',
             diagnosis: initialData?.diagnosis || '',
-            doctorId: initialData?.doctorId || '',
+            staffId: initialData?.staffId || '',
             bedId: initialData?.bedId || '',
             hr: initialData?.vitalSigns?.hr?.toString() || '',
             bp: initialData?.vitalSigns?.bp || '',
@@ -127,7 +127,7 @@ export default function EmergencyModal({
                 triageLevel: initialData?.triageLevel?.toString() || '3',
                 chiefComplaint: initialData?.chiefComplaint || '',
                 diagnosis: initialData?.diagnosis || '',
-                doctorId: initialData?.doctorId || '',
+                staffId: initialData?.staffId || '',
                 bedId: initialData?.bedId || '',
                 hr: initialData?.vitalSigns?.hr?.toString() || '',
                 bp: initialData?.vitalSigns?.bp || '',
@@ -147,7 +147,7 @@ export default function EmergencyModal({
                 triageLevel: parseInt(values.triageLevel),
                 chiefComplaint: values.chiefComplaint,
                 diagnosis: values.diagnosis || null,
-                doctorId: values.doctorId || null,
+                staffId: values.staffId || null,
                 bedId: values.bedId || null,
                 notes: values.notes || null,
                 vitalSigns: {
@@ -323,23 +323,23 @@ export default function EmergencyModal({
                         />
 
                         <div className="grid grid-cols-2 gap-4">
-                            {/* Doctor Selection */}
+                            {/* Staff Selection */}
                             <FormField
                                 control={form.control}
-                                name="doctorId"
+                                name="staffId"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Médico Tratante</FormLabel>
+                                        <FormLabel>Personal Tratante</FormLabel>
                                         <Select onValueChange={field.onChange} value={field.value}>
                                             <FormControl>
                                                 <SelectTrigger className="bg-zinc-950 border-zinc-800">
-                                                    <SelectValue placeholder="Asignar médico" />
+                                                    <SelectValue placeholder="Asignar personal" />
                                                 </SelectTrigger>
                                             </FormControl>
                                             <SelectContent className="bg-zinc-900 border-zinc-800 text-zinc-100">
-                                                {doctors.map((dr: any) => (
-                                                    <SelectItem key={dr.id} value={dr.id}>
-                                                        Dr. {dr.user.firstName} {dr.user.lastName}
+                                                {staff.map((member: any) => (
+                                                    <SelectItem key={member.id} value={member.id}>
+                                                        {member.user.firstName} {member.user.lastName}
                                                     </SelectItem>
                                                 ))}
                                             </SelectContent>

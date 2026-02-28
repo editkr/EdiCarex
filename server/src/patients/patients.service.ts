@@ -136,12 +136,12 @@ export class PatientsService {
                 appointments: {
                     take: 10,
                     orderBy: { appointmentDate: 'desc' },
-                    include: { doctor: { include: { user: true } } },
+                    include: { staff: { include: { user: true } } },
                 },
                 medicalRecords: {
                     take: 10,
                     orderBy: { visitDate: 'desc' },
-                    include: { doctor: { include: { user: true } } },
+                    include: { staff: { include: { user: true } } },
                 },
                 labOrders: {
                     take: 10,
@@ -232,7 +232,7 @@ export class PatientsService {
             where: { patientId: id },
             orderBy: { visitDate: 'desc' },
             include: {
-                doctor: { include: { user: true } },
+                staff: { include: { user: true } },
             },
         });
     }
@@ -310,7 +310,7 @@ export class PatientsService {
                 where: { patientId: id },
                 orderBy: { appointmentDate: 'desc' },
                 take: 50,
-                include: { doctor: { include: { user: true } } },
+                include: { staff: { include: { user: true } } },
             }),
             (this.prisma as any).patientDiagnosis?.findMany({
                 where: { patientId: id },
@@ -436,7 +436,7 @@ export class PatientsService {
         try {
             await this.findOne(id);
 
-            const doctor = await this.prisma.doctor.findFirst({
+            const staff = await this.prisma.healthStaff.findFirst({
                 include: { user: true }
             });
 
@@ -451,7 +451,7 @@ export class PatientsService {
                 });
             }
 
-            if (doctor && medication) {
+            if (staff && medication) {
                 const orderCount = await this.prisma.pharmacyOrder.count();
                 const orderNumber = `ORD-RX-${(orderCount + 1).toString().padStart(5, '0')}`;
 
@@ -460,7 +460,7 @@ export class PatientsService {
                         orderNumber,
                         medicationId: medication.id,
                         quantity: 1,
-                        doctorId: doctor.id,
+                        staffId: staff.id,
                         patientId: id,
                         status: 'PENDIENTE'
                     }
@@ -476,7 +476,7 @@ export class PatientsService {
                 startDate: new Date(data.startDate || new Date()),
                 instructions: data.instructions || data.notes || '',
                 status: 'ACTIVE',
-                prescribedById: doctor?.id || null
+                prescribedById: staff?.id || null
             };
 
             return await (this.prisma as any).patientMedication.create({
@@ -573,16 +573,16 @@ export class PatientsService {
     async addNote(id: string, data: { title: string; content: string }) {
         await this.findOne(id);
 
-        const doctor = await this.prisma.doctor.findFirst();
+        const staff = await this.prisma.healthStaff.findFirst();
 
-        if (!doctor) {
-            throw new BadRequestException('No se encontraron doctores en el sistema para asignar la nota.');
+        if (!staff) {
+            throw new BadRequestException('No se encontró personal de salud en el sistema para asignar la nota.');
         }
 
         return this.prisma.medicalRecord.create({
             data: {
                 patientId: id,
-                doctorId: doctor.id,
+                staffId: staff.id,
                 visitDate: new Date(),
                 chiefComplaint: data.title,
                 diagnosis: 'Nota Clínica',
@@ -590,6 +590,32 @@ export class PatientsService {
                 treatment: '',
                 prescriptions: ''
             }
+        });
+    }
+
+    async getVaccinations(id: string) {
+        await this.findOne(id);
+        return this.prisma.vaccination.findMany({
+            where: { patientId: id },
+            orderBy: { appliedAt: 'desc' }
+        });
+    }
+
+    async getEncounters(id: string) {
+        await this.findOne(id);
+        return this.prisma.encounter.findMany({
+            where: { patientId: id },
+            orderBy: { createdAt: 'desc' },
+            include: { staff: { include: { user: true } } }
+        });
+    }
+
+    async getMinsaPrograms(id: string) {
+        await this.findOne(id);
+        return this.prisma.minsaProgramRecord.findMany({
+            where: { patientId: id },
+            orderBy: { visitDate: 'desc' },
+            include: { program: true }
         });
     }
 }

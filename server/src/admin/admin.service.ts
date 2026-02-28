@@ -54,8 +54,8 @@ export class AdminService {
             orderBy: { _count: { type: 'desc' } },
         });
 
-        // Also get specialty distribution from doctors with appointments
-        const specialtyAppointments = await this.prisma.doctor.findMany({
+        // Also get specialty distribution from staff with appointments
+        const specialtyAppointments = await this.prisma.healthStaff.findMany({
             where: {
                 deletedAt: null,
                 appointments: {
@@ -196,8 +196,8 @@ export class AdminService {
             // Exhaustive list of all 53 models in alphabetical order for clarity
             const tables = [
                 'appointment', 'appointmentCheckIn', 'appointmentHistory', 'attendance',
-                'auditLog', 'bed', 'bedActivity', 'category', 'doctor', 'doctorDocument',
-                'doctorSchedule', 'emergencyAttachment', 'emergencyCase', 'emergencyMedication',
+                'auditLog', 'bed', 'bedActivity', 'category', 'healthStaff', 'staffDocument',
+                'staffSchedule', 'emergencyAttachment', 'emergencyCase', 'emergencyMedication',
                 'emergencyProcedure', 'emergencyVitalSign', 'employee', 'employeeShift',
                 'fileStorage', 'inventoryItem', 'invoice', 'invoiceItem', 'labOrder',
                 'labResult', 'labTest', 'medicalRecord', 'medication', 'message',

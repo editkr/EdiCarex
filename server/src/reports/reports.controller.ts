@@ -37,9 +37,9 @@ export class ReportsController {
         return this.reportsService.getMedicationStats(params);
     }
 
-    @Get('doctors')
-    getDoctorStats(@Query() params: any) {
-        return this.reportsService.getDoctorStats(params);
+    @Get('staff')
+    getStaffStats(@Query() params: any) {
+        return this.reportsService.getStaffStats(params);
     }
 
     @Get('emergencies')

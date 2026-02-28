@@ -80,8 +80,8 @@ export default function AppointmentDetailsPage() {
             patientId: appointment.patient?.id,
             serviceDescription: `Consulta Médica - ${appointment.reason || 'General'}`,
             servicePrice: 50,
-            doctorName: appointment.doctor?.user ? `${appointment.doctor.user.firstName} ${appointment.doctor.user.lastName}` : undefined,
-            doctorId: appointment.doctorId,
+            staffName: (appointment.healthStaff?.user || appointment.doctor?.user) ? `${(appointment.healthStaff?.user || appointment.doctor.user).firstName} ${(appointment.healthStaff?.user || appointment.doctor.user).lastName}` : undefined,
+            staffId: appointment.healthStaffId || appointment.doctorId,
             appointmentId: appointment.id
         })
         setShowInvoiceModal(true)
@@ -277,9 +277,9 @@ export default function AppointmentDetailsPage() {
                                 </p>
                             </div>
                             <div>
-                                <p className="text-sm text-muted-foreground">Doctor</p>
+                                <p className="text-sm text-muted-foreground">Personal de Salud</p>
                                 <p className="font-medium">
-                                    {appointment.doctor ? `Dr. ${appointment.doctor.user?.firstName} ${appointment.doctor.user?.lastName}` : 'Desconocido'}
+                                    {(appointment.healthStaff?.user || appointment.doctor?.user) ? `${(appointment.healthStaff?.user || appointment.doctor.user).firstName} ${(appointment.healthStaff?.user || appointment.doctor.user).lastName}` : 'Desconocido'}
                                 </p>
                             </div>
                         </div>
