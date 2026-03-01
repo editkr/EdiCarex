@@ -38,6 +38,7 @@ import { HisModule } from './his/his.module';
 import { EpidemiologyModule } from './epidemiology/epidemiology.module';
 import { SisModule } from './sis/sis.module';
 import { ObservationRoomModule } from './observation-room/observation-room.module';
+import { ConsultorioConfigModule } from './consultorio-config/consultorio-config.module';
 
 
 @Module({
@@ -95,6 +96,7 @@ import { ObservationRoomModule } from './observation-room/observation-room.modul
         EpidemiologyModule,
         SisModule,
         ObservationRoomModule,
+        ConsultorioConfigModule,
     ],
     controllers: [HealthController],
     providers: [

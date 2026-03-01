@@ -1650,8 +1650,8 @@ export default function PatientProfilePage() {
             />
 
             <AppointmentModal
-                open={createAppointmentOpen}
-                onOpenChange={setCreateAppointmentOpen}
+                isOpen={createAppointmentOpen}
+                onClose={() => setCreateAppointmentOpen(false)}
                 defaultPatientId={id}
                 onSuccess={() => {
                     refetchAppointments()

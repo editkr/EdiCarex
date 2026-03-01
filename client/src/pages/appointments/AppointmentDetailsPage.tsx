@@ -479,8 +479,8 @@ export default function AppointmentDetailsPage() {
 
             {/* Edit Modal */}
             <AppointmentModal
-                open={showEditModal}
-                onOpenChange={setShowEditModal}
+                isOpen={showEditModal}
+                onClose={() => setShowEditModal(false)}
                 appointment={appointment}
                 onSuccess={() => {
                     refetch()

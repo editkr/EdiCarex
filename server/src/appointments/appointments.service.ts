@@ -438,4 +438,91 @@ export class AppointmentsService {
             throw new BadRequestException(`Error al generar registro HIS: ${error.message}`);
         }
     }
+
+    async getDailyStats(dateStr?: string) {
+        const date = dateStr ? new Date(dateStr) : new Date();
+        const start = new Date(date);
+        start.setHours(0, 0, 0, 0);
+        const end = new Date(date);
+        end.setHours(23, 59, 59, 999);
+
+        // 1. Obtener configuraciones de consultorios
+        const configs = await this.prisma.consultorioConfig.findMany({
+            where: { isActive: true },
+        });
+
+        // 2. Obtener todas las citas del día (no eliminadas)
+        const appointments = await this.prisma.appointment.findMany({
+            where: {
+                deletedAt: null,
+                appointmentDate: { gte: start, lte: end },
+            },
+            include: {
+                patient: {
+                    select: { firstName: true, lastName: true, documentNumber: true, insuranceProvider: true }
+                },
+                staff: {
+                    include: { user: { select: { lastName: true } } }
+                }
+            },
+            orderBy: { appointmentDate: 'asc' },
+        });
+
+        // 3. Calcular métricas por consultorio
+        const statsByService = configs.map(config => {
+            // Filtrar citas por el UPSS del consultorio (o mapeo de tipo si UPSS no coincide exacto)
+            const serviceApps = appointments.filter(app =>
+                app.upss === config.upss ||
+                (config.serviceName === 'MEDICINA_GENERAL' && app.type === 'CONSULTA_MEDICINA_GENERAL') ||
+                (config.serviceName === 'OBSTETRICIA' && (app.type === 'CONSULTA_OBSTETRICIA' || app.type === 'CONTROL_PRENATAL'))
+            );
+
+            const occupied = serviceApps.length;
+            const isFull = occupied >= config.maxDailySlots;
+
+            // Cola de espera (SCHEDULED, CONFIRMED, IN_PROGRESS)
+            const waitingList = serviceApps
+                .filter(app => ['SCHEDULED', 'CONFIRMED', 'IN_PROGRESS'].includes(app.status))
+                .map((app, index) => ({
+                    id: app.id,
+                    patientName: `${app.patient.firstName} ${app.patient.lastName}`,
+                    time: app.startTime,
+                    status: app.status,
+                    estimatedWaitMinutes: index * config.slotDurationMinutes,
+                }));
+
+            return {
+                serviceName: config.serviceName,
+                label: config.label,
+                upss: config.upss,
+                occupied,
+                maxOccupancy: config.maxDailySlots,
+                occupancyPercentage: Math.min(Math.round((occupied / config.maxDailySlots) * 100), 100),
+                isFull,
+                waitingCount: waitingList.length,
+                waitingList,
+            };
+        });
+
+        // 4. Métricas generales
+        const totalScheduled = appointments.length;
+        const totalFullConsultorios = statsByService.filter(s => s.isFull).length;
+        const totalWaiting = statsByService.reduce((acc, s) => acc + s.waitingCount, 0);
+
+        const totalMaxCapacity = statsByService.reduce((acc, s) => acc + s.maxOccupancy, 0);
+        const overallOccupancy = totalMaxCapacity > 0
+            ? Math.round((totalScheduled / totalMaxCapacity) * 100)
+            : 0;
+
+        return {
+            date: start.toISOString(),
+            metrics: {
+                totalScheduled,
+                totalFullConsultorios,
+                totalWaiting,
+                overallOccupancy,
+            },
+            services: statsByService,
+        };
+    }
 }

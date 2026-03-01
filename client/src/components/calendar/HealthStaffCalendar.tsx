@@ -10,6 +10,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { useToast } from '@/components/ui/use-toast'
 import { appointmentsAPI } from '@/services/api'
+import { Badge } from '@/components/ui/badge'
+import { cn } from '@/lib/utils'
 import './HealthStaffCalendar.css'
 
 const locales = {
@@ -46,7 +48,17 @@ const messages = {
     time: 'Hora',
     event: 'Evento',
     noEventsInRange: 'No hay eventos en este rango',
+    showMore: (total: number) => `+ Ver ${total} más`,
 }
+
+const CalendarEvent = ({ event }: any) => (
+    <div className="flex flex-col h-full">
+        <span className="font-black text-[10px] leading-tight truncate">{event.title}</span>
+        <span className="text-[10px] opacity-80 font-medium truncate uppercase tracking-tighter">
+            {event.resource?.reason || 'Consulta'}
+        </span>
+    </div>
+)
 
 export default function HealthStaffCalendar({ staffId, appointments, onRefresh }: HealthStaffCalendarProps) {
     const { toast } = useToast()
@@ -56,7 +68,9 @@ export default function HealthStaffCalendar({ staffId, appointments, onRefresh }
     const events = useMemo(() => {
         return appointments.map((apt: any) => {
             const start = new Date(apt.appointmentDate)
-            const end = addHours(start, 1)
+            // Usar duración estimada o 20 min por defecto
+            const duration = apt.estimatedDuration || 20
+            const end = new Date(start.getTime() + duration * 60000)
 
             return {
                 id: apt.id,
@@ -66,13 +80,15 @@ export default function HealthStaffCalendar({ staffId, appointments, onRefresh }
                 resource: {
                     patientId: apt.patientId,
                     patientName: apt.patient ? `${apt.patient.firstName} ${apt.patient.lastName}` : 'Desconocido',
-                    reason: apt.reason || 'Chequeo General',
+                    reason: apt.reason || apt.type || 'Consulta Médica',
                     status: apt.status,
                     type: 'appointment',
                 },
             }
         })
     }, [appointments])
+
+    const visibleEventsCount = useMemo(() => events.length, [events])
 
     // Manejar selección de slot
     const handleSelectSlot = useCallback(
@@ -150,53 +166,81 @@ export default function HealthStaffCalendar({ staffId, appointments, onRefresh }
 
     // Estilos personalizados
     const eventStyleGetter = (event: any) => {
-        let backgroundColor = '#3b82f6'
+        let backgroundColor = 'hsl(var(--primary))'
 
-        if (event.resource?.type === 'blocked') {
-            backgroundColor = '#6b7280'
-        } else if (event.resource?.status === 'COMPLETED') {
-            backgroundColor = '#10b981'
-        } else if (event.resource?.status === 'CANCELLED') {
-            backgroundColor = '#ef4444'
-        } else if (event.resource?.status === 'CONFIRMED') {
-            backgroundColor = '#3b82f6'
+        const statusMap: Record<string, string> = {
+            'SCHEDULED': '#3b82f6', // Azul
+            'CONFIRMED': '#3b82f6', // Azul
+            'IN_PROGRESS': '#f59e0b', // Naranja
+            'COMPLETED': '#10b981', // Verde
+            'CANCELLED': '#ef4444', // Rojo
+            'NO_SHOW': '#6b7280', // Gris
         }
 
+        backgroundColor = statusMap[event.resource?.status] || backgroundColor
+
         return {
+            className: cn("calendar-event-card", event.resource?.status.toLowerCase()),
             style: {
                 backgroundColor,
-                borderRadius: '4px',
-                opacity: 0.9,
-                color: 'white',
-                border: '0px',
-                display: 'block',
             },
         }
     }
 
+    const slotPropGetter = (date: Date) => {
+        const hour = date.getHours()
+        if (hour === 12) {
+            return {
+                className: 'lunch-break-slot',
+            }
+        }
+        return {}
+    }
+
+    const dayPropGetter = (date: Date) => {
+        const day = date.getDay()
+        if (day === 0) { // Domingo
+            return {
+                className: 'non-working-day',
+            }
+        }
+        return {}
+    }
+
     return (
         <Card>
-            <CardHeader>
-                <div className="flex justify-between items-center">
-                    <CardTitle>Calendario de Citas</CardTitle>
-                    <div className="flex gap-2">
+            <CardHeader className="pb-2">
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                    <div className="space-y-1">
+                        <CardTitle className="text-xl font-black uppercase tracking-tight flex items-center gap-2">
+                            Agenda de Atención
+                            <Badge variant="secondary" className="font-bold text-xs">
+                                {visibleEventsCount} Citas
+                            </Badge>
+                        </CardTitle>
+                        <p className="text-xs text-muted-foreground font-medium">Horario Oficial: 08:00 AM - 18:00 PM</p>
+                    </div>
+                    <div className="flex gap-1 bg-muted p-1 rounded-lg border">
                         <Button
-                            variant={view === 'day' ? 'default' : 'outline'}
+                            variant={view === 'day' ? 'default' : 'ghost'}
                             size="sm"
+                            className="text-xs font-bold uppercase h-8"
                             onClick={() => setView('day')}
                         >
                             Día
                         </Button>
                         <Button
-                            variant={view === 'week' ? 'default' : 'outline'}
+                            variant={view === 'week' ? 'default' : 'ghost'}
                             size="sm"
+                            className="text-xs font-bold uppercase h-8"
                             onClick={() => setView('week')}
                         >
                             Semana
                         </Button>
                         <Button
-                            variant={view === 'month' ? 'default' : 'outline'}
+                            variant={view === 'month' ? 'default' : 'ghost'}
                             size="sm"
+                            className="text-xs font-bold uppercase h-8"
                             onClick={() => setView('month')}
                         >
                             Mes
@@ -205,7 +249,7 @@ export default function HealthStaffCalendar({ staffId, appointments, onRefresh }
                 </div>
             </CardHeader>
             <CardContent>
-                <div className="staff-calendar" style={{ height: '600px' }}>
+                <div className="staff-calendar">
                     {/* @ts-ignore */}
                     <DnDCalendar
                         localizer={localizer}
@@ -219,33 +263,42 @@ export default function HealthStaffCalendar({ staffId, appointments, onRefresh }
                         selectable
                         resizable
                         eventPropGetter={eventStyleGetter}
-                        step={30}
-                        timeslots={2}
-                        min={setHours(setMinutes(new Date(), 0), 8)}
-                        max={setHours(setMinutes(new Date(), 0), 18)}
-                        defaultDate={new Date()}
+                        slotPropGetter={slotPropGetter}
+                        dayPropGetter={dayPropGetter}
+                        step={20}
+                        timeslots={3}
+                        min={new Date(new Date().setHours(8, 0, 0, 0))}
+                        max={new Date(new Date().setHours(18, 0, 0, 0))}
+                        defaultView="week"
                         culture='es'
                         messages={messages}
                         popup
+                        components={{
+                            event: CalendarEvent,
+                        }}
                     />
                 </div>
 
                 {/* Legend */}
-                <div className="flex gap-4 mt-4 text-sm">
+                <div className="flex flex-wrap gap-4 mt-6 p-4 bg-muted/30 rounded-xl border border-dashed border-muted-foreground/20 text-[10px] font-black uppercase tracking-widest text-muted-foreground">
                     <div className="flex items-center gap-2">
-                        <div className="w-4 h-4 rounded bg-blue-500"></div>
+                        <div className="w-3 h-3 rounded-full bg-blue-500 shadow-sm"></div>
                         <span>Programada</span>
                     </div>
                     <div className="flex items-center gap-2">
-                        <div className="w-4 h-4 rounded bg-green-500"></div>
+                        <div className="w-3 h-3 rounded-full bg-amber-500 shadow-sm"></div>
+                        <span>En Progreso</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <div className="w-3 h-3 rounded-full bg-emerald-500 shadow-sm"></div>
                         <span>Completada</span>
                     </div>
                     <div className="flex items-center gap-2">
-                        <div className="w-4 h-4 rounded bg-red-500"></div>
+                        <div className="w-3 h-3 rounded-full bg-rose-500 shadow-sm"></div>
                         <span>Cancelada</span>
                     </div>
                     <div className="flex items-center gap-2">
-                        <div className="w-4 h-4 rounded bg-gray-500"></div>
+                        <div className="w-3 h-3 rounded-full bg-slate-500 shadow-sm"></div>
                         <span>Bloqueada</span>
                     </div>
                 </div>

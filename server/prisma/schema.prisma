@@ -690,6 +690,27 @@ model EstablishmentConfig {
 }
 
 // ============================================
+// CONSULTORIO CONFIGURATION (Dynamic Slots)
+// ============================================
+
+model ConsultorioConfig {
+  id                   String   @id @default(uuid())
+  serviceName          String   @unique // e.g., MEDICINA_GENERAL, OBSTETRICIA
+  label                String   // e.g., "Medicina General"
+  upss                 String   // e.g., "CONSULTA EXTERNA"
+  maxDailySlots        Int      @default(18)
+  slotDurationMinutes  Int      @default(20)
+  isActive             Boolean  @default(true)
+  color                String?  // hex or tailwind class
+  ipressCode           String   @default("00003308")
+  
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  @@map("consultorio_configs")
+}
+
+// ============================================
 // OBSERVATION ROOM (I-3 Max 6 Stretchers)
 // ============================================
 

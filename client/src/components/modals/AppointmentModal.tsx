@@ -74,19 +74,26 @@ const appointmentSchema = z.object({
 type AppointmentFormData = z.infer<typeof appointmentSchema>
 
 interface AppointmentModalProps {
-    open: boolean
-    onOpenChange: (open: boolean) => void
+    isOpen: boolean
+    onClose: () => void
     appointment?: any
     onSuccess: () => void
     defaultPatientId?: string
+    defaultValues?: {
+        appointmentDate?: Date
+        time?: string
+        serviceLabel?: string
+        upss?: string
+    }
 }
 
 export default function AppointmentModal({
-    open,
-    onOpenChange,
+    isOpen: open,
+    onClose: onOpenChange,
     appointment,
     onSuccess,
     defaultPatientId,
+    defaultValues,
 }: AppointmentModalProps) {
     const { toast } = useToast()
     const [patients, setPatients] = useState<any[]>([])
@@ -135,6 +142,28 @@ export default function AppointmentModal({
                     status: appointment.status || 'SCHEDULED',
                     priority: appointment.priority || 'NORMAL',
                 })
+            } else if (defaultValues) {
+                // Mapear serviceLabel a type si es posible
+                const typeMeta = MINSA_TYPES.find(t => t.label === defaultValues.serviceLabel) ||
+                    MINSA_TYPES.find(t => t.upss === defaultValues.upss)
+
+                form.reset({
+                    patientId: defaultPatientId || '',
+                    staffId: '',
+                    appointmentDate: defaultValues.appointmentDate || new Date(),
+                    time: defaultValues.time || '08:00',
+                    type: typeMeta?.value || 'CONS_MED_GRAL',
+                    upss: defaultValues.upss || typeMeta?.upss || 'CONSULTA EXTERNA',
+                    consultorio: 'Consultorio 01',
+                    estimatedDuration: typeMeta?.duration || 20,
+                    financiador: '02',
+                    patientCondition: 'CONTINUADOR',
+                    reason: '',
+                    chiefComplaint: '',
+                    notes: '',
+                    status: 'SCHEDULED',
+                    priority: 'NORMAL',
+                })
             } else {
                 form.reset({
                     patientId: defaultPatientId || '',
@@ -154,7 +183,7 @@ export default function AppointmentModal({
                 })
             }
         }
-    }, [open, appointment, form, defaultPatientId])
+    }, [open, appointment, form, defaultPatientId, defaultValues])
 
     const fetchResources = async () => {
         try {
@@ -219,7 +248,7 @@ export default function AppointmentModal({
                 toast({ title: 'Éxito', description: 'Cita programada correctamente' })
             }
             onSuccess()
-            onOpenChange(false)
+            onOpenChange()
         } catch (error: any) {
             toast({
                 title: 'Error de Validación',
@@ -533,7 +562,7 @@ export default function AppointmentModal({
                                 <span>Duración estimada: {form.watch('estimatedDuration')} MIN.</span>
                             </div>
                             <div className="flex gap-3">
-                                <Button type="button" variant="ghost" onClick={() => onOpenChange(false)} className="font-bold text-slate-500">
+                                <Button type="button" variant="ghost" onClick={() => onOpenChange()} className="font-bold text-slate-500">
                                     DESCARTAR
                                 </Button>
                                 <Button type="submit" className="h-12 px-8 rounded-xl font-black tracking-widest bg-primary hover:bg-primary/90" disabled={form.formState.isSubmitting || loadingResources}>

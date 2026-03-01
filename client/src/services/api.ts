@@ -161,6 +161,7 @@ export const appointmentsAPI = {
     cancel: (id: string) => api.patch(`/appointments/${id}/status`, { status: 'CANCELLED' }),
     getNotifications: (id: string) => api.get(`/appointments/${id}/notifications`),
     getDashboardStats: () => api.get('/appointments/stats/dashboard'),
+    getDailyStats: (date?: string) => api.get('/appointments/daily/stats', { params: { date } }),
     generateHis: (id: string) => api.post(`/appointments/${id}/generate-his`),
 }
 
@@ -565,5 +566,13 @@ export const observationRoomAPI = {
     admit: (id: string, data: any) => api.post(`/observation-room/${id}/admit`, data),
     discharge: (id: string, reason: string) => api.post(`/observation-room/${id}/discharge`, { reason }),
     refer: (id: string, data: any) => api.post(`/observation-room/${id}/refer`, data),
+}
+
+// ============================================
+// CONSULTORIO CONFIG API
+// ============================================
+export const consultorioConfigAPI = {
+    getAll: () => api.get('/consultorio-config'),
+    seed: () => api.post('/consultorio-config/seed'),
 }
 

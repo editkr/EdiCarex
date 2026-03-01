@@ -573,8 +573,8 @@ export default function AppointmentsPage() {
             </Tabs>
 
             <AppointmentModal
-                open={modalOpen}
-                onOpenChange={setModalOpen}
+                isOpen={modalOpen}
+                onClose={() => setModalOpen(false)}
                 appointment={selectedAppointment}
                 onSuccess={handleSuccess}
             />

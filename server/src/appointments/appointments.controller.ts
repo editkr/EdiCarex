@@ -38,6 +38,13 @@ export class AppointmentsController {
         return this.appointmentsService.getDashboardStats();
     }
 
+    @Get('daily/stats')
+    @ApiOperation({ summary: 'Estadísticas detalladas de la agenda diaria (ocupación, esperas)' })
+    @RequirePermission('APPOINTMENTS_VIEW')
+    getDailyStats(@Query('date') date: string) {
+        return this.appointmentsService.getDailyStats(date);
+    }
+
     @Get()
     @ApiOperation({ summary: 'Listar citas con filtros MINSA I-4' })
     @RequirePermission('APPOINTMENTS_VIEW')
