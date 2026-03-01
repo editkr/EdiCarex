@@ -106,6 +106,79 @@ export class CreatePatientDto {
     @IsString()
     @IsOptional()
     status?: string;
+
+    @ApiProperty({ required: false, default: 'DNI' })
+    @IsString()
+    @IsOptional()
+    documentType?: string;
+
+    @ApiProperty({ required: false })
+    @IsString()
+    @IsOptional()
+    ubigeo?: string;
+
+    @ApiProperty({ required: false })
+    @IsString()
+    @IsOptional()
+    sector?: string;
+
+    @ApiProperty({ required: false })
+    @IsString()
+    @IsOptional()
+    familyFolderId?: string;
+
+    @ApiProperty({ required: false })
+    @IsString()
+    @IsOptional()
+    occupation?: string;
+
+    @ApiProperty({ required: false })
+    @IsString()
+    @IsOptional()
+    educationLevel?: string;
+
+    @ApiProperty({ required: false })
+    @IsString()
+    @IsOptional()
+    maritalStatus?: string;
+
+    @ApiProperty({ required: false })
+    @IsString()
+    @IsOptional()
+    ethnicity?: string;
+
+    @ApiProperty({ required: false })
+    @IsString()
+    @IsOptional()
+    motherTongue?: string;
+
+    @ApiProperty({ required: false })
+    @IsOptional()
+    isIntercultural?: boolean;
+
+    @ApiProperty({ required: false })
+    @IsString()
+    @IsOptional()
+    sisCode?: string;
+
+    @ApiProperty({ required: false })
+    @IsString()
+    @IsOptional()
+    sisModalidad?: string;
+
+    @ApiProperty({ required: false })
+    @IsString()
+    @IsOptional()
+    sisStatus?: string;
+
+    @ApiProperty({ required: false })
+    @IsOptional()
+    sisValidatedAt?: Date;
+
+    @ApiProperty({ required: false })
+    @IsString()
+    @IsOptional()
+    sisAssignedIpress?: string;
 }
 
 export class UpdatePatientDto extends PartialType(CreatePatientDto) { }
@@ -125,6 +198,35 @@ export class SearchPatientsDto {
     @IsString()
     @IsOptional()
     status?: string;
+
+    @ApiProperty({ required: false })
+    @IsString()
+    @IsOptional()
+    insuranceType?: string;
+
+    @ApiProperty({ required: false })
+    @IsString()
+    @IsOptional()
+    sisStatus?: string;
+
+    @ApiProperty({ required: false })
+    @IsString()
+    @IsOptional()
+    lifeStage?: string;
+
+    @ApiProperty({ required: false })
+    @IsString()
+    @IsOptional()
+    sector?: string;
+
+    @ApiProperty({ required: false })
+    @IsString()
+    @IsOptional()
+    ubigeo?: string;
+
+    @ApiProperty({ required: false })
+    @IsOptional()
+    isIntercultural?: boolean | string;
 }
 
 export class CreateNoteDto {

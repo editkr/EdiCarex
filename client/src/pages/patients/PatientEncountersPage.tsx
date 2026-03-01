@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -10,6 +10,7 @@ import { es } from 'date-fns/locale'
 import { useQuery } from '@tanstack/react-query'
 import { patientsAPI } from '@/services/api'
 import { Loader2 } from 'lucide-react'
+import AddEncounterModal from '@/components/modals/AddEncounterModal'
 
 interface Encounter {
     id: string
@@ -24,7 +25,9 @@ interface Encounter {
 
 export default function PatientEncountersPage() {
     const { id } = useParams()
-    const { data: encounters = [], isLoading: loading } = useQuery({
+    const [modalOpen, setModalOpen] = useState(false)
+
+    const { data: encounters = [], isLoading: loading, refetch } = useQuery({
         queryKey: ['patient-encounters', id],
         queryFn: async () => {
             if (!id) return []
@@ -46,7 +49,7 @@ export default function PatientEncountersPage() {
                         <p className="text-muted-foreground">Consultas, triajes y evolución clínica del paciente</p>
                     </div>
                 </div>
-                <Button className="gap-2">
+                <Button className="gap-2" onClick={() => setModalOpen(true)}>
                     <Plus className="h-4 w-4" /> Nuevo Encuentro
                 </Button>
             </div>
@@ -80,13 +83,29 @@ export default function PatientEncountersPage() {
                         <CardContent>
                             <p className="text-sm font-medium">Motivo: {encounter.reason || 'Sin especificar'}</p>
                             <div className="mt-4 flex gap-2">
-                                <Button variant="outline" size="sm">Ver Detalles</Button>
-                                {encounter.status === 'OPEN' && <Button size="sm">Registrar Evolución</Button>}
+                                <Button variant="outline" size="sm" asChild>
+                                    <Link to={`/patients/${id}/encounters/${encounter.id}`}>Ver Detalles</Link>
+                                </Button>
+                                {encounter.status === 'OPEN' && (
+                                    <Button size="sm" asChild>
+                                        <Link to={`/patients/${id}/encounters/${encounter.id}`}>Registrar Evolución</Link>
+                                    </Button>
+                                )}
                             </div>
                         </CardContent>
                     </Card>
                 ))}
             </div>
+
+            {id && (
+                <AddEncounterModal
+                    open={modalOpen}
+                    onOpenChange={setModalOpen}
+                    patientId={id}
+                    onSuccess={() => refetch()}
+                />
+            )}
         </div>
     )
 }
+

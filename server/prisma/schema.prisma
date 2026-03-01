@@ -232,9 +232,23 @@ model Patient {
   zipCode           String?
   emergencyContact  String?
   emergencyPhone    String?
+  documentType      String    @default("DNI") // DNI, CARNET_EXTRANJERIA, CODIGO_UNICO
   insuranceNumber   String?
-  insuranceProvider String? @default("SIS") // SIS, ESSALUD, PRIVADO, OTROS
-  insuranceType     String? @default("MINSA") // MINSA, ESSALUD, PARROQUIAL
+  insuranceProvider String?   @default("SIS_PARA_TODOS") // SIS_GRATUITO, SIS_PARA_TODOS, SIS_INDEPENDIENTE, SIS_EMPRENDEDOR, SIS_MICROEMPRESAS, ESSALUD, EPS, PRIVADO, SOAT, NINGUNO
+  insuranceType     String?   @default("MINSA")
+  
+  // Demographics and Context
+  lifeStage         String?   // NINO, ADOLESCENTE, JOVEN, ADULTO, ADULTO_MAYOR
+  ubigeo            String    @default("211101")
+  sector            String?
+  familyFolderId    String?
+  occupation        String?
+  educationLevel    String?   // SIN_INSTRUCCION, PRIMARIA, SECUNDARIA, SUPERIOR_TECNICA, SUPERIOR_UNIVERSITARIA
+  maritalStatus     String?   // SOLTERO, CASADO, CONVIVIENTE, VIUDO, DIVORCIADO
+  ethnicity         String?
+  motherTongue      String?   // CASTELLANO, QUECHUA, AYMARA, OTRO
+  isIntercultural   Boolean   @default(false)
+  
   allergies         String?
   chronicConditions String?
   notes             String?
@@ -246,8 +260,11 @@ model Patient {
 
   // SIS Expanded Data
   sisCode           String?
-  sisStatus         String    @default("NOT_AFFILIATED") // ACTIVO, INACTIVO, NOT_AFFILIATED
+  sisModalidad      String?
+  sisStatus         String    @default("NOT_AFFILIATED") // ACTIVO, INACTIVO, SUSPENDIDO, CANCELADO, NOT_AFFILIATED
   sisValidatedAt    DateTime?
+  sisAssignedIpress String?
+
 
   // Relations
   userId         String?         @unique
@@ -427,9 +444,22 @@ model HealthStaff {
   specialization  String?
   yearsExperience Int?
   consultationFee Decimal   @default(0) @db.Decimal(10, 2)
-  contractType    String?   
-  profession      String?   
-  minsaProgram    String?   
+  
+  // RRHH MINSA Fields
+  profession          String?   // MEDICO_CIRUJANO, ENFERMERA, OBSTETRIZ, ODONTOLOGO, PSICOLOGO, NUTRICIONISTA, TECNOLOGO_MEDICO, QUIMICO_FARMACEUTICO, TRABAJADOR_SOCIAL, TECNICO_ENFERMERIA, TECNICO_FARMACIA, ADMINISTRATIVO
+  specialtyArea       String?   // Para tecnólogos médicos: LABORATORIO_CLINICO, TERAPIA_FISICA, RADIOLOGIA, TERAPIA_LENGUAJE, TERAPIA_OCUPACIONAL
+  contractType        String?   // CAS, NOMBRADO, SERUMS, LOCACION
+  contractStartDate   DateTime?
+  contractEndDate     DateTime? // Puede ser null (e.g. NOMBRADO)
+  serumsCycle         String?   // e.g. "2024-I"
+  dniNumber           String?
+  minsaProgram        String?   // CRED, PRENATAL, TBC, ANEMIA_DESNUTRICION, PLANIFICACION_FAMILIAR, ADULTO_MAYOR, INMUNIZACIONES, SALUD_MENTAL, ENT, SALUD_BUCAL, NINGUNO
+  collegiateBody      String?   // CMP, CEP, COP, CDP, CPsP, CNP, CTM, CQF, CTSP
+  collegiateStatus    String?   // HABILITADO, INHABILITADO, PENDIENTE, NO_APLICA
+  collegiateExpiresAt DateTime?
+  workShift           String?   // MAÑANA, TARDE, NOCHE, ROTATIVO
+  weeklyHours         Int?      @default(36)
+
   bio             String?
   isAvailable     Boolean   @default(true)
   createdAt       DateTime  @default(now())
@@ -501,13 +531,27 @@ model Appointment {
   startTime       String // HH:mm format
   endTime         String? // HH:mm format
   reason          String
-  type            String    @default("CHECKUP") // CHECKUP, FOLLOW_UP, EMERGENCY, CONSULTATION, SURGERY
+  type            String    @default("CONSULTA_MEDICINA_GENERAL") // CONSULTA_MEDICINA_GENERAL, CONSULTA_OBSTETRICIA, CONSULTA_ODONTOLOGIA, CONSULTA_PSICOLOGIA, CONSULTA_NUTRICION, CONSULTA_ASISTENCIA_SOCIAL, CONTROL_CRED, CONTROL_PRENATAL, VACUNACION, LABORATORIO, TRIAJE, TELEMEDICINA, VISITA_DOMICILIARIA
   symptoms        String?
   status          String    @default("SCHEDULED") // SCHEDULED, CONFIRMED, IN_PROGRESS, COMPLETED, CANCELLED, NO_SHOW
   priority        String    @default("NORMAL") // LOW, NORMAL, HIGH, URGENT
   triageScore     Int? // AI-generated triage score
   triageNotes     String?
   notes           String?
+
+  // Campos MINSA I-4 (NTS N°021, RM 546-2011, Manual HIS)
+  patientCondition  String?  // NUEVO, CONTINUADOR, REINGRESO (según Manual HIS MINSA)
+  financiador       String?  // 01-PAGANTE, 02-SIS, 03-ESSALUD, 04-SOAT, 05-SANIDAD_FAP, 06-SANIDAD_NAVAL, 07-SANIDAD_EP, 08-SANIDAD_PNP, 09-OTROS
+  upss              String?  // CONSULTA_EXTERNA, FARMACIA, PATOLOGIA_CLINICA, INMUNIZACIONES
+  consultorio       String?  // Número o nombre del consultorio
+  estimatedDuration Int?     // Duración estimada en minutos (auto-calculado según tipo)
+  chiefComplaint    String?  // Motivo principal de consulta (texto libre, para HIS)
+  vitalSignsAtEntry Json?    // Signos vitales en triaje: {fc, pa, temperatura, spo2, peso, talla}
+  diagnosisCodes    Json?    // Diagnósticos CIE-10 registrados al finalizar: [{code, type, description}]
+  prescriptions     Json?    // Medicamentos PNUME prescritos: [{name, dose, frequency, days}]
+  hisLinked         Boolean  @default(false) // Si ya fue registrado en el sistema HIS
+  hisRecordId       String?  // ID del HISRecord creado a partir de esta cita
+
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
   deletedAt       DateTime?
@@ -530,8 +574,11 @@ model Appointment {
   @@index([staffId])
   @@index([appointmentDate])
   @@index([status])
+  @@index([hisLinked])
+  @@index([type])
   @@map("appointments")
 }
+
 
 model AppointmentHistory {
   id        String   @id @default(uuid())

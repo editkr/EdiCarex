@@ -1,5 +1,6 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useQuery } from '@tanstack/react-query'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -19,11 +20,11 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select'
-import { Calendar as CalendarIcon, Plus, Search, Loader2, Edit, Trash2, Eye, TableIcon, Filter, Download, CheckCircle, XCircle, Clock, TrendingUp, CalendarCheck } from 'lucide-react'
+import { Calendar as CalendarIcon, Plus, Search, Edit, Trash2, Eye, TableIcon, Filter, Download, CheckCircle, XCircle, Clock, TrendingUp, CalendarCheck, ShieldCheck, UserPlus, FileSearch } from 'lucide-react'
 import { appointmentsAPI, patientsAPI, healthStaffAPI } from '@/services/api'
 import { useToast } from '@/components/ui/use-toast'
 import AppointmentModal from '@/components/modals/AppointmentModal'
-import { format, isToday, isThisWeek, differenceInMinutes, isPast } from 'date-fns'
+import { format, differenceInMinutes } from 'date-fns'
 import { es } from 'date-fns/locale'
 import * as XLSX from 'xlsx'
 import jsPDF from 'jspdf'
@@ -40,15 +41,14 @@ import {
 } from "@/components/ui/alert-dialog"
 import HealthStaffCalendar from '@/components/calendar/HealthStaffCalendar'
 import { usePermissions } from '@/hooks/usePermissions'
+import { useOrganization } from '@/contexts/OrganizationContext'
+import { Skeleton } from '@/components/ui/skeleton'
 
 export default function AppointmentsPage() {
     const navigate = useNavigate()
     const { hasPermission } = usePermissions()
+    const { config } = useOrganization()
     const [searchTerm, setSearchTerm] = useState('')
-    const [appointments, setAppointments] = useState<any[]>([])
-    const [patients, setPatients] = useState<any[]>([])
-    const [staff, setStaff] = useState<any[]>([])
-    const [loading, setLoading] = useState(true)
     const [modalOpen, setModalOpen] = useState(false)
     const [selectedAppointment, setSelectedAppointment] = useState<any>(null)
     const [deleteId, setDeleteId] = useState<string | null>(null)
@@ -56,38 +56,43 @@ export default function AppointmentsPage() {
     const [showFilters, setShowFilters] = useState(false)
     const { toast } = useToast()
 
-    // Filtros
+    // Filtros MINSA I-4
     const [filters, setFilters] = useState({
         status: 'all',
         priority: 'all',
         staffId: 'all',
+        appointmentType: 'all',
+        financiador: 'all',
+        patientCondition: 'all',
+        upss: 'all'
     })
 
-    useEffect(() => {
-        loadData()
-    }, [])
+    // Cargar Datos con useQuery
+    const { data: appointmentsRes, isLoading: isLoadingApts, refetch: refetchApts } = useQuery({
+        queryKey: ['appointments', filters],
+        queryFn: () => appointmentsAPI.getAll(filters)
+    })
 
-    const loadData = async () => {
-        try {
-            setLoading(true)
-            const [appointmentsRes, patientsRes, staffRes] = await Promise.all([
-                appointmentsAPI.getAll(),
-                patientsAPI.getAll().catch(() => ({ data: { data: [] } })),
-                healthStaffAPI.getAll().catch(() => ({ data: { data: [] } })),
-            ])
-            setAppointments(appointmentsRes.data.data || [])
-            setPatients(patientsRes.data?.data || [])
-            setStaff(staffRes.data?.data || [])
-        } catch (error: any) {
-            toast({
-                title: 'Error',
-                description: error.response?.data?.message || 'Error al cargar citas',
-                variant: 'destructive',
-            })
-        } finally {
-            setLoading(false)
-        }
-    }
+    const { data: statsRes, isLoading: isLoadingStats, refetch: refetchStats } = useQuery({
+        queryKey: ['appointments-dashboard-stats'],
+        queryFn: () => appointmentsAPI.getDashboardStats()
+    })
+
+    const { data: patientsRes } = useQuery({
+        queryKey: ['patients'],
+        queryFn: () => patientsAPI.getAll().catch(() => ({ data: { data: [] } }))
+    })
+
+    const { data: staffRes } = useQuery({
+        queryKey: ['staff'],
+        queryFn: () => healthStaffAPI.getAll().catch(() => ({ data: { data: [] } }))
+    })
+
+    const appointments = appointmentsRes?.data?.data || []
+    const dashboardStats = statsRes?.data
+    const staff = staffRes?.data?.data || []
+
+    const isLoading = isLoadingApts || isLoadingStats
 
     const handleDelete = async () => {
         if (!deleteId) return
@@ -97,7 +102,8 @@ export default function AppointmentsPage() {
                 title: 'Éxito',
                 description: 'Cita eliminada correctamente',
             })
-            loadData()
+            refetchApts()
+            refetchStats()
         } catch (error: any) {
             toast({
                 title: 'Error',
@@ -120,7 +126,8 @@ export default function AppointmentsPage() {
     }
 
     const handleSuccess = () => {
-        loadData()
+        refetchApts()
+        refetchStats()
         setModalOpen(false)
     }
 
@@ -128,113 +135,120 @@ export default function AppointmentsPage() {
         navigate(`/appointments/${appointmentId}`)
     }
 
-    // Filtrar citas
+    // Filtrar citas localmente (búsqueda)
     const filteredAppointments = useMemo(() => {
+        if (!searchTerm) return appointments;
         return appointments.filter((apt: any) => {
-
-            // Búsqueda
-            const searchMatch = searchTerm === '' ||
-                apt.patient?.firstName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                apt.patient?.lastName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                (apt.healthStaff?.user?.firstName || apt.doctor?.user?.firstName)?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                (apt.healthStaff?.user?.lastName || apt.doctor?.user?.lastName)?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                apt.reason?.toLowerCase().includes(searchTerm.toLowerCase())
-
-            // Filtros
-            const statusMatch = filters.status === 'all' || apt.status === filters.status
-            const staffMatch = filters.staffId === 'all' || apt.staffId === filters.staffId
-
-            // Normalizar prioridad: NORMAL en DB = MEDIUM en UI, tratar null como MEDIUM
-            const rawPriority = apt.priority || 'NORMAL'
-            const aptPriority = (rawPriority === 'NORMAL' ? 'MEDIUM' : rawPriority).toUpperCase()
-            const filterPriority = filters.priority.toUpperCase()
-            const priorityMatch = filterPriority === 'ALL' || aptPriority === filterPriority
-
-            return searchMatch && statusMatch && staffMatch && priorityMatch
+            const searchStr = searchTerm.toLowerCase()
+            return (
+                apt.patient?.firstName?.toLowerCase().includes(searchStr) ||
+                apt.patient?.lastName?.toLowerCase().includes(searchStr) ||
+                apt.patient?.documentNumber?.includes(searchStr) ||
+                (apt.staff?.user?.firstName || apt.doctor?.user?.firstName)?.toLowerCase().includes(searchStr) ||
+                (apt.staff?.user?.lastName || apt.doctor?.user?.lastName)?.toLowerCase().includes(searchStr) ||
+                apt.reason?.toLowerCase().includes(searchStr)
+            )
         })
-    }, [appointments, searchTerm, filters])
+    }, [appointments, searchTerm])
 
-    // Estadísticas en tiempo real
-    const statistics = useMemo(() => {
-        const total = filteredAppointments.length
-        const todayCount = filteredAppointments.filter(apt => isToday(new Date(apt.appointmentDate))).length
-        const confirmedThisWeek = filteredAppointments.filter(apt =>
-            apt.status === 'CONFIRMED' && isThisWeek(new Date(apt.appointmentDate))
-        ).length
-        const completed = appointments.filter(apt => apt.status === 'COMPLETED').length
-        const totalPast = appointments.filter(apt => isPast(new Date(apt.appointmentDate))).length
-        const completionRate = totalPast > 0 ? Math.round((completed / totalPast) * 100) : 0
-
-        return { total, todayCount, confirmedThisWeek, completionRate }
-    }, [filteredAppointments, appointments])
-
-    // Badges inteligentes
-    const getSmartBadge = (apt: any) => {
-        const now = new Date()
-        const aptDate = new Date(apt.appointmentDate)
-        const minutesUntil = differenceInMinutes(aptDate, now)
-
-        if (minutesUntil > 0 && minutesUntil <= 120) {
-            return { label: 'Urgente', color: 'bg-red-100 text-red-700 border-red-300' }
-        }
-        if (apt.priority === 'HIGH') {
-            return { label: 'Prioridad Alta', color: 'bg-orange-100 text-orange-700 border-orange-300' }
-        }
-        return null
+    // Labels I-4 MINSA reales
+    const getAppointmentTypeLabel = (type: string) => {
+        const types: Record<string, string> = {
+            'CONSULTA_MEDICINA_GENERAL': 'Medicina General',
+            'CONSULTA_OBSTETRICIA': 'Obstetricia',
+            'CONTROL_PRENATAL': 'Control Prenatal',
+            'CONSULTA_ODONTOLOGIA': 'Odontología',
+            'CONSULTA_PSICOLOGIA': 'Psicología',
+            'CONSULTA_NUTRICION': 'Nutrición',
+            'CONSULTA_ASISTENCIA_SOCIAL': 'Asistencia Social',
+            'CONTROL_CRED': 'Control CRED',
+            'VACUNACION': 'Vacunación',
+            'LABORATORIO': 'Laboratorio',
+            'TRIAJE': 'Triaje',
+            'TELEMEDICINA': 'Telemedicina',
+            'VISITA_DOMICILIARIA': 'Visita Domiciliaria'
+        };
+        return types[type] || type
     }
 
-    // Acciones rápidas
-    const handleQuickAction = async (id: string, newStatus: string) => {
-        try {
-            await appointmentsAPI.updateStatus(id, newStatus)
-            toast({ title: 'Éxito', description: `Cita actualizada a ${newStatus}` })
-            loadData()
-        } catch (error: any) {
-            toast({ title: 'Error', description: 'No se pudo actualizar la cita', variant: 'destructive' })
+    const getFinanciadorLabel = (code: string) => {
+        const labels: Record<string, string> = {
+            '01': 'Pagante',
+            '02': 'SIS',
+            '03': 'EsSalud',
+            '04': 'SOAT',
+            '05': 'Sanidad FAP',
+            '06': 'Sanidad Naval',
+            '07': 'Sanidad EP',
+            '08': 'Sanidad PNP',
+            '09': 'Otros'
         }
+        return labels[code] || code
+    }
+
+    const getUpssLabel = (upss: string) => {
+        const labels: Record<string, string> = {
+            'CONS_EXT': 'Consulta Externa',
+            'CONSULTA_EXTERNA': 'Consulta Externa',
+            'FARMACIA': 'Farmacia',
+            'PAT_CLINICA': 'Patología Clínica',
+            'PATOLOGIA_CLINICA': 'Patología Clínica',
+            'INMUNIZACIONES': 'Inmunizaciones'
+        }
+        return labels[upss] || upss
     }
 
     // Exportar a Excel
     const exportToExcel = () => {
-        const data = filteredAppointments.map(apt => ({
+        const data = filteredAppointments.map((apt: any) => ({
             Paciente: apt.patient ? `${apt.patient.firstName} ${apt.patient.lastName}` : 'Desconocido',
             Personal: apt.staff ? `${apt.staff.user?.firstName} ${apt.staff.user?.lastName}` : 'Desconocido',
             Fecha: apt.appointmentDate ? format(new Date(apt.appointmentDate), 'dd/MM/yyyy HH:mm') : 'N/A',
             Estado: apt.status,
-            Motivo: apt.reason || 'Consulta General',
-            Prioridad: apt.priority || 'MEDIUM'
+            UPSS: getUpssLabel(apt.upss),
+            Tipo: getAppointmentTypeLabel(apt.type),
+            Financiador: getFinanciadorLabel(apt.financiador),
+            Condicion: apt.patientCondition || 'N/A'
         }))
 
         const ws = XLSX.utils.json_to_sheet(data)
         const wb = XLSX.utils.book_new()
         XLSX.utils.book_append_sheet(wb, ws, 'Citas')
-        XLSX.writeFile(wb, `Citas_${format(new Date(), 'yyyy-MM-dd')}.xlsx`)
-        toast({ title: 'Exportado', description: 'Archivo Excel descargado' })
+        XLSX.writeFile(wb, `Citas_${config?.hospitalName || 'CS_Jorge_Chavez'}_${format(new Date(), 'yyyy-MM-dd')}.xlsx`)
     }
 
     // Exportar a PDF
     const exportToPDF = () => {
-        const doc = new jsPDF()
-        doc.text('Reporte de Citas - EdiCarex', 14, 15)
-        doc.setFontSize(10)
-        doc.text(`Generado: ${format(new Date(), 'dd/MM/yyyy HH:mm')}`, 14, 22)
+        const doc = new jsPDF('l', 'mm', 'a4')
+        const hospitalName = config?.hospitalName || 'Centro de Salud Jorge Chávez'
+        const ipressCode = (config as any)?.ipressCode || '00003308'
 
-        const tableData = filteredAppointments.map(apt => [
+        doc.setFontSize(14)
+        doc.text(`Reporte de Citas - ${hospitalName}`, 14, 15)
+        doc.setFontSize(10)
+        doc.text(`IPRESS: ${ipressCode} | Ubicación: ${config?.address || 'Juliaca, Puno'}`, 14, 22)
+        doc.text(`Generado: ${format(new Date(), 'dd/MM/yyyy HH:mm')}`, 14, 28)
+
+        const tableData = filteredAppointments.map((apt: any) => [
             apt.patient ? `${apt.patient.firstName} ${apt.patient.lastName}` : 'Desconocido',
             apt.staff ? `${apt.staff.user?.firstName} ${apt.staff.user?.lastName}` : 'Desconocido',
             apt.appointmentDate ? format(new Date(apt.appointmentDate), 'dd/MM/yyyy HH:mm') : 'N/A',
-            apt.status,
-            apt.reason || 'Consulta General'
+            getUpssLabel(apt.upss),
+            getAppointmentTypeLabel(apt.type),
+            getFinanciadorLabel(apt.financiador),
+            apt.patientCondition || 'N/A',
+            apt.status === 'COMPLETED' ? (apt.hisLinked ? 'REG. HIS' : 'PEND. HIS') : apt.status
         ])
 
         autoTable(doc, {
-            startY: 28,
-            head: [['Paciente', 'Personal', 'Fecha', 'Estado', 'Motivo']],
+            startY: 34,
+            head: [['Paciente', 'Personal', 'Fecha/Hora', 'UPSS', 'Atención', 'Financ.', 'Cond.', 'Estado']],
             body: tableData,
+            theme: 'grid',
+            headStyles: { fillColor: [43, 108, 176] }
         })
 
-        doc.save(`Citas_${format(new Date(), 'yyyy-MM-dd')}.pdf`)
-        toast({ title: 'Exportado', description: 'Archivo PDF descargado' })
+        doc.save(`Reporte_Citas_${format(new Date(), 'yyyy-MM-dd')}.pdf`)
     }
 
     const getStatusBadge = (status: string) => {
@@ -245,44 +259,32 @@ export default function AppointmentsPage() {
             CANCELLED: 'bg-red-100 text-red-800',
             NO_SHOW: 'bg-orange-100 text-orange-800',
         }
-        return colors[status] || colors.SCHEDULED
+        return colors[status] || 'bg-gray-100 text-gray-800'
     }
 
-    const getPriorityBadge = (priority: string) => {
-        const colors: Record<string, string> = {
-            HIGH: 'bg-red-100 text-red-800',
-            MEDIUM: 'bg-yellow-100 text-yellow-800',
-            NORMAL: 'bg-yellow-100 text-yellow-800',
-            LOW: 'bg-blue-100 text-blue-800',
+    const getQuickAction = async (id: string, newStatus: string) => {
+        try {
+            await appointmentsAPI.updateStatus(id, newStatus)
+            toast({ title: 'Éxito', description: 'Cita actualizada' })
+            refetchApts()
+            refetchStats()
+        } catch (error) {
+            toast({ title: 'Error', variant: 'destructive' })
         }
-        return colors[priority] || colors.MEDIUM
     }
 
-    const getAppointmentTypeLabel = (type: string) => {
-        const types: Record<string, string> = {
-            'CHECKUP': 'Chequeo General',
-            'FOLLOW_UP': 'Seguimiento',
-            'EMERGENCY': 'Emergencia',
-            'CONSULTATION': 'Consulta Médica',
-            'SURGERY': 'Cirugía',
-            'ROUTINE': 'Rutina',
-            'TELEMEDICINE': 'Telemedicina',
-            'THERAPY': 'Terapia / Rehabilitación',
-            'PROCEDURE': 'Procedimiento Especial',
-            'LABORATORY': 'Laboratorio / Examen',
-            'IMAGING': 'Imagenología (Rayos X, etc.)',
-            'DENTISTRY': 'Odontología',
-            'NUTRITION': 'Nutrición',
-            'MENTAL_HEALTH': 'Salud Mental',
-            'VACCINATION': 'Vacunación'
-        };
-        return types[type] || type
-    }
-
-    if (loading) {
+    if (isLoading && !appointments.length) {
         return (
-            <div className="flex items-center justify-center h-96">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <div className="space-y-6">
+                <div className="flex justify-between">
+                    <Skeleton className="h-10 w-48" />
+                    <Skeleton className="h-10 w-64" />
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    {[1, 2, 3, 4].map(i => <Skeleton key={i} className="h-24 w-full" />)}
+                </div>
+                <Skeleton className="h-16 w-full" />
+                <Skeleton className="h-96 w-full" />
             </div>
         )
     }
@@ -294,7 +296,7 @@ export default function AppointmentsPage() {
                 <div>
                     <h1 className="text-3xl font-bold tracking-tight">Citas Médicas</h1>
                     <p className="text-muted-foreground">
-                        Gestión completa de citas y horarios
+                        {config?.hospitalName || 'Centro de Salud Jorge Chávez'} - Módulo I-4
                     </p>
                 </div>
                 <div className="flex gap-2">
@@ -306,8 +308,12 @@ export default function AppointmentsPage() {
                         <Download className="h-4 w-4 mr-2" />
                         PDF
                     </Button>
+                    <Button variant="outline" onClick={() => navigate('/appointments/daily-schedule')} className="border-primary text-primary hover:bg-primary/10">
+                        <Clock className="h-4 w-4 mr-2" />
+                        Ver Agenda Diaria
+                    </Button>
                     {hasPermission('APPOINTMENTS_CREATE') && (
-                        <Button onClick={handleAdd}>
+                        <Button onClick={handleAdd} className="bg-primary hover:bg-primary/90">
                             <Plus className="h-4 w-4 mr-2" />
                             Nueva Cita
                         </Button>
@@ -317,47 +323,47 @@ export default function AppointmentsPage() {
 
             {/* Statistics Cards */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <Card className="p-4 hover:shadow-md transition-shadow">
+                <Card className="p-4 bg-blue-50/50 border-blue-100 hover:shadow-md transition-shadow">
                     <div className="flex items-center justify-between">
                         <div>
-                            <p className="text-sm font-medium text-muted-foreground">Total de Citas</p>
-                            <h3 className="text-2xl font-bold mt-1">{statistics.total}</h3>
-                        </div>
-                        <div className="h-12 w-12 rounded-full bg-indigo-100 flex items-center justify-center">
-                            <CalendarCheck className="h-6 w-6 text-indigo-600" />
-                        </div>
-                    </div>
-                </Card>
-
-                <Card className="p-4 hover:shadow-md transition-shadow">
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <p className="text-sm font-medium text-muted-foreground">Citas de Hoy</p>
-                            <h3 className="text-2xl font-bold mt-1">{statistics.todayCount}</h3>
+                            <p className="text-sm font-medium text-blue-600">Citas de Hoy</p>
+                            <h3 className="text-2xl font-bold mt-1">{dashboardStats?.today?.total || 0}</h3>
                         </div>
                         <div className="h-12 w-12 rounded-full bg-blue-100 flex items-center justify-center">
-                            <Clock className="h-6 w-6 text-blue-600" />
+                            <CalendarCheck className="h-6 w-6 text-blue-600" />
                         </div>
                     </div>
                 </Card>
 
-                <Card className="p-4 hover:shadow-md transition-shadow">
+                <Card className="p-4 bg-orange-50/50 border-orange-100 hover:shadow-md transition-shadow">
                     <div className="flex items-center justify-between">
                         <div>
-                            <p className="text-sm font-medium text-muted-foreground">Confirmadas (Semana)</p>
-                            <h3 className="text-2xl font-bold mt-1">{statistics.confirmedThisWeek}</h3>
+                            <p className="text-sm font-medium text-orange-600">Pendientes registro HIS</p>
+                            <h3 className="text-2xl font-bold mt-1 text-orange-700">{dashboardStats?.month?.pendingHis || 0}</h3>
+                        </div>
+                        <div className="h-12 w-12 rounded-full bg-orange-100 flex items-center justify-center">
+                            <FileSearch className="h-6 w-6 text-orange-600" />
+                        </div>
+                    </div>
+                </Card>
+
+                <Card className="p-4 bg-green-50/50 border-green-100 hover:shadow-md transition-shadow">
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <p className="text-sm font-medium text-green-600">Nuevos Pacientes (Mes)</p>
+                            <h3 className="text-2xl font-bold mt-1">{dashboardStats?.month?.newPatients || 0}</h3>
                         </div>
                         <div className="h-12 w-12 rounded-full bg-green-100 flex items-center justify-center">
-                            <CheckCircle className="h-6 w-6 text-green-600" />
+                            <UserPlus className="h-6 w-6 text-green-600" />
                         </div>
                     </div>
                 </Card>
 
-                <Card className="p-4 hover:shadow-md transition-shadow">
+                <Card className="p-4 bg-purple-50/50 border-purple-100 hover:shadow-md transition-shadow">
                     <div className="flex items-center justify-between">
                         <div>
-                            <p className="text-sm font-medium text-muted-foreground">Tasa de Completado</p>
-                            <h3 className="text-2xl font-bold mt-1">{statistics.completionRate}%</h3>
+                            <p className="text-sm font-medium text-purple-600">Cumplimiento (Mes)</p>
+                            <h3 className="text-2xl font-bold mt-1">{dashboardStats?.month?.completionRate || 0}%</h3>
                         </div>
                         <div className="h-12 w-12 rounded-full bg-purple-100 flex items-center justify-center">
                             <TrendingUp className="h-6 w-6 text-purple-600" />
@@ -369,225 +375,196 @@ export default function AppointmentsPage() {
             {/* Search and Filters */}
             <Card className="p-4">
                 <div className="flex flex-col md:flex-row gap-4">
-                    {/* Búsqueda */}
                     <div className="flex-1">
                         <div className="relative">
                             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                             <Input
-                                placeholder="Buscar por paciente, personal, o motivo..."
+                                placeholder="Buscar por paciente, DNI, personal o motivo..."
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
                                 className="pl-10"
                             />
                         </div>
                     </div>
-
-                    {/* Botones */}
-                    <div className="flex gap-2">
-                        <Button variant="outline" size="sm" onClick={() => setShowFilters(!showFilters)}>
-                            <Filter className="h-4 w-4 mr-2" />
-                            Filtros
-                        </Button>
-                    </div>
+                    <Button variant="outline" size="sm" onClick={() => setShowFilters(!showFilters)} className={showFilters ? "bg-accent" : ""}>
+                        <Filter className="h-4 w-4 mr-2" />
+                        {showFilters ? 'Cerrar Filtros' : 'Filtros Avanzados'}
+                    </Button>
                 </div>
 
-                {/* Filtros avanzados */}
                 {showFilters && (
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4 pt-4 border-t">
+                    <div className="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-6 gap-3 mt-4 pt-4 border-t animate-in fade-in slide-in-from-top-2">
+                        <Select value={filters.appointmentType} onValueChange={(v) => setFilters({ ...filters, appointmentType: v })}>
+                            <SelectTrigger><SelectValue placeholder="Tipo Atención" /></SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">Todas las Atenciones</SelectItem>
+                                <SelectItem value="CONSULTA_MEDICINA_GENERAL">Medicina General</SelectItem>
+                                <SelectItem value="CONSULTA_OBSTETRICIA">Obstetricia</SelectItem>
+                                <SelectItem value="CONTROL_CRED">CRED</SelectItem>
+                                <SelectItem value="VACUNACION">Vacunación</SelectItem>
+                                <SelectItem value="TELEMEDICINA">Telemedicina</SelectItem>
+                            </SelectContent>
+                        </Select>
+
                         <Select value={filters.status} onValueChange={(v) => setFilters({ ...filters, status: v })}>
-                            <SelectTrigger>
-                                <SelectValue placeholder="Estado" />
-                            </SelectTrigger>
+                            <SelectTrigger><SelectValue placeholder="Estado" /></SelectTrigger>
                             <SelectContent>
                                 <SelectItem value="all">Todos los Estados</SelectItem>
                                 <SelectItem value="SCHEDULED">Programada</SelectItem>
                                 <SelectItem value="CONFIRMED">Confirmada</SelectItem>
                                 <SelectItem value="COMPLETED">Completada</SelectItem>
                                 <SelectItem value="CANCELLED">Cancelada</SelectItem>
-                                <SelectItem value="NO_SHOW">No Asistió</SelectItem>
+                            </SelectContent>
+                        </Select>
+
+                        <Select value={filters.financiador} onValueChange={(v) => setFilters({ ...filters, financiador: v })}>
+                            <SelectTrigger><SelectValue placeholder="Financiador" /></SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">Todo Financiamiento</SelectItem>
+                                <SelectItem value="02">SIS</SelectItem>
+                                <SelectItem value="03">EsSalud</SelectItem>
+                                <SelectItem value="01">Pagante</SelectItem>
+                                <SelectItem value="09">Otros</SelectItem>
+                            </SelectContent>
+                        </Select>
+
+                        <Select value={filters.patientCondition} onValueChange={(v) => setFilters({ ...filters, patientCondition: v })}>
+                            <SelectTrigger><SelectValue placeholder="Condición" /></SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">Todas Condiciones</SelectItem>
+                                <SelectItem value="NUEVO">Nuevo</SelectItem>
+                                <SelectItem value="CONTINUADOR">Continuador</SelectItem>
+                                <SelectItem value="REINGRESO">Reingreso</SelectItem>
+                            </SelectContent>
+                        </Select>
+
+                        <Select value={filters.upss} onValueChange={(v) => setFilters({ ...filters, upss: v })}>
+                            <SelectTrigger><SelectValue placeholder="UPSS" /></SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">Todas UPSS</SelectItem>
+                                <SelectItem value="CONSULTA_EXTERNA">Consulta Externa</SelectItem>
+                                <SelectItem value="INMUNIZACIONES">Inmunizaciones</SelectItem>
+                                <SelectItem value="PATOLOGIA_CLINICA">Laboratorio</SelectItem>
                             </SelectContent>
                         </Select>
 
                         <Select value={filters.staffId} onValueChange={(v) => setFilters({ ...filters, staffId: v })}>
-                            <SelectTrigger>
-                                <SelectValue placeholder="Personal de Salud" />
-                            </SelectTrigger>
+                            <SelectTrigger><SelectValue placeholder="Profesional" /></SelectTrigger>
                             <SelectContent>
                                 <SelectItem value="all">Todo el Personal</SelectItem>
-                                {staff.map((member: any) => (
-                                    <SelectItem key={member.id} value={member.id}>
-                                        {member.user?.firstName} {member.user?.lastName}
+                                {staff.map((m: any) => (
+                                    <SelectItem key={m.id} value={m.id}>
+                                        {m.user?.firstName} {m.user?.lastName}
                                     </SelectItem>
                                 ))}
-                            </SelectContent>
-                        </Select>
-
-                        <Select value={filters.priority} onValueChange={(v) => setFilters({ ...filters, priority: v })}>
-                            <SelectTrigger>
-                                <SelectValue placeholder="Prioridad" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="all">Todas las Prioridades</SelectItem>
-                                <SelectItem value="HIGH">Alta</SelectItem>
-                                <SelectItem value="MEDIUM">Media</SelectItem>
-                                <SelectItem value="LOW">Baja</SelectItem>
                             </SelectContent>
                         </Select>
                     </div>
                 )}
             </Card>
 
-            {/* Tabs: Calendar / Table */}
+            {/* Tabs */}
             <Tabs value={activeTab} onValueChange={setActiveTab}>
-                <TabsList>
+                <TabsList className="grid w-full grid-cols-2 max-w-[400px]">
                     <TabsTrigger value="calendar">
-                        <CalendarIcon className="h-4 w-4 mr-2" />
-                        Vista Calendario
+                        <CalendarIcon className="h-4 w-4 mr-2" /> Calendario
                     </TabsTrigger>
                     <TabsTrigger value="table">
-                        <TableIcon className="h-4 w-4 mr-2" />
-                        Vista Tabla
+                        <TableIcon className="h-4 w-4 mr-2" /> Tabla
                     </TabsTrigger>
                 </TabsList>
 
-                {/* Calendar View */}
-                <TabsContent value="calendar" className="mt-4">
+                <TabsContent value="calendar" className="mt-4 border rounded-xl p-4 bg-card shadow-sm">
                     <HealthStaffCalendar
                         staffId="all"
                         appointments={filteredAppointments}
-                        onRefresh={loadData}
+                        onRefresh={refetchApts}
                     />
                 </TabsContent>
 
-                {/* Table View */}
                 <TabsContent value="table" className="mt-4">
-                    <Card>
+                    <Card className="overflow-hidden">
                         <Table>
                             <TableHeader>
-                                <TableRow>
-                                    <TableHead>Paciente</TableHead>
-                                    <TableHead>Personal de Salud</TableHead>
-                                    <TableHead>Fecha</TableHead>
-                                    <TableHead>Hora</TableHead>
-                                    <TableHead>Tipo</TableHead>
+                                <TableRow className="bg-muted/50">
+                                    <TableHead>Paciente / Cond.</TableHead>
+                                    <TableHead>Personal</TableHead>
+                                    <TableHead>Fecha / Hora</TableHead>
+                                    <TableHead>Financ. / UPSS</TableHead>
+                                    <TableHead>Tipo Atención</TableHead>
                                     <TableHead>Estado</TableHead>
-                                    <TableHead>Motivo</TableHead>
-                                    <TableHead>Prioridad</TableHead>
                                     <TableHead className="text-right">Acciones</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
                                 {filteredAppointments.length === 0 ? (
                                     <TableRow>
-                                        <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
-                                            No se encontraron citas
+                                        <TableCell colSpan={7} className="text-center py-12 text-muted-foreground">
+                                            No se encontraron citas según los filtros seleccionados
                                         </TableCell>
                                     </TableRow>
                                 ) : (
-                                    filteredAppointments.map((apt: any) => {
-                                        const smartBadge = getSmartBadge(apt)
-                                        return (
-                                            <TableRow key={apt.id} className="hover:bg-accent/50 transition-colors">
-                                                <TableCell>
-                                                    <div className="flex items-center gap-2">
-                                                        <span>{apt.patient ? `${apt.patient.firstName} ${apt.patient.lastName}` : 'Desconocido'}</span>
-                                                        {smartBadge && (
-                                                            <span className={`text-xs px-2 py-0.5 rounded-full font-semibold border ${smartBadge.color}`}>
-                                                                {smartBadge.label}
-                                                            </span>
-                                                        )}
-                                                    </div>
-                                                </TableCell>
-                                                <TableCell>
-                                                    {apt.healthStaff ? `${apt.healthStaff.user?.firstName} ${apt.healthStaff.user?.lastName}` : (apt.staff ? `${apt.staff.user?.firstName} ${apt.staff.user?.lastName}` : (apt.doctor ? `${apt.doctor.user?.firstName} ${apt.doctor.user?.lastName}` : 'Desconocido'))}
-                                                </TableCell>
-                                                <TableCell>
-                                                    {apt.appointmentDate ? format(new Date(apt.appointmentDate), 'dd MMM yyyy', { locale: es }) : 'N/A'}
-                                                </TableCell>
-                                                <TableCell>
-                                                    {apt.appointmentDate ? format(new Date(apt.appointmentDate), 'HH:mm', { locale: es }) : 'N/A'}
-                                                </TableCell>
-                                                <TableCell>
-                                                    <span className="text-xs font-medium text-muted-foreground whitespace-nowrap">
-                                                        {getAppointmentTypeLabel(apt.type)}
+                                    filteredAppointments.map((apt: any) => (
+                                        <TableRow key={apt.id} className="hover:bg-accent/50 transition-colors">
+                                            <TableCell>
+                                                <div className="font-semibold">{apt.patient ? `${apt.patient.firstName} ${apt.patient.lastName}` : 'Desconocido'}</div>
+                                                <div className="text-[10px] text-muted-foreground uppercase flex items-center gap-1">
+                                                    <ShieldCheck className="h-3 w-3" /> {apt.patientCondition || 'CONTINUADOR'}
+                                                </div>
+                                            </TableCell>
+                                            <TableCell>
+                                                <div className="text-sm">{apt.staff?.user ? `${apt.staff.user.firstName} ${apt.staff.user.lastName}` : 'Desconocido'}</div>
+                                                <div className="text-[10px] text-muted-foreground">{apt.staff?.profession || 'Personal C.S.'}</div>
+                                            </TableCell>
+                                            <TableCell>
+                                                <div className="text-sm font-medium">{format(new Date(apt.appointmentDate), 'dd MMM yyyy', { locale: es })}</div>
+                                                <div className="text-xs text-muted-foreground">{format(new Date(apt.appointmentDate), 'HH:mm')}</div>
+                                            </TableCell>
+                                            <TableCell>
+                                                <div className="text-sm font-medium text-blue-700">{getFinanciadorLabel(apt.financiador)}</div>
+                                                <div className="text-[10px] text-muted-foreground truncate max-w-[120px]">{getUpssLabel(apt.upss)}</div>
+                                            </TableCell>
+                                            <TableCell>
+                                                <span className="text-xs font-semibold px-2 py-0.5 rounded border bg-muted/30">
+                                                    {getAppointmentTypeLabel(apt.type)}
+                                                </span>
+                                            </TableCell>
+                                            <TableCell>
+                                                <div className="flex flex-col gap-1">
+                                                    <span className={`px-2 py-1 rounded-full text-[10px] font-bold text-center ${getStatusBadge(apt.status)}`}>
+                                                        {apt.status}
                                                     </span>
-                                                </TableCell>
-                                                <TableCell>
-                                                    <span className={`px-2 py-1 rounded-full text-xs font-semibold ${getStatusBadge(apt.status)}`}>
-                                                        {apt.status === 'SCHEDULED' && 'Programada'}
-                                                        {apt.status === 'CONFIRMED' && 'Confirmada'}
-                                                        {apt.status === 'COMPLETED' && 'Completada'}
-                                                        {apt.status === 'CANCELLED' && 'Cancelada'}
-                                                        {apt.status === 'NO_SHOW' && 'No Asistió'}
-                                                        {!['SCHEDULED', 'CONFIRMED', 'COMPLETED', 'CANCELLED', 'NO_SHOW'].includes(apt.status) && apt.status}
-                                                    </span>
-                                                </TableCell>
-                                                <TableCell>{apt.reason || 'Consulta General'}</TableCell>
-                                                <TableCell>
-                                                    <span className={`px-2 py-1 rounded-full text-xs font-semibold ${getPriorityBadge(apt.priority || 'NORMAL')}`}>
-                                                        {apt.priority === 'HIGH' && 'Alta'}
-                                                        {(apt.priority === 'MEDIUM' || apt.priority === 'NORMAL' || !apt.priority) && 'Media'}
-                                                        {apt.priority === 'LOW' && 'Baja'}
-                                                    </span>
-                                                </TableCell>
-                                                <TableCell className="text-right">
-                                                    <div className="flex justify-end gap-1">
-                                                        {apt.status === 'SCHEDULED' && (
-                                                            <Button
-                                                                variant="ghost"
-                                                                size="sm"
-                                                                onClick={() => handleQuickAction(apt.id, 'CONFIRMED')}
-                                                                className="text-green-600 hover:text-green-700 hover:bg-green-50"
-                                                                title="Confirmar"
-                                                            >
-                                                                <CheckCircle className="h-4 w-4" />
-                                                            </Button>
-                                                        )}
-                                                        {(apt.status === 'SCHEDULED' || apt.status === 'CONFIRMED') && (
-                                                            <Button
-                                                                variant="ghost"
-                                                                size="sm"
-                                                                onClick={() => handleQuickAction(apt.id, 'CANCELLED')}
-                                                                className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                                                                title="Cancelar"
-                                                            >
-                                                                <XCircle className="h-4 w-4" />
-                                                            </Button>
-                                                        )}
-                                                        <Button
-                                                            variant="ghost"
-                                                            size="sm"
-                                                            onClick={() => handleViewDetails(apt.id)}
-                                                            title="Ver Detalles"
-                                                        >
-                                                            <Eye className="h-4 w-4" />
+                                                    {apt.status === 'COMPLETED' && (
+                                                        <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold text-center ${apt.hisLinked ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                                                            {apt.hisLinked ? 'HIS REGISTRADO' : 'PENDIENTE HIS'}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            </TableCell>
+                                            <TableCell className="text-right">
+                                                <div className="flex justify-end gap-1">
+                                                    <Button variant="ghost" size="icon" onClick={() => handleViewDetails(apt.id)} title="Ver Detalles">
+                                                        <Eye className="h-4 w-4" />
+                                                    </Button>
+                                                    {apt.status === 'SCHEDULED' && hasPermission('APPOINTMENTS_EDIT') && (
+                                                        <Button variant="ghost" size="icon" className="text-green-600" onClick={() => getQuickAction(apt.id, 'CONFIRMED')} title="Confirmar">
+                                                            <CheckCircle className="h-4 w-4" />
                                                         </Button>
-                                                        {hasPermission('APPOINTMENTS_EDIT') && (
-                                                            <Button
-                                                                variant="ghost"
-                                                                size="sm"
-                                                                onClick={() => handleEdit(apt)}
-                                                                title="Editar"
-                                                            >
-                                                                <Edit className="h-4 w-4" />
-                                                            </Button>
-                                                        )}
-                                                        {hasPermission('APPOINTMENTS_DELETE') && (
-                                                            <Button
-                                                                variant="ghost"
-                                                                size="sm"
-                                                                onClick={() => setDeleteId(apt.id)}
-                                                                className="text-red-500 hover:text-red-700"
-                                                                title="Eliminar"
-                                                            >
-                                                                <Trash2 className="h-4 w-4" />
-                                                            </Button>
-                                                        )}
-                                                    </div>
-                                                </TableCell>
-                                            </TableRow>
-                                        )
-                                    })
+                                                    )}
+                                                    {['SCHEDULED', 'CONFIRMED'].includes(apt.status) && hasPermission('APPOINTMENTS_EDIT') && (
+                                                        <Button variant="ghost" size="icon" onClick={() => handleEdit(apt)} title="Editar">
+                                                            <Edit className="h-4 w-4" />
+                                                        </Button>
+                                                    )}
+                                                    {hasPermission('APPOINTMENTS_DELETE') && (
+                                                        <Button variant="ghost" size="icon" className="text-red-500" onClick={() => setDeleteId(apt.id)} title="Borrar">
+                                                            <Trash2 className="h-4 w-4" />
+                                                        </Button>
+                                                    )}
+                                                </div>
+                                            </TableCell>
+                                        </TableRow>
+                                    ))
                                 )}
                             </TableBody>
                         </Table>
@@ -595,7 +572,6 @@ export default function AppointmentsPage() {
                 </TabsContent>
             </Tabs>
 
-            {/* Modal */}
             <AppointmentModal
                 open={modalOpen}
                 onOpenChange={setModalOpen}
@@ -603,18 +579,15 @@ export default function AppointmentsPage() {
                 onSuccess={handleSuccess}
             />
 
-            {/* Delete Dialog */}
             <AlertDialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
                 <AlertDialogContent>
                     <AlertDialogHeader>
-                        <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                            Esta acción no se puede deshacer. Esto eliminará permanentemente la cita.
-                        </AlertDialogDescription>
+                        <AlertDialogTitle>¿Eliminar cita médica?</AlertDialogTitle>
+                        <AlertDialogDescription>Esta acción no puede deshacerse. Se registrará la eliminación en la auditoría del sistema.</AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                        <AlertDialogAction onClick={handleDelete}>Eliminar</AlertDialogAction>
+                        <AlertDialogCancel>Volver</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleDelete} className="bg-red-600 hover:bg-red-700">Eliminar permanentemente</AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>

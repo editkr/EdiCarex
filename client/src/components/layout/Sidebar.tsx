@@ -98,6 +98,13 @@ const menuSections: MenuSection[] = [
             },
             {
                 icon: Clock,
+                label: 'Agenda Diaria',
+                path: '/appointments/daily-schedule',
+                roles: ['ADMIN', 'STAFF', 'RECEPTIONIST', 'MANAGEMENT'],
+                permission: 'APPOINTMENTS_VIEW'
+            },
+            {
+                icon: Clock,
                 label: 'Sala de Espera',
                 path: '/waiting-room',
                 roles: ['ADMIN', 'STAFF', 'RECEPTIONIST', 'MANAGEMENT'],

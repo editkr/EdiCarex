@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -9,6 +9,7 @@ import { es } from 'date-fns/locale'
 import { useQuery } from '@tanstack/react-query'
 import { patientsAPI } from '@/services/api'
 import { Loader2 } from 'lucide-react'
+import VaccinationModal from '@/components/modals/VaccinationModal'
 
 interface Vaccination {
     id: string
@@ -24,8 +25,9 @@ interface Vaccination {
 
 export default function PatientVaccinationsPage() {
     const { id } = useParams()
+    const [modalOpen, setModalOpen] = useState(false)
 
-    const { data: vaccinations = [], isLoading: loading } = useQuery({
+    const { data: vaccinations = [], isLoading: loading, refetch } = useQuery({
         queryKey: ['patient-vaccinations', id],
         queryFn: async () => {
             if (!id) return []
@@ -47,7 +49,7 @@ export default function PatientVaccinationsPage() {
                         <p className="text-muted-foreground">Historial de inmunizaciones (ESNI)</p>
                     </div>
                 </div>
-                <Button className="gap-2 bg-blue-600 hover:bg-blue-700">
+                <Button className="gap-2 bg-blue-600 hover:bg-blue-700" onClick={() => setModalOpen(true)}>
                     <Plus className="h-4 w-4" /> Registrar Vacuna
                 </Button>
             </div>
@@ -88,6 +90,15 @@ export default function PatientVaccinationsPage() {
                     </Card>
                 ))}
             </div>
+
+            {id && (
+                <VaccinationModal
+                    open={modalOpen}
+                    onOpenChange={setModalOpen}
+                    patientId={id}
+                    onSuccess={() => refetch()}
+                />
+            )}
         </div>
     )
 }

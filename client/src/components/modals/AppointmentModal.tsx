@@ -1,8 +1,8 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
-import { format, differenceInMinutes } from 'date-fns'
+import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
 import {
     Dialog,
@@ -18,6 +18,7 @@ import {
     FormItem,
     FormLabel,
     FormMessage,
+    FormDescription,
 } from '@/components/ui/form'
 import {
     Select,
@@ -31,25 +32,43 @@ import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { useToast } from '@/components/ui/use-toast'
 import { appointmentsAPI, patientsAPI, healthStaffAPI } from '@/services/api'
-import { Loader2, CalendarIcon } from 'lucide-react'
+import { Loader2, CalendarIcon, Stethoscope, Clock, ShieldCheck, HeartPulse } from 'lucide-react'
 import { Calendar } from '@/components/ui/calendar'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { cn } from '@/lib/utils'
+import { Badge } from '@/components/ui/badge'
+
+const MINSA_TYPES = [
+    { value: 'CONS_MED_GRAL', label: 'Medicina General', duration: 20, upss: 'CONSULTA EXTERNA', color: 'bg-blue-500' },
+    { value: 'CONS_EXT', label: 'Consulta Externa', duration: 20, upss: 'CONSULTA EXTERNA', color: 'bg-slate-500' },
+    { value: 'CONTROL_PRENATAL', label: 'Control Prenatal', duration: 30, upss: 'OBSTETRICIA', color: 'bg-rose-500' },
+    { value: 'CRED', label: 'C.R.E.D.', duration: 40, upss: 'CONSULTA EXTERNA (CRED)', color: 'bg-emerald-500' },
+    { value: 'CONS_ODONTO', label: 'Odontología', duration: 30, upss: 'ODONTOLOGÍA', color: 'bg-orange-500' },
+    { value: 'CONS_PSICO', label: 'Psicología', duration: 45, upss: 'PSICOLOGÍA', color: 'bg-indigo-500' },
+    { value: 'CONS_NUTRI', label: 'Nutrición', duration: 30, upss: 'NUTRICIÓN', color: 'bg-lime-500' },
+]
 
 const appointmentSchema = z.object({
     patientId: z.string().min(1, 'El paciente es requerido'),
-    staffId: z.string().min(1, 'El personal de salud es requerido'),
+    staffId: z.string().min(1, 'El profesional es requerido'),
     appointmentDate: z.date({
         required_error: "La fecha es requerida",
     }),
-    time: z.string().min(1, 'La hora es requerida'),
+    time: z.string().min(1, 'La hora es requerida').refine((val) => {
+        const [hours] = val.split(':').map(Number);
+        return hours >= 8 && hours < 18;
+    }, { message: "El horario permitido es de 08:00 a 18:00" }),
     type: z.string().min(1, 'El tipo es requerido'),
+    upss: z.string().min(1, 'La UPSS es requerida'),
+    consultorio: z.string().min(1, 'El consultorio es requerido'),
+    estimatedDuration: z.number().min(1),
+    financiador: z.string().min(1, 'El financiador es requerido'),
+    patientCondition: z.string().min(1, 'La condición es requerida'),
     reason: z.string().min(1, 'El motivo es requerido'),
-    symptoms: z.string().optional(),
+    chiefComplaint: z.string().optional(),
     notes: z.string().optional(),
     status: z.string().default('SCHEDULED'),
     priority: z.string().default('NORMAL'),
-    duration: z.string().default("60"), // UI helper only, stored as string for Select
 })
 
 type AppointmentFormData = z.infer<typeof appointmentSchema>
@@ -79,14 +98,18 @@ export default function AppointmentModal({
         defaultValues: {
             patientId: '',
             staffId: '',
-            type: 'CHECKUP',
+            type: 'CONS_MED_GRAL',
+            upss: 'CONSULTA EXTERNA',
+            consultorio: 'Consultorio 01',
+            estimatedDuration: 20,
+            financiador: '02',
+            patientCondition: 'CONTINUADOR',
             reason: '',
-            symptoms: '',
+            chiefComplaint: '',
             notes: '',
             status: 'SCHEDULED',
             priority: 'NORMAL',
-            time: '09:00',
-            duration: "60",
+            time: '08:00',
         },
     })
 
@@ -97,39 +120,41 @@ export default function AppointmentModal({
                 const date = new Date(appointment.appointmentDate)
                 form.reset({
                     patientId: appointment.patientId,
-                    staffId: appointment.staffId,
+                    staffId: appointment.healthStaffId || appointment.doctorId,
                     appointmentDate: date,
                     time: format(date, 'HH:mm'),
-                    type: appointment.type || 'CHECKUP',
+                    type: appointment.type || 'CONS_MED_GRAL',
+                    upss: appointment.upss || 'CONSULTA EXTERNA',
+                    consultorio: appointment.consultorio || 'Consultorio 01',
+                    estimatedDuration: appointment.estimatedDuration || 20,
+                    financiador: appointment.financiador || '02',
+                    patientCondition: appointment.patientCondition || 'CONTINUADOR',
                     reason: appointment.reason || '',
-                    symptoms: appointment.symptoms || '',
+                    chiefComplaint: appointment.chiefComplaint || '',
                     notes: appointment.notes || '',
                     status: appointment.status || 'SCHEDULED',
                     priority: appointment.priority || 'NORMAL',
-                    duration: (() => {
-                        if (!appointment.endTime || !appointment.appointmentDate) return "60"
-                        const diff = differenceInMinutes(new Date(appointment.endTime), new Date(appointment.appointmentDate))
-                        const validOptions = ["15", "30", "45", "60", "90", "120"]
-                        const diffString = String(diff)
-                        return validOptions.includes(diffString) ? diffString : "60"
-                    })(),
                 })
             } else {
                 form.reset({
                     patientId: defaultPatientId || '',
                     staffId: '',
-                    type: 'CHECKUP',
+                    type: 'CONS_MED_GRAL',
+                    upss: 'CONSULTA EXTERNA',
+                    consultorio: 'Consultorio 01',
+                    estimatedDuration: 20,
+                    financiador: '02',
+                    patientCondition: 'CONTINUADOR',
                     reason: '',
-                    symptoms: '',
+                    chiefComplaint: '',
                     notes: '',
                     status: 'SCHEDULED',
                     priority: 'NORMAL',
-                    time: '09:00',
-                    duration: "60",
+                    time: '08:00',
                 })
             }
         }
-    }, [open, appointment, form])
+    }, [open, appointment, form, defaultPatientId])
 
     const fetchResources = async () => {
         try {
@@ -152,45 +177,53 @@ export default function AppointmentModal({
         }
     }
 
+    // Auto-completar UPSS y Duración según tipo
+    const watchType = form.watch('type')
+    useEffect(() => {
+        const meta = MINSA_TYPES.find(t => t.value === watchType)
+        if (meta) {
+            form.setValue('upss', meta.upss)
+            form.setValue('estimatedDuration', meta.duration)
+        }
+    }, [watchType, form])
+
+    // Auto-completar financiador según paciente
+    const watchPatientId = form.watch('patientId')
+    useEffect(() => {
+        const patient = patients.find(p => p.id === watchPatientId)
+        if (patient) {
+            // SIS es 02, ESSALUD 03, PAGANTE 01
+            const provider = patient.insuranceProvider?.toUpperCase()
+            if (provider === 'SIS') form.setValue('financiador', '02')
+            else if (provider === 'ESSALUD') form.setValue('financiador', '03')
+            else form.setValue('financiador', '01')
+        }
+    }, [watchPatientId, patients, form])
+
     const onSubmit = async (data: AppointmentFormData) => {
         try {
-            // Combine date and time
             const DateTime = new Date(data.appointmentDate)
             const [hours, minutes] = data.time.split(':')
-            DateTime.setHours(parseInt(hours), parseInt(minutes))
-
-            // Calculate endTime
-            const durationInMinutes = parseInt(data.duration)
-            const EndDateTime = new Date(DateTime.getTime() + durationInMinutes * 60000)
-
-            const { duration, ...restData } = data // Remove duration from payload
+            DateTime.setHours(parseInt(hours), parseInt(minutes), 0, 0)
 
             const payload = {
-                ...restData,
+                ...data,
                 appointmentDate: DateTime.toISOString(),
-                time: DateTime.toISOString(), // Send full ISO string for backend startTime
-                endTime: EndDateTime.toISOString(),
             }
 
             if (appointment) {
                 await appointmentsAPI.update(appointment.id, payload)
-                toast({
-                    title: 'Éxito',
-                    description: 'Cita actualizada correctamente',
-                })
+                toast({ title: 'Éxito', description: 'Cita actualizada correctamente' })
             } else {
                 await appointmentsAPI.create(payload)
-                toast({
-                    title: 'Éxito',
-                    description: 'Cita programada correctamente',
-                })
+                toast({ title: 'Éxito', description: 'Cita programada correctamente' })
             }
             onSuccess()
             onOpenChange(false)
         } catch (error: any) {
             toast({
-                title: 'Error',
-                description: error.response?.data?.message || 'Algo salió mal',
+                title: 'Error de Validación',
+                description: error.response?.data?.message || 'Verifique el horario y disponibilidad del profesional.',
                 variant: 'destructive',
             })
         }
@@ -198,309 +231,316 @@ export default function AppointmentModal({
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogContent className="max-w-3xl max-h-[95vh] overflow-y-auto border-t-8 border-t-primary">
                 <DialogHeader>
-                    <DialogTitle>{appointment ? 'Editar Cita' : 'Programar Cita'}</DialogTitle>
-                    <DialogDescription>
-                        {appointment
-                            ? 'Actualizar detalles de la cita.'
-                            : 'Crear una nueva cita. El triaje AI analizará los síntomas.'}
-                    </DialogDescription>
+                    <div className="flex items-center gap-3 mb-2">
+                        <div className="bg-primary/10 p-2 rounded-xl">
+                            <Stethoscope className="h-6 w-6 text-primary" />
+                        </div>
+                        <div>
+                            <DialogTitle className="text-2xl font-black uppercase tracking-tight">
+                                {appointment ? 'Modificar Registro de Cita' : 'Nueva Programación MINSA'}
+                            </DialogTitle>
+                            <DialogDescription className="font-medium text-slate-500">
+                                Establecimiento: Centro de Salud Jorge Chávez (I-4)
+                            </DialogDescription>
+                        </div>
+                    </div>
                 </DialogHeader>
 
                 <Form {...form}>
-                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 pt-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-5">
 
-                            <FormField
-                                control={form.control}
-                                name="patientId"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Paciente {appointment && '(No editable)'}</FormLabel>
-                                        <Select
-                                            onValueChange={field.onChange}
-                                            defaultValue={field.value}
-                                            disabled={!!appointment}
-                                        >
-                                            <FormControl>
-                                                <SelectTrigger className="h-11">
-                                                    <SelectValue placeholder="Seleccionar paciente" />
-                                                </SelectTrigger>
-                                            </FormControl>
-                                            <SelectContent>
-                                                {patients.map((patient) => (
-                                                    <SelectItem key={patient.id} value={patient.id}>
-                                                        {patient.firstName} {patient.lastName}
-                                                    </SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
+                            {/* Sección Paciente y Profesional */}
+                            <div className="space-y-5">
+                                <h3 className="text-xs font-black uppercase tracking-widest text-primary flex items-center gap-2">
+                                    <ShieldCheck className="h-4 w-4" /> Datos de Atención
+                                </h3>
 
-                            <FormField
-                                control={form.control}
-                                name="staffId"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Personal de Salud</FormLabel>
-                                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                            <FormControl>
-                                                <SelectTrigger className="h-11">
-                                                    <SelectValue placeholder="Seleccionar personal" />
-                                                </SelectTrigger>
-                                            </FormControl>
-                                            <SelectContent>
-                                                {staff.map((doc: any) => (
-                                                    <SelectItem key={doc.id} value={doc.id}>
-                                                        {doc.user?.firstName} {doc.user?.lastName} ({doc.specialization || 'General'})
-                                                    </SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-
-                            <FormField
-                                control={form.control}
-                                name="appointmentDate"
-                                render={({ field }) => (
-                                    <FormItem className="flex flex-col">
-                                        <FormLabel>Fecha</FormLabel>
-                                        <Popover>
-                                            <PopoverTrigger asChild>
+                                <FormField
+                                    control={form.control}
+                                    name="patientId"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel className="font-bold">PACIENTE (DNI/Nombres)</FormLabel>
+                                            <Select onValueChange={field.onChange} defaultValue={field.value} disabled={!!appointment}>
                                                 <FormControl>
-                                                    <Button
-                                                        variant={"outline"}
-                                                        className={cn(
-                                                            "w-full h-11 pl-3 text-left font-normal",
-                                                            !field.value && "text-muted-foreground"
-                                                        )}
-                                                    >
-                                                        {field.value ? (
-                                                            format(field.value, "PPP", { locale: es })
-                                                        ) : (
-                                                            <span>Elegir fecha</span>
-                                                        )}
-                                                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                                                    </Button>
+                                                    <SelectTrigger className="h-12 bg-slate-50 border-slate-200">
+                                                        <SelectValue placeholder="Seleccionar paciente" />
+                                                    </SelectTrigger>
                                                 </FormControl>
-                                            </PopoverTrigger>
-                                            <PopoverContent className="w-auto p-0" align="start">
-                                                <Calendar
-                                                    mode="single"
-                                                    selected={field.value}
-                                                    onSelect={field.onChange}
-                                                    disabled={(date) =>
-                                                        date < new Date()
-                                                    }
-                                                    initialFocus
-                                                />
-                                            </PopoverContent>
-                                        </Popover>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
+                                                <SelectContent>
+                                                    {patients.map((p) => (
+                                                        <SelectItem key={p.id} value={p.id}>
+                                                            {p.documentNumber} - {p.firstName} {p.lastName}
+                                                        </SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
 
-                            <FormField
-                                control={form.control}
-                                name="time"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Hora Inicio</FormLabel>
-                                        <FormControl>
-                                            <Input type="time" className="h-11" {...field} />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
+                                <FormField
+                                    control={form.control}
+                                    name="staffId"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel className="font-bold">PROFESIONAL RESPONSABLE</FormLabel>
+                                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                                <FormControl>
+                                                    <SelectTrigger className="h-12 bg-slate-50 border-slate-200">
+                                                        <SelectValue placeholder="Seleccionar profesional" />
+                                                    </SelectTrigger>
+                                                </FormControl>
+                                                <SelectContent>
+                                                    {staff.map((s: any) => (
+                                                        <SelectItem key={s.id} value={s.id}>
+                                                            {s.user?.firstName} {s.user?.lastName} ({s.profession}) — {s.licenseNumber}
+                                                        </SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
 
-                            <FormField
-                                control={form.control}
-                                name="duration"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Duración</FormLabel>
-                                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <FormField
+                                        control={form.control}
+                                        name="financiador"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel className="font-bold text-[10px] uppercase">Financiador</FormLabel>
+                                                <Select onValueChange={field.onChange} value={field.value}>
+                                                    <FormControl>
+                                                        <SelectTrigger className="h-10 text-xs">
+                                                            <SelectValue />
+                                                        </SelectTrigger>
+                                                    </FormControl>
+                                                    <SelectContent>
+                                                        <SelectItem value="02">SIS (Gratuito)</SelectItem>
+                                                        <SelectItem value="01">S.P. (Pagante)</SelectItem>
+                                                        <SelectItem value="03">ESSALUD</SelectItem>
+                                                    </SelectContent>
+                                                </Select>
+                                            </FormItem>
+                                        )}
+                                    />
+                                    <FormField
+                                        control={form.control}
+                                        name="patientCondition"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel className="font-bold text-[10px] uppercase">Condición</FormLabel>
+                                                <Select onValueChange={field.onChange} value={field.value}>
+                                                    <FormControl>
+                                                        <SelectTrigger className="h-10 text-xs">
+                                                            <SelectValue />
+                                                        </SelectTrigger>
+                                                    </FormControl>
+                                                    <SelectContent>
+                                                        <SelectItem value="NUEVO">Nuevo</SelectItem>
+                                                        <SelectItem value="CONTINUADOR">Continuador</SelectItem>
+                                                        <SelectItem value="REINGRESANTE">Reingresante</SelectItem>
+                                                    </SelectContent>
+                                                </Select>
+                                            </FormItem>
+                                        )}
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Sección Fecha y Modalidad */}
+                            <div className="space-y-5 bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                                <h3 className="text-xs font-black uppercase tracking-widest text-slate-500 flex items-center gap-2">
+                                    <Clock className="h-4 w-4" /> Horario y UPS
+                                </h3>
+
+                                <div className="grid grid-cols-2 gap-4">
+                                    <FormField
+                                        control={form.control}
+                                        name="appointmentDate"
+                                        render={({ field }) => (
+                                            <FormItem className="flex flex-col">
+                                                <FormLabel className="font-bold">FECHA</FormLabel>
+                                                <Popover>
+                                                    <PopoverTrigger asChild>
+                                                        <FormControl>
+                                                            <Button variant="outline" className={cn("h-12 text-left font-bold", !field.value && "text-muted-foreground")}>
+                                                                {field.value ? format(field.value, "dd/MM/yyyy") : <span>Elegir</span>}
+                                                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                                            </Button>
+                                                        </FormControl>
+                                                    </PopoverTrigger>
+                                                    <PopoverContent className="w-auto p-0" align="start">
+                                                        <Calendar mode="single" selected={field.value} onSelect={field.onChange} disabled={(date) => date < new Date() && !appointment} initialFocus />
+                                                    </PopoverContent>
+                                                </Popover>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+
+                                    <FormField
+                                        control={form.control}
+                                        name="time"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel className="font-bold">HORA (08-18h)</FormLabel>
+                                                <FormControl>
+                                                    <Input type="time" className="h-12 font-bold" min="08:00" max="18:00" {...field} />
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                </div>
+
+                                <FormField
+                                    control={form.control}
+                                    name="type"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel className="font-bold">TIPO DE ATENCIÓN HIS</FormLabel>
+                                            <Select onValueChange={field.onChange} value={field.value}>
+                                                <FormControl>
+                                                    <SelectTrigger className="h-12 border-2 border-primary/20">
+                                                        <SelectValue />
+                                                    </SelectTrigger>
+                                                </FormControl>
+                                                <SelectContent>
+                                                    {MINSA_TYPES.map(t => (
+                                                        <SelectItem key={t.value} value={t.value}>
+                                                            <div className="flex items-center gap-2">
+                                                                <div className={cn("h-2 w-2 rounded-full", t.color)} />
+                                                                {t.label}
+                                                            </div>
+                                                        </SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+
+                                <div className="grid grid-cols-2 gap-4">
+                                    <FormField
+                                        control={form.control}
+                                        name="upss"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel className="text-[10px] font-bold uppercase">UPSS ASIGNADA</FormLabel>
+                                                <FormControl>
+                                                    <Input {...field} className="h-9 bg-slate-100 text-[10px] font-bold truncate" disabled />
+                                                </FormControl>
+                                            </FormItem>
+                                        )}
+                                    />
+                                    <FormField
+                                        control={form.control}
+                                        name="consultorio"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel className="text-[10px] font-bold uppercase">CONSULTORIO</FormLabel>
+                                                <Select onValueChange={field.onChange} value={field.value}>
+                                                    <FormControl>
+                                                        <SelectTrigger className="h-9 text-xs">
+                                                            <SelectValue />
+                                                        </SelectTrigger>
+                                                    </FormControl>
+                                                    <SelectContent>
+                                                        {[1, 2, 3, 4, 5, 6].map(n => (
+                                                            <SelectItem key={n} value={`Consultorio 0${n}`}>Consultorio 0{n}</SelectItem>
+                                                        ))}
+                                                    </SelectContent>
+                                                </Select>
+                                            </FormItem>
+                                        )}
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Motivo y Observaciones */}
+                            <div className="md:col-span-2 space-y-4">
+                                <h3 className="text-xs font-black uppercase tracking-widest text-primary flex items-center gap-2">
+                                    <HeartPulse className="h-4 w-4" /> Motivo y Clínica
+                                </h3>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <FormField
+                                        control={form.control}
+                                        name="reason"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel className="font-bold">MOTIVO DE CITA (Resumen)</FormLabel>
+                                                <FormControl>
+                                                    <Input placeholder="Ej. Control de anemia, Fiebre persistente..." className="h-11" {...field} />
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                    <FormField
+                                        control={form.control}
+                                        name="priority"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel className="font-bold">PRIORIDAD</FormLabel>
+                                                <Select onValueChange={field.onChange} value={field.value}>
+                                                    <FormControl>
+                                                        <SelectTrigger className="h-11">
+                                                            <SelectValue />
+                                                        </SelectTrigger>
+                                                    </FormControl>
+                                                    <SelectContent>
+                                                        <SelectItem value="HIGH">🔴 Emergencia / Urgencia</SelectItem>
+                                                        <SelectItem value="NORMAL">🟡 Atención Estándar</SelectItem>
+                                                        <SelectItem value="LOW">🔵 Preventivo / Seguimiento</SelectItem>
+                                                    </SelectContent>
+                                                </Select>
+                                            </FormItem>
+                                        )}
+                                    />
+                                </div>
+
+                                <FormField
+                                    control={form.control}
+                                    name="chiefComplaint"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel className="font-bold flex justify-between">
+                                                <span>RELATO / SÍNTOMAS (Para Manual HIS)</span>
+                                                <Badge className="bg-primary/20 text-primary hover:bg-primary/20 text-[8px] uppercase">Sugerido para Triaje IA</Badge>
+                                            </FormLabel>
                                             <FormControl>
-                                                <SelectTrigger className="h-11">
-                                                    <SelectValue placeholder="Seleccionar duración" />
-                                                </SelectTrigger>
+                                                <Textarea placeholder="Describa los síntomas principales encontrados en la admisión..." className="min-h-[80px] resize-none border-dashed" {...field} />
                                             </FormControl>
-                                            <SelectContent>
-                                                <SelectItem value="15">15 min</SelectItem>
-                                                <SelectItem value="30">30 min</SelectItem>
-                                                <SelectItem value="45">45 min</SelectItem>
-                                                <SelectItem value="60">1 hora</SelectItem>
-                                                <SelectItem value="90">1 hora 30 min</SelectItem>
-                                                <SelectItem value="120">2 horas</SelectItem>
-                                            </SelectContent>
-                                        </Select>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-
-                            <FormField
-                                control={form.control}
-                                name="type"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Tipo</FormLabel>
-                                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                            <FormControl>
-                                                <SelectTrigger className="h-11">
-                                                    <SelectValue placeholder="Seleccionar tipo" />
-                                                </SelectTrigger>
-                                            </FormControl>
-                                            <SelectContent>
-                                                <SelectItem value="CONSULTATION">Consulta Médica</SelectItem>
-                                                <SelectItem value="CHECKUP">Chequeo General</SelectItem>
-                                                <SelectItem value="EMERGENCY">Emergencia</SelectItem>
-                                                <SelectItem value="FOLLOW_UP">Seguimiento</SelectItem>
-                                                <SelectItem value="SURGERY">Cirugía</SelectItem>
-                                                <SelectItem value="TELEMEDICINE">Telemedicina</SelectItem>
-                                                <SelectItem value="THERAPY">Terapia / Rehabilitación</SelectItem>
-                                                <SelectItem value="PROCEDURE">Procedimiento Especial</SelectItem>
-                                                <SelectItem value="LABORATORY">Laboratorio / Examen</SelectItem>
-                                                <SelectItem value="ROUTINE">Rutina</SelectItem>
-                                                <SelectItem value="IMAGING">Imagenología (Rayos X, etc.)</SelectItem>
-                                                <SelectItem value="DENTISTRY">Odontología</SelectItem>
-                                                <SelectItem value="NUTRITION">Nutrición</SelectItem>
-                                                <SelectItem value="MENTAL_HEALTH">Salud Mental</SelectItem>
-                                                <SelectItem value="VACCINATION">Vacunación</SelectItem>
-                                            </SelectContent>
-                                        </Select>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-
-                            <FormField
-                                control={form.control}
-                                name="status"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Estado</FormLabel>
-                                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                            <FormControl>
-                                                <SelectTrigger className="h-11">
-                                                    <SelectValue placeholder="Estado" />
-                                                </SelectTrigger>
-                                            </FormControl>
-                                            <SelectContent>
-                                                <SelectItem value="SCHEDULED">Programada</SelectItem>
-                                                <SelectItem value="CONFIRMED">Confirmada</SelectItem>
-                                                <SelectItem value="COMPLETED">Completada</SelectItem>
-                                                <SelectItem value="CANCELLED">Cancelada</SelectItem>
-                                                <SelectItem value="NO_SHOW">No Asistió</SelectItem>
-                                            </SelectContent>
-                                        </Select>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-
-                            <FormField
-                                control={form.control}
-                                name="priority"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Prioridad</FormLabel>
-                                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                            <FormControl>
-                                                <SelectTrigger className="h-11">
-                                                    <SelectValue placeholder="Prioridad" />
-                                                </SelectTrigger>
-                                            </FormControl>
-                                            <SelectContent>
-                                                <SelectItem value="HIGH">🔴 Alta</SelectItem>
-                                                <SelectItem value="NORMAL">🟡 Media</SelectItem>
-                                                <SelectItem value="LOW">🔵 Baja</SelectItem>
-                                            </SelectContent>
-                                        </Select>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-
-                            <FormField
-                                control={form.control}
-                                name="reason"
-                                render={({ field }) => (
-                                    <FormItem className="md:col-span-2">
-                                        <FormLabel>Motivo de la Visita</FormLabel>
-                                        <FormControl>
-                                            <Input placeholder="Ej. Chequeo anual, Dolor de cabeza, etc." {...field} />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-
-                            <FormField
-                                control={form.control}
-                                name="symptoms"
-                                render={({ field }) => (
-                                    <FormItem className="md:col-span-2">
-                                        <FormLabel className="flex items-center gap-2">
-                                            Síntomas
-                                            <span className="text-xs font-normal text-muted-foreground bg-primary/10 px-2 py-0.5 rounded-full text-primary">
-                                                Triaje IA
-                                            </span>
-                                        </FormLabel>
-                                        <FormControl>
-                                            <Textarea
-                                                placeholder="Describa los síntomas detalladamente para que la IA determine el nivel de triaje..."
-                                                className="resize-none min-h-[100px]"
-                                                {...field}
-                                            />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-
-                            <FormField
-                                control={form.control}
-                                name="notes"
-                                render={({ field }) => (
-                                    <FormItem className="md:col-span-2">
-                                        <FormLabel>Notas Adicionales</FormLabel>
-                                        <FormControl>
-                                            <Textarea
-                                                placeholder="Observaciones, instrucciones especiales o recordatorios..."
-                                                className="resize-none"
-                                                {...field}
-                                            />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                            </div>
                         </div>
 
-                        <div className="flex justify-end gap-3">
-                            <Button
-                                type="button"
-                                variant="outline"
-                                onClick={() => onOpenChange(false)}
-                            >
-                                Cancelar
-                            </Button>
-                            <Button type="submit" disabled={form.formState.isSubmitting || loadingResources}>
-                                {form.formState.isSubmitting && (
-                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                )}
-                                {appointment ? 'Guardar Cambios' : 'Programar'}
-                            </Button>
+                        <div className="flex justify-between items-center pt-6 border-t">
+                            <div className="flex items-center gap-2 text-primary font-black text-xs uppercase">
+                                <Clock className="h-4 w-4" />
+                                <span>Duración estimada: {form.watch('estimatedDuration')} MIN.</span>
+                            </div>
+                            <div className="flex gap-3">
+                                <Button type="button" variant="ghost" onClick={() => onOpenChange(false)} className="font-bold text-slate-500">
+                                    DESCARTAR
+                                </Button>
+                                <Button type="submit" className="h-12 px-8 rounded-xl font-black tracking-widest bg-primary hover:bg-primary/90" disabled={form.formState.isSubmitting || loadingResources}>
+                                    {form.formState.isSubmitting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                                    {appointment ? 'ACTUALIZAR CITA' : 'CONFIRMAR PROGRAMACIÓN'}
+                                </Button>
+                            </div>
                         </div>
                     </form>
                 </Form>

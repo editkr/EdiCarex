@@ -114,6 +114,14 @@ export default function HealthStaffProfilePage() {
     const allAppointments = appointmentsData?.data?.data || []
     const staffAppointments = allAppointments.filter((apt: any) => apt.staffId === id)
 
+    // Cargar estadísticas clínicas reales
+    const { data: statsData, isLoading: statsLoading } = useQuery({
+        queryKey: ['staff-stats', id],
+        queryFn: () => healthStaffAPI.getStats(id!),
+        enabled: !!id,
+    })
+    const staffStats = statsData?.data
+
     // Citas de hoy
     const todayAppointments = staffAppointments.filter((apt: any) => {
         try {
@@ -264,7 +272,7 @@ export default function HealthStaffProfilePage() {
                                 </div>
                                 <div className="flex items-center gap-2 text-sm">
                                     <MapPin className="h-4 w-4 text-muted-foreground" />
-                                    <span>Oficina 301, 3er Piso</span>
+                                    <span>{staffMember.user?.address || 'C.S. Jorge Chávez I-4'}</span>
                                 </div>
                             </div>
 
@@ -366,15 +374,19 @@ export default function HealthStaffProfilePage() {
                         <BarChart3 className="h-4 w-4 mr-2" />
                         Estadísticas
                     </TabsTrigger>
-                    <TabsTrigger value="specialties">
+                    <TabsTrigger value="specialties" className="hidden md:flex">
                         <Award className="h-4 w-4 mr-2" />
                         Especialidades
+                    </TabsTrigger>
+                    <TabsTrigger value="rrhh">
+                        <FileText className="h-4 w-4 mr-2" />
+                        RRHH
                     </TabsTrigger>
                     <TabsTrigger value="documents">
                         <FileText className="h-4 w-4 mr-2" />
                         Documentos
                     </TabsTrigger>
-                    <TabsTrigger value="hours">
+                    <TabsTrigger value="hours" className="hidden md:flex">
                         <Clock className="h-4 w-4 mr-2" />
                         Horario
                     </TabsTrigger>
@@ -429,6 +441,97 @@ export default function HealthStaffProfilePage() {
                             </CardContent>
                         </Card>
                     </div>
+                </TabsContent>
+
+                {/* Tab: RRHH (MINSA) */}
+                <TabsContent value="rrhh">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Recursos Humanos y Contratación</CardTitle>
+                            <CardDescription>Datos laborales según normativas Minsa / Ley 23536</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="grid gap-6 md:grid-cols-2">
+                                <div className="space-y-4">
+                                    <div>
+                                        <h3 className="font-semibold text-slate-900 mb-2 border-b pb-1">Modalidad de Contratos</h3>
+                                        <div className="space-y-2">
+                                            <div className="flex justify-between items-center bg-slate-50 p-2 rounded">
+                                                <span className="text-sm text-slate-500">Tipo de Contrato</span>
+                                                <span className="font-medium">{staffMember.contractType || 'No registrado'}</span>
+                                            </div>
+                                            <div className="flex justify-between items-center bg-slate-50 p-2 rounded">
+                                                <span className="text-sm text-slate-500">Inicio Contrato</span>
+                                                <span className="font-medium">{staffMember.contractStartDate ? format(new Date(staffMember.contractStartDate), 'dd/MM/yyyy') : '-'}</span>
+                                            </div>
+                                            <div className="flex justify-between items-center bg-slate-50 p-2 rounded">
+                                                <span className="text-sm text-slate-500">Fin Contrato</span>
+                                                <span className="font-medium">{staffMember.contractEndDate ? format(new Date(staffMember.contractEndDate), 'dd/MM/yyyy') : (staffMember.contractType === 'NOMBRADO' ? 'Indefinido' : '-')}</span>
+                                            </div>
+                                            {staffMember.contractType === 'SERUMS' && (
+                                                <div className="flex justify-between items-center bg-slate-50 p-2 rounded">
+                                                    <span className="text-sm text-slate-500">Ciclo SERUMS</span>
+                                                    <span className="font-medium">{staffMember.serumsCycle || '-'}</span>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <h3 className="font-semibold text-slate-900 mb-2 border-b pb-1">Jornada Laboral</h3>
+                                        <div className="space-y-2">
+                                            <div className="flex justify-between items-center bg-slate-50 p-2 rounded">
+                                                <span className="text-sm text-slate-500">Jornada Semanal</span>
+                                                <span className="font-medium">{staffMember.weeklyHours} horas</span>
+                                            </div>
+                                            <div className="flex justify-between items-center bg-slate-50 p-2 rounded">
+                                                <span className="text-sm text-slate-500">Turno Principal</span>
+                                                <span className="font-medium">{staffMember.workShift || 'NO DEFINIDO'}</span>
+                                            </div>
+                                            <div className="flex justify-between items-center bg-slate-50 p-2 rounded">
+                                                <span className="text-sm text-slate-500">Programa MINSA</span>
+                                                <span className="font-medium">{staffMember.minsaProgram || 'NINGUNO'}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <h3 className="font-semibold text-slate-900 mb-2 border-b pb-1">Colegiatura y Habilitación</h3>
+                                    <div className="space-y-3">
+                                        <div className="bg-slate-50 p-3 rounded-lg border border-slate-100 flex items-start gap-3">
+                                            <Award className="h-5 w-5 text-indigo-500 mt-0.5" />
+                                            <div>
+                                                <p className="text-sm font-medium text-slate-900">Colegio Profesional</p>
+                                                <p className="text-xs text-muted-foreground">{staffMember.collegiateBody || 'NO APLICA'}</p>
+                                            </div>
+                                        </div>
+                                        <div className="bg-slate-50 p-3 rounded-lg border border-slate-100 flex items-start gap-3">
+                                            <FileText className="h-5 w-5 text-blue-500 mt-0.5" />
+                                            <div>
+                                                <p className="text-sm font-medium text-slate-900">Número de Colegiatura</p>
+                                                <p className="text-xs font-mono">{staffMember.licenseNumber || 'NO APLICA'}</p>
+                                            </div>
+                                        </div>
+                                        <div className={`p-3 rounded-lg border flex items-start gap-3 ${staffMember.collegiateStatus === 'HABILITADO' ? 'bg-green-50 border-green-200' :
+                                            staffMember.collegiateStatus === 'NO_APLICA' ? 'bg-slate-50 border-slate-200' : 'bg-red-50 border-red-200'
+                                            }`}>
+                                            {staffMember.collegiateStatus === 'HABILITADO' ? <CheckCircle2 className="h-5 w-5 text-green-600 mt-0.5" /> :
+                                                staffMember.collegiateStatus === 'NO_APLICA' ? <CheckCircle2 className="h-5 w-5 text-slate-400 mt-0.5" /> :
+                                                    <XCircle className="h-5 w-5 text-red-600 mt-0.5" />}
+                                            <div>
+                                                <p className={`text-sm font-medium ${staffMember.collegiateStatus === 'HABILITADO' ? 'text-green-900' :
+                                                    staffMember.collegiateStatus === 'NO_APLICA' ? 'text-slate-700' : 'text-red-900'
+                                                    }`}>Estado: {staffMember.collegiateStatus || 'DESCONOCIDO'}</p>
+                                                {staffMember.collegiateExpiresAt && staffMember.collegiateStatus !== 'NO_APLICA' && (
+                                                    <p className="text-xs text-muted-foreground mt-0.5">Vence: {format(new Date(staffMember.collegiateExpiresAt), 'dd/MM/yyyy')}</p>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
                 </TabsContent>
 
                 {/* Tab: Weekly Schedule */}
@@ -506,26 +609,65 @@ export default function HealthStaffProfilePage() {
                     </Card>
                 </TabsContent>
 
-                {/* Tab: Statistics */}
+                {/* Tab: Statistics - datos reales del backend */}
                 <TabsContent value="statistics">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Estadísticas de Rendimiento</CardTitle>
-                            <CardDescription>Volumen de pacientes en los últimos 6 meses</CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <ResponsiveContainer width="100%" height={300}>
-                                <LineChart data={monthlyStats}>
-                                    <CartesianGrid strokeDasharray="3 3" />
-                                    <XAxis dataKey="month" />
-                                    <YAxis />
-                                    <Tooltip />
-                                    <Legend />
-                                    <Line type="monotone" dataKey="patients" stroke="#10b981" strokeWidth={2} name="Patients" />
-                                </LineChart>
-                            </ResponsiveContainer>
-                        </CardContent>
-                    </Card>
+                    {statsLoading ? (
+                        <div className="flex items-center justify-center py-8"><Loader2 className="h-6 w-6 animate-spin text-slate-400" /></div>
+                    ) : (
+                        <div className="space-y-4">
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                <Card>
+                                    <CardHeader className="pb-1">
+                                        <CardTitle className="text-xs text-slate-500">Atenciones del Mes</CardTitle>
+                                    </CardHeader>
+                                    <CardContent>
+                                        <p className="text-2xl font-bold">{staffStats?.monthEncounters ?? '-'}</p>
+                                    </CardContent>
+                                </Card>
+                                <Card>
+                                    <CardHeader className="pb-1">
+                                        <CardTitle className="text-xs text-slate-500">Registros HIS</CardTitle>
+                                    </CardHeader>
+                                    <CardContent>
+                                        <p className="text-2xl font-bold">{staffStats?.hisRecords ?? '-'}</p>
+                                    </CardContent>
+                                </Card>
+                                <Card>
+                                    <CardHeader className="pb-1">
+                                        <CardTitle className="text-xs text-slate-500">Referidos (mes)</CardTitle>
+                                    </CardHeader>
+                                    <CardContent>
+                                        <p className="text-2xl font-bold">{staffStats?.outReferrals ?? '-'}</p>
+                                    </CardContent>
+                                </Card>
+                                <Card>
+                                    <CardHeader className="pb-1">
+                                        <CardTitle className="text-xs text-slate-500">Tasa Asistencia</CardTitle>
+                                    </CardHeader>
+                                    <CardContent>
+                                        <p className="text-2xl font-bold">{staffStats?.attendanceRate ?? '-'}%</p>
+                                    </CardContent>
+                                </Card>
+                            </div>
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle>Atenciones por semana (mes actual)</CardTitle>
+                                    <CardDescription>Distribución de atenciones en el mes</CardDescription>
+                                </CardHeader>
+                                <CardContent>
+                                    <ResponsiveContainer width="100%" height={250}>
+                                        <BarChart data={staffStats?.weeklyEncounters || []}>
+                                            <CartesianGrid strokeDasharray="3 3" />
+                                            <XAxis dataKey="name" />
+                                            <YAxis />
+                                            <Tooltip />
+                                            <Bar dataKey="atenciones" fill="#3b82f6" name="Atenciones" radius={[4, 4, 0, 0]} />
+                                        </BarChart>
+                                    </ResponsiveContainer>
+                                </CardContent>
+                            </Card>
+                        </div>
+                    )}
                 </TabsContent>
 
                 {/* Tab: Specialties */}

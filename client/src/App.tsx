@@ -30,6 +30,7 @@ const PatientProfilePage = lazy(() => import('@/pages/patients/PatientProfilePag
 const HealthStaffPage = lazy(() => import('@/pages/health-staff/HealthStaffPage'))
 const HealthStaffProfilePage = lazy(() => import('@/pages/health-staff/HealthStaffProfilePage'))
 const AppointmentsPage = lazy(() => import('@/pages/appointments/AppointmentsPage'))
+const DailySchedulePage = lazy(() => import('./pages/appointments/DailySchedulePage'))
 const AppointmentDetailsPage = lazy(() => import('@/pages/appointments/AppointmentDetailsPage'))
 const WaitingRoomPage = lazy(() => import('@/pages/waiting-room/WaitingRoomPage'))
 const UrgenciesPage = lazy(() => import('@/pages/emergency/UrgenciesPage'))
@@ -63,19 +64,20 @@ const EpidemiologyReportNewPage = lazy(() => import('@/pages/epidemiology/Epidem
 const SISValidationPage = lazy(() => import('@/pages/sis/SISValidationPage'))
 
 // Patient Details Sub-pages
-const PatientEncountersPage = lazy(() => import('./pages/patients/PatientEncountersPage'))
-const PatientVaccinationsPage = lazy(() => import('./pages/patients/PatientVaccinationsPage'))
+const PatientEncountersPage = lazy(() => import('@/pages/patients/PatientEncountersPage'))
+const PatientEncounterDetailPage = lazy(() => import('@/pages/patients/PatientEncounterDetailPage'))
+const PatientVaccinationsPage = lazy(() => import('@/pages/patients/PatientVaccinationsPage'))
 
 // Lab Details
-const LabResultDetailsPage = lazy(() => import('./pages/laboratory/LabResultDetailsPage'))
-const LabOrderDetailsPage = lazy(() => import('./pages/laboratory/LabOrderDetailsPage'))
+const LabResultDetailsPage = lazy(() => import('@/pages/laboratory/LabResultDetailsPage'))
+const LabOrderDetailsPage = lazy(() => import('@/pages/laboratory/LabOrderDetailsPage'))
 
 // Observation Room
 const ObservationRoomPage = lazy(() => import('@/pages/observation-room/ObservationRoomPage'))
 const ObservationRoomDetailPage = lazy(() => import('@/pages/observation-room/ObservationRoomDetailPage'))
 
 // Urgency Expansions
-const UrgencyReferralPage = lazy(() => import('./pages/emergency/UrgencyReferralPage'))
+const UrgencyReferralPage = lazy(() => import('@/pages/emergency/UrgencyReferralPage'))
 
 // Portals & Screens
 const PublicScreenPage = lazy(() => import('@/pages/PublicScreenPage'))
@@ -148,6 +150,7 @@ function App() {
                                         <Route index element={<ProtectedRoute requiredPermission="PATIENTS_VIEW"><PatientsPage /></ProtectedRoute>} />
                                         <Route path=":id" element={<ProtectedRoute requiredPermission="PATIENTS_VIEW"><PatientProfilePage /></ProtectedRoute>} />
                                         <Route path=":id/encounters" element={<ProtectedRoute requiredPermission="PATIENTS_VIEW"><PatientEncountersPage /></ProtectedRoute>} />
+                                        <Route path=":id/encounters/:encounterId" element={<ProtectedRoute requiredPermission="PATIENTS_VIEW"><PatientEncounterDetailPage /></ProtectedRoute>} />
                                         <Route path=":id/vaccinations" element={<ProtectedRoute requiredPermission="PATIENTS_VIEW"><PatientVaccinationsPage /></ProtectedRoute>} />
                                     </Route>
 
@@ -158,6 +161,7 @@ function App() {
 
                                     <Route path="/appointments">
                                         <Route index element={<ProtectedRoute requiredPermission="APPOINTMENTS_VIEW"><AppointmentsPage /></ProtectedRoute>} />
+                                        <Route path="daily-schedule" element={<ProtectedRoute requiredPermission="APPOINTMENTS_VIEW"><DailySchedulePage /></ProtectedRoute>} />
                                         <Route path=":id" element={<ProtectedRoute requiredPermission="APPOINTMENTS_VIEW"><AppointmentDetailsPage /></ProtectedRoute>} />
                                     </Route>
 

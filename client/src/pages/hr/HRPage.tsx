@@ -70,14 +70,15 @@ import {
     Sunset,
     Moon
 } from 'lucide-react'
-import { hrAPI } from '@/services/api'
+import { hrAPI, healthStaffAPI } from '@/services/api'
 import { useToast } from '@/components/ui/use-toast'
-import { format, differenceInHours, differenceInMinutes } from 'date-fns'
+import { format, differenceInHours, differenceInMinutes, differenceInDays } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { useOrganization } from '@/contexts/OrganizationContext'
 import { Calendar } from '@/components/ui/calendar'
 import { useNavigate, Link } from 'react-router-dom'
 import { formatCurrency } from '@/utils/financialUtils'
+import { useQuery } from '@tanstack/react-query'
 import {
     BarChart,
     Bar,
@@ -122,6 +123,14 @@ export default function HRPage() {
     const [activeTab, setActiveTab] = useState('staff')
     const [selectedMonth, setSelectedMonth] = useState(new Date())
     const { toast } = useToast()
+
+    // MINSA RRHH Dashboard
+    const { data: rrhhDashboard, isLoading: rrhhLoading } = useQuery({
+        queryKey: ['rrhh-dashboard'],
+        queryFn: () => healthStaffAPI.getAll({ limit: 200 }),
+        // We also have a dedicated endpoint:
+        // queryFn: () => api.get('/health-staff/rrhh/dashboard'),
+    })
 
     // Essential Modal State (Remaining in Dashboard)
     const [selectedEmployee, setSelectedEmployee] = useState<any>(null)
@@ -384,6 +393,10 @@ export default function HRPage() {
             {/* Tabs — default shadcn like Emergencias */}
             <Tabs value={activeTab} onValueChange={setActiveTab}>
                 <TabsList>
+                    <TabsTrigger value="minsa">
+                        <BadgeCheck className="h-4 w-4 mr-2" />
+                        MINSA
+                    </TabsTrigger>
                     <TabsTrigger value="staff">
                         <Users className="h-4 w-4 mr-2" />
                         Colaboradores
@@ -397,6 +410,154 @@ export default function HRPage() {
                         Nómina
                     </TabsTrigger>
                 </TabsList>
+
+                {/* ─── MINSA TAB ─── */}
+                <TabsContent value="minsa" className="mt-4 space-y-4">
+                    {rrhhLoading ? (
+                        <div className="flex items-center justify-center py-8">
+                            <Loader2 className="h-6 w-6 animate-spin" />
+                        </div>
+                    ) : (() => {
+                        const allStaff: any[] = rrhhDashboard?.data?.data || []
+                        const now = new Date()
+                        const thirtyDaysFromNow = new Date(now.getTime() + 30 * 24 * 3600 * 1000)
+
+                        const expiringContracts = allStaff.filter(s =>
+                            s.contractType !== 'NOMBRADO' && s.contractEndDate &&
+                            new Date(s.contractEndDate) <= thirtyDaysFromNow &&
+                            new Date(s.contractEndDate) > now
+                        )
+                        const expiringCollegiate = allStaff.filter(s =>
+                            s.collegiateExpiresAt &&
+                            new Date(s.collegiateExpiresAt) <= thirtyDaysFromNow &&
+                            s.collegiateStatus !== 'NO_APLICA'
+                        )
+
+                        const byProfession = Object.entries(
+                            allStaff.reduce((acc: any, s) => {
+                                const p = s.profession || 'SIN ESPECIFICAR'
+                                acc[p] = (acc[p] || 0) + 1
+                                return acc
+                            }, {})
+                        ).map(([name, value]) => ({ name: name.replace(/_/g, ' '), value }))
+
+                        const byContractType = Object.entries(
+                            allStaff.reduce((acc: any, s) => {
+                                const c = s.contractType || 'NO DEFINIDO'
+                                acc[c] = (acc[c] || 0) + 1
+                                return acc
+                            }, {})
+                        ).map(([name, value]) => ({ name, value }))
+
+                        const COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#3b82f6', '#ec4899']
+
+                        return (
+                            <>
+                                {/* Summary Cards */}
+                                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                    <Card>
+                                        <CardHeader className="pb-1">
+                                            <CardTitle className="text-xs text-slate-500">Personal Activo</CardTitle>
+                                        </CardHeader>
+                                        <CardContent><p className="text-2xl font-bold text-indigo-600">{allStaff.length}</p></CardContent>
+                                    </Card>
+                                    <Card className={expiringContracts.length > 0 ? 'border-orange-300' : ''}>
+                                        <CardHeader className="pb-1">
+                                            <CardTitle className="text-xs text-slate-500">Contratos (30d)</CardTitle>
+                                        </CardHeader>
+                                        <CardContent><p className={`text-2xl font-bold ${expiringContracts.length > 0 ? 'text-orange-600' : 'text-slate-700'}`}>{expiringContracts.length}</p></CardContent>
+                                    </Card>
+                                    <Card className={expiringCollegiate.length > 0 ? 'border-amber-300' : ''}>
+                                        <CardHeader className="pb-1">
+                                            <CardTitle className="text-xs text-slate-500">Habilit. Venc. (30d)</CardTitle>
+                                        </CardHeader>
+                                        <CardContent><p className={`text-2xl font-bold ${expiringCollegiate.length > 0 ? 'text-amber-600' : 'text-slate-700'}`}>{expiringCollegiate.length}</p></CardContent>
+                                    </Card>
+                                    <Card>
+                                        <CardHeader className="pb-1">
+                                            <CardTitle className="text-xs text-slate-500">Tipos Contratos</CardTitle>
+                                        </CardHeader>
+                                        <CardContent><p className="text-2xl font-bold">{byContractType.length}</p></CardContent>
+                                    </Card>
+                                </div>
+
+                                {/* Alerts */}
+                                {(expiringContracts.length > 0 || expiringCollegiate.length > 0) && (
+                                    <Card className="border-orange-200 bg-orange-50">
+                                        <CardHeader>
+                                            <CardTitle className="text-sm flex items-center gap-2 text-orange-700">
+                                                <AlertTriangle className="h-4 w-4" /> Alertas Críticas de RRHH
+                                            </CardTitle>
+                                        </CardHeader>
+                                        <CardContent>
+                                            <div className="space-y-2">
+                                                {expiringContracts.map((s: any) => (
+                                                    <div key={`c-${s.id}`} className="flex items-center justify-between bg-white p-2 rounded border border-orange-100">
+                                                        <div className="flex items-center gap-2">
+                                                            <AlertCircle className="h-4 w-4 text-orange-500" />
+                                                            <span className="text-sm font-medium">{s.user?.firstName} {s.user?.lastName}</span>
+                                                            <span className="text-xs bg-orange-100 text-orange-700 px-1 rounded">{s.contractType}</span>
+                                                        </div>
+                                                        <span className="text-xs text-orange-600">
+                                                            Vence en {differenceInDays(new Date(s.contractEndDate), now)}d
+                                                        </span>
+                                                    </div>
+                                                ))}
+                                                {expiringCollegiate.map((s: any) => (
+                                                    <div key={`col-${s.id}`} className="flex items-center justify-between bg-white p-2 rounded border border-amber-100">
+                                                        <div className="flex items-center gap-2">
+                                                            <ShieldCheck className="h-4 w-4 text-amber-500" />
+                                                            <span className="text-sm font-medium">{s.user?.firstName} {s.user?.lastName}</span>
+                                                            <span className="text-xs bg-amber-100 text-amber-700 px-1 rounded">{s.collegiateBody}</span>
+                                                        </div>
+                                                        <span className="text-xs text-amber-600">
+                                                            Habilitación vence en {differenceInDays(new Date(s.collegiateExpiresAt), now)}d
+                                                        </span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </CardContent>
+                                    </Card>
+                                )}
+
+                                {/* Charts */}
+                                <div className="grid md:grid-cols-2 gap-4">
+                                    <Card>
+                                        <CardHeader>
+                                            <CardTitle className="text-sm">Distribución por Profesión</CardTitle>
+                                        </CardHeader>
+                                        <CardContent>
+                                            <ResponsiveContainer width="100%" height={220}>
+                                                <RePieChart>
+                                                    <Pie data={byProfession} cx="50%" cy="50%" outerRadius={80} dataKey="value" label={({ name }: any) => name.slice(0, 8)}>
+                                                        {byProfession.map((_: any, i: number) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
+                                                    </Pie>
+                                                    <Tooltip />
+                                                </RePieChart>
+                                            </ResponsiveContainer>
+                                        </CardContent>
+                                    </Card>
+                                    <Card>
+                                        <CardHeader>
+                                            <CardTitle className="text-sm">Distribución por Contrato</CardTitle>
+                                        </CardHeader>
+                                        <CardContent>
+                                            <ResponsiveContainer width="100%" height={220}>
+                                                <BarChart data={byContractType} layout="vertical">
+                                                    <CartesianGrid strokeDasharray="3 3" />
+                                                    <XAxis type="number" />
+                                                    <YAxis dataKey="name" width={70} type="category" tick={{ fontSize: 11 }} />
+                                                    <Tooltip />
+                                                    <Bar dataKey="value" fill="#6366f1" radius={[0, 4, 4, 0]} name="Número" />
+                                                </BarChart>
+                                            </ResponsiveContainer>
+                                        </CardContent>
+                                    </Card>
+                                </div>
+                            </>
+                        )
+                    })()}
+                </TabsContent>
 
                 {/* ─── SCHEDULES TAB ─── */}
                 <TabsContent value="schedules" className="mt-4 space-y-4">

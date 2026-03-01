@@ -3,6 +3,17 @@ import { PrismaService } from '../prisma/prisma.service';
 import { CreatePatientDto, UpdatePatientDto, SearchPatientsDto } from './dto';
 import { AuditService } from '../audit/audit.service';
 import { EncryptionService } from '../common/services/encryption.service';
+import { differenceInYears } from 'date-fns';
+
+function calculateLifeStage(dateOfBirth: Date | string): string {
+    const dob = new Date(dateOfBirth);
+    const age = differenceInYears(new Date(), dob);
+    if (age < 12) return 'NINO';
+    if (age < 18) return 'ADOLESCENTE';
+    if (age < 30) return 'JOVEN';
+    if (age < 60) return 'ADULTO';
+    return 'ADULTO_MAYOR';
+}
 
 @Injectable()
 export class PatientsService {
@@ -14,10 +25,18 @@ export class PatientsService {
 
     async create(createPatientDto: CreatePatientDto) {
         try {
+            // Validar DNI si es documento peruano
+            if (createPatientDto.documentType === 'DNI' && createPatientDto.documentNumber?.length !== 8) {
+                throw new BadRequestException('El DNI debe tener exactamente 8 caracteres.');
+            }
+
+            const lifeStage = calculateLifeStage(createPatientDto.dateOfBirth);
+
             // Encrypt sensitive fields
-            const encryptedData = {
+            const encryptedData: any = {
                 ...createPatientDto,
-                documentNumber: this.encryptionService.encrypt(createPatientDto.documentNumber),
+                lifeStage,
+                documentNumber: createPatientDto.documentNumber ? this.encryptionService.encrypt(createPatientDto.documentNumber) : undefined,
                 phone: createPatientDto.phone ? this.encryptionService.encrypt(createPatientDto.phone) : undefined,
                 address: createPatientDto.address ? this.encryptionService.encrypt(createPatientDto.address) : undefined,
                 email: createPatientDto.email ? this.encryptionService.encrypt(createPatientDto.email) : undefined,
@@ -51,7 +70,8 @@ export class PatientsService {
         try {
             const encryptedPatients = patients.map(p => ({
                 ...p,
-                documentNumber: this.encryptionService.encrypt(p.documentNumber),
+                lifeStage: calculateLifeStage(p.dateOfBirth),
+                documentNumber: p.documentNumber ? this.encryptionService.encrypt(p.documentNumber) : undefined,
                 phone: p.phone ? this.encryptionService.encrypt(p.phone) : undefined,
                 address: p.address ? this.encryptionService.encrypt(p.address) : undefined,
                 email: p.email ? this.encryptionService.encrypt(p.email) : undefined,
@@ -85,6 +105,30 @@ export class PatientsService {
 
         if (search?.status) {
             where.status = search.status;
+        }
+
+        if (search?.insuranceType) {
+            where.insuranceProvider = search.insuranceType;
+        }
+
+        if (search?.sisStatus) {
+            where.sisStatus = search.sisStatus;
+        }
+
+        if (search?.lifeStage) {
+            where.lifeStage = search.lifeStage;
+        }
+
+        if (search?.sector) {
+            where.sector = search.sector;
+        }
+
+        if (search?.ubigeo) {
+            where.ubigeo = search.ubigeo;
+        }
+
+        if (search?.isIntercultural !== undefined) {
+            where.isIntercultural = search.isIntercultural === 'true' || search.isIntercultural === true;
         }
 
         const [patients, total] = await Promise.all([
@@ -175,7 +219,16 @@ export class PatientsService {
         const current = await this.findOne(id); // Already decrypted
 
         // Encrypt updated fields
-        const encryptedData = { ...updatePatientDto };
+        const encryptedData: any = { ...updatePatientDto };
+
+        if (updatePatientDto.documentType === 'DNI' && updatePatientDto.documentNumber && updatePatientDto.documentNumber.length !== 8) {
+            throw new BadRequestException('El DNI debe tener exactamente 8 caracteres.');
+        }
+
+        if (updatePatientDto.dateOfBirth) {
+            encryptedData.lifeStage = calculateLifeStage(updatePatientDto.dateOfBirth);
+        }
+
         if (encryptedData.documentNumber) encryptedData.documentNumber = this.encryptionService.encrypt(encryptedData.documentNumber);
         if (encryptedData.phone) encryptedData.phone = this.encryptionService.encrypt(encryptedData.phone);
         if (encryptedData.address) encryptedData.address = this.encryptionService.encrypt(encryptedData.address);
@@ -617,5 +670,46 @@ export class PatientsService {
             orderBy: { visitDate: 'desc' },
             include: { program: true }
         });
+    }
+
+    async getSisHistory(id: string) {
+        await this.findOne(id);
+        return this.prisma.sISValidationLog.findMany({
+            where: { patientId: id },
+            orderBy: { createdAt: 'desc' },
+        });
+    }
+
+    async getDashboardStats() {
+        const patients = await this.prisma.patient.findMany({
+            where: { deletedAt: null },
+            select: {
+                lifeStage: true,
+                insuranceProvider: true,
+                sisStatus: true
+            }
+        });
+
+        const stats = {
+            total: patients.length,
+            byLifeStage: {},
+            byInsurance: {},
+            bySisStatus: {}
+        };
+
+        patients.forEach(p => {
+            const stage = p.lifeStage || 'UNKNOWN';
+            stats.byLifeStage[stage] = (stats.byLifeStage[stage] || 0) + 1;
+
+            const provider = p.insuranceProvider || 'NINGUNO';
+            stats.byInsurance[provider] = (stats.byInsurance[provider] || 0) + 1;
+
+            if (provider.startsWith('SIS')) {
+                const sisState = p.sisStatus || 'NOT_AFFILIATED';
+                stats.bySisStatus[sisState] = (stats.bySisStatus[sisState] || 0) + 1;
+            }
+        });
+
+        return stats;
     }
 }

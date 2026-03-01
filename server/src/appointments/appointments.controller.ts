@@ -23,15 +23,23 @@ export class AppointmentsController {
     ) { }
 
     @Post()
-    @ApiOperation({ summary: 'Create new appointment with AI triage' })
+    @ApiOperation({ summary: 'Crear nueva cita con validación horario I-4 y triaje IA' })
     @RequirePermission('APPOINTMENTS_CREATE')
     @Audit('CREATE_APPOINTMENT', 'appointments')
     create(@Body() createDto: any) {
         return this.appointmentsService.create(createDto);
     }
 
+    // ⚠️ IMPORTANTE: stats/dashboard debe ir ANTES de :id para evitar colisión de rutas
+    @Get('stats/dashboard')
+    @ApiOperation({ summary: 'Dashboard de estadísticas de citas (día, semana, mes, HIS pendiente)' })
+    @RequirePermission('APPOINTMENTS_VIEW')
+    getDashboardStats() {
+        return this.appointmentsService.getDashboardStats();
+    }
+
     @Get()
-    @ApiOperation({ summary: 'Get all appointments with filters' })
+    @ApiOperation({ summary: 'Listar citas con filtros MINSA I-4' })
     @RequirePermission('APPOINTMENTS_VIEW')
     @ApiQuery({ name: 'page', required: false })
     @ApiQuery({ name: 'limit', required: false })
@@ -39,31 +47,46 @@ export class AppointmentsController {
     @ApiQuery({ name: 'staffId', required: false })
     @ApiQuery({ name: 'patientId', required: false })
     @ApiQuery({ name: 'date', required: false })
+    @ApiQuery({ name: 'startDate', required: false })
+    @ApiQuery({ name: 'endDate', required: false })
+    @ApiQuery({ name: 'appointmentType', required: false })
+    @ApiQuery({ name: 'financiador', required: false })
+    @ApiQuery({ name: 'patientCondition', required: false })
+    @ApiQuery({ name: 'upss', required: false })
+    @ApiQuery({ name: 'hisLinked', required: false })
     findAll(@Query() query: any) {
         const { page, limit, ...filters } = query;
         return this.appointmentsService.findAll(
             page ? parseInt(page) : 1,
-            limit ? parseInt(limit) : 20,
+            limit ? parseInt(limit) : 100,
             filters,
         );
     }
 
     @Get(':id/notifications')
-    @ApiOperation({ summary: 'Get appointment notifications' })
+    @ApiOperation({ summary: 'Notificaciones de la cita' })
     @RequirePermission('APPOINTMENTS_VIEW')
     async getNotifications(@Param('id') id: string) {
         return this.notificationsService.findByRelatedEntity('APPOINTMENT', id);
     }
 
+    @Post(':id/generate-his')
+    @ApiOperation({ summary: 'Generar registro HIS automáticamente desde cita completada' })
+    @RequirePermission('APPOINTMENTS_EDIT')
+    @Audit('GENERATE_HIS_FROM_APPOINTMENT', 'appointments')
+    generateHis(@Param('id') id: string) {
+        return this.appointmentsService.generateHis(id);
+    }
+
     @Get(':id')
-    @ApiOperation({ summary: 'Get appointment by ID' })
+    @ApiOperation({ summary: 'Obtener cita por ID' })
     @RequirePermission('APPOINTMENTS_VIEW')
     findOne(@Param('id') id: string) {
         return this.appointmentsService.findOne(id);
     }
 
     @Patch(':id/status')
-    @ApiOperation({ summary: 'Update appointment status' })
+    @ApiOperation({ summary: 'Actualizar estado de la cita' })
     @RequirePermission('APPOINTMENTS_EDIT')
     @Audit('UPDATE_APPOINTMENT_STATUS', 'appointments')
     updateStatus(@Param('id') id: string, @Body() body: { status: string; notes?: string }) {
@@ -71,7 +94,7 @@ export class AppointmentsController {
     }
 
     @Patch(':id')
-    @ApiOperation({ summary: 'Update appointment' })
+    @ApiOperation({ summary: 'Actualizar cita (incluyendo signos vitales, diagnósticos, recetas)' })
     @RequirePermission('APPOINTMENTS_EDIT')
     @Audit('UPDATE_APPOINTMENT', 'appointments')
     update(@Param('id') id: string, @Body() data: any) {
@@ -79,8 +102,8 @@ export class AppointmentsController {
     }
 
     @Delete(':id')
-    @ApiOperation({ summary: 'Delete appointment' })
-    @RequirePermission('APPOINTMENTS_EDIT') // Deleting usually requires Edit or specialized Delete permission
+    @ApiOperation({ summary: 'Eliminar cita (soft delete)' })
+    @RequirePermission('APPOINTMENTS_EDIT')
     @Audit('DELETE_APPOINTMENT', 'appointments')
     remove(@Param('id') id: string) {
         return this.appointmentsService.remove(id);

@@ -25,13 +25,14 @@ import {
     SelectValue,
 } from "@/components/ui/select"
 import { useToast } from '@/components/ui/use-toast'
-import { referralsAPI, patientsAPI } from '@/services/api'
+import { referralsAPI, patientsAPI, healthStaffAPI } from '@/services/api'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { useAuthStore } from '@/stores/authStore'
 import { useOrganization } from '@/contexts/OrganizationContext'
 
 const referralSchema = z.object({
     patientId: z.string().min(1, 'Debe seleccionar un paciente'),
+    referredBy: z.string().optional(),
     destinationCode: z.string().min(1, 'Debe seleccionar un destino'),
     specialty: z.string().min(1, 'Debe seleccionar una especialidad'),
     priority: z.enum(['P1', 'P2', 'P3']),
@@ -64,6 +65,7 @@ export default function ReferralNewPage() {
         resolver: zodResolver(referralSchema),
         defaultValues: {
             patientId: '',
+            referredBy: '',
             destinationCode: 'Hospital Carlos Monge Medrano',
             specialty: '',
             priority: 'P2',
@@ -71,6 +73,13 @@ export default function ReferralNewPage() {
             reason: '',
         }
     })
+
+    // Personal disponible
+    const { data: staffData } = useQuery({
+        queryKey: ['staff-available'],
+        queryFn: () => healthStaffAPI.getAll({ isAvailable: 'true', limit: 100 }),
+    })
+    const availableStaff: any[] = staffData?.data?.data || []
 
     const handleSelectPatient = (patient: any) => {
         setSelectedPatient(patient)
@@ -82,6 +91,7 @@ export default function ReferralNewPage() {
         mutationFn: async (data: ReferralFormData) => {
             const payload = {
                 patientId: data.patientId,
+                referredBy: data.referredBy || undefined,
                 destinationCode: data.destinationCode,
                 specialty: data.specialty,
                 priority: data.priority,
@@ -125,7 +135,7 @@ export default function ReferralNewPage() {
                         <h1 className="text-2xl font-bold">Solicitud de Referencia (Hoja 002)</h1>
                         <p className="text-muted-foreground flex items-center gap-2">
                             <Building2 className="h-4 w-4" />
-                            Origen: {config?.name || 'C.S. Jorge Chávez'}
+                            Origen: {config?.hospitalName || 'C.S. Jorge Chávez'}
                         </p>
                     </div>
                 </div>
@@ -286,8 +296,27 @@ export default function ReferralNewPage() {
                                             <UserPlus className="h-4 w-4" />
                                             MÉDICO QUE REFIERE
                                         </h4>
-                                        <p className="text-sm font-semibold">{user?.firstName} {user?.lastName}</p>
-                                        <p className="text-xs text-blue-600/80">{user?.role?.description || user?.role?.name}</p>
+                                        <FormField
+                                            control={form.control}
+                                            name="referredBy"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormControl>
+                                                        <select
+                                                            {...field}
+                                                            className="w-full bg-white border border-blue-200 rounded-md px-3 py-2 text-sm"
+                                                        >
+                                                            <option value="">{user?.firstName} {user?.lastName} (usuario actual)</option>
+                                                            {availableStaff.map((s: any) => (
+                                                                <option key={s.id} value={s.id}>
+                                                                    {s.user?.firstName} {s.user?.lastName} — {s.profession?.replace(/_/g, ' ')}
+                                                                </option>
+                                                            ))}
+                                                        </select>
+                                                    </FormControl>
+                                                </FormItem>
+                                            )}
+                                        />
                                     </div>
                                 </section>
                             </div>

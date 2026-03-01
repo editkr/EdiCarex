@@ -32,20 +32,24 @@ import { Loader2, Upload, X, User } from 'lucide-react'
 import { patientsAPI } from '@/services/api'
 import { useToast } from '@/components/ui/use-toast'
 
+import { differenceInYears } from 'date-fns'
+
 const patientSchema = z.object({
     firstName: z.string().min(2, 'El nombre debe tener al menos 2 caracteres'),
     lastName: z.string().min(2, 'El apellido debe tener al menos 2 caracteres'),
-    documentNumber: z.string().min(5, 'El documento es requerido'),
+    documentType: z.enum(['DNI', 'CARNET_EXTRANJERIA', 'CODIGO_UNICO']).default('DNI'),
+    documentNumber: z.string().min(8, 'El documento es requerido y debe tener al menos 8 caracteres'),
     photo: z.string().optional(),
     dateOfBirth: z.string().min(1, 'La fecha de nacimiento es requerida'),
     gender: z.enum(['MALE', 'FEMALE', 'OTHER']),
     bloodType: z.string().optional(),
-    phone: z.string().min(10, 'El teléfono debe tener al menos 10 caracteres'),
+    phone: z.string().min(9, 'El teléfono debe tener al menos 9 caracteres'),
     email: z.string().email('Email inválido').optional().or(z.literal('')),
     address: z.string().optional(),
     city: z.string().optional(),
     state: z.string().optional(),
     zipCode: z.string().optional(),
+    ubigeo: z.string().optional().default('211101'), // Juliaca default
     emergencyContact: z.string().optional(),
     emergencyPhone: z.string().optional(),
     insuranceNumber: z.string().optional(),
@@ -54,6 +58,20 @@ const patientSchema = z.object({
     chronicConditions: z.string().optional(),
     notes: z.string().optional(),
     status: z.enum(['ACTIVE', 'INACTIVE', 'DECEASED', 'CRITICAL']),
+
+    // Nuevos campos
+    sector: z.string().optional(),
+    familyFolderId: z.string().optional(),
+    occupation: z.string().optional(),
+    educationLevel: z.string().optional(),
+    maritalStatus: z.string().optional(),
+    ethnicity: z.string().optional(),
+    motherTongue: z.string().optional(),
+    isIntercultural: z.boolean().optional().default(false),
+    sisCode: z.string().optional(),
+    sisModalidad: z.string().optional(),
+    sisStatus: z.string().optional(),
+    sisAssignedIpress: z.string().optional()
 })
 
 type PatientFormData = z.infer<typeof patientSchema>
@@ -74,6 +92,7 @@ export default function PatientModal({ open, onOpenChange, patient, onSuccess }:
         defaultValues: patient ? {
             ...patient,
             dateOfBirth: patient.dateOfBirth ? new Date(patient.dateOfBirth).toISOString().split('T')[0] : '',
+            documentType: patient.documentType || 'DNI',
             documentNumber: patient.documentNumber || '',
             photo: patient.photo || '',
             email: patient.email || '',
@@ -82,6 +101,7 @@ export default function PatientModal({ open, onOpenChange, patient, onSuccess }:
             city: patient.city || '',
             state: patient.state || '',
             zipCode: patient.zipCode || '',
+            ubigeo: patient.ubigeo || '211101',
             emergencyContact: patient.emergencyContact || '',
             emergencyPhone: patient.emergencyPhone || '',
             insuranceNumber: patient.insuranceNumber || '',
@@ -90,9 +110,22 @@ export default function PatientModal({ open, onOpenChange, patient, onSuccess }:
             chronicConditions: patient.chronicConditions || '',
             notes: patient.notes || '',
             status: patient.status || 'ACTIVE',
+            sector: patient.sector || '',
+            familyFolderId: patient.familyFolderId || '',
+            occupation: patient.occupation || '',
+            educationLevel: patient.educationLevel || '',
+            maritalStatus: patient.maritalStatus || '',
+            ethnicity: patient.ethnicity || '',
+            motherTongue: patient.motherTongue || '',
+            isIntercultural: patient.isIntercultural || false,
+            sisCode: patient.sisCode || '',
+            sisModalidad: patient.sisModalidad || '',
+            sisStatus: patient.sisStatus || '',
+            sisAssignedIpress: patient.sisAssignedIpress || '',
         } : {
             firstName: '',
             lastName: '',
+            documentType: 'DNI' as const,
             documentNumber: '',
             photo: '',
             dateOfBirth: '',
@@ -104,6 +137,7 @@ export default function PatientModal({ open, onOpenChange, patient, onSuccess }:
             city: '',
             state: '',
             zipCode: '',
+            ubigeo: '211101',
             emergencyContact: '',
             emergencyPhone: '',
             insuranceNumber: '',
@@ -112,6 +146,18 @@ export default function PatientModal({ open, onOpenChange, patient, onSuccess }:
             chronicConditions: '',
             notes: '',
             status: 'ACTIVE',
+            sector: '',
+            familyFolderId: '',
+            occupation: '',
+            educationLevel: '',
+            maritalStatus: '',
+            ethnicity: '',
+            motherTongue: '',
+            isIntercultural: false,
+            sisCode: '',
+            sisModalidad: '',
+            sisStatus: '',
+            sisAssignedIpress: '',
         },
     })
 
@@ -122,6 +168,7 @@ export default function PatientModal({ open, onOpenChange, patient, onSuccess }:
                     ...patient,
                     firstName: patient.firstName || '',
                     lastName: patient.lastName || '',
+                    documentType: patient.documentType || 'DNI',
                     dateOfBirth: patient.dateOfBirth ? new Date(patient.dateOfBirth).toISOString().split('T')[0] : '',
                     documentNumber: patient.documentNumber || '',
                     photo: patient.photo || '',
@@ -133,6 +180,7 @@ export default function PatientModal({ open, onOpenChange, patient, onSuccess }:
                     city: patient.city || '',
                     state: patient.state || '',
                     zipCode: patient.zipCode || '',
+                    ubigeo: patient.ubigeo || '211101',
                     emergencyContact: patient.emergencyContact || '',
                     emergencyPhone: patient.emergencyPhone || '',
                     insuranceNumber: patient.insuranceNumber || '',
@@ -141,11 +189,24 @@ export default function PatientModal({ open, onOpenChange, patient, onSuccess }:
                     chronicConditions: patient.chronicConditions || '',
                     notes: patient.notes || '',
                     status: patient.status || 'ACTIVE',
+                    sector: patient.sector || '',
+                    familyFolderId: patient.familyFolderId || '',
+                    occupation: patient.occupation || '',
+                    educationLevel: patient.educationLevel || '',
+                    maritalStatus: patient.maritalStatus || '',
+                    ethnicity: patient.ethnicity || '',
+                    motherTongue: patient.motherTongue || '',
+                    isIntercultural: patient.isIntercultural || false,
+                    sisCode: patient.sisCode || '',
+                    sisModalidad: patient.sisModalidad || '',
+                    sisStatus: patient.sisStatus || '',
+                    sisAssignedIpress: patient.sisAssignedIpress || '',
                 })
             } else {
                 form.reset({
                     firstName: '',
                     lastName: '',
+                    documentType: 'DNI',
                     documentNumber: '',
                     photo: '',
                     dateOfBirth: '',
@@ -157,6 +218,7 @@ export default function PatientModal({ open, onOpenChange, patient, onSuccess }:
                     city: '',
                     state: '',
                     zipCode: '',
+                    ubigeo: '211101',
                     emergencyContact: '',
                     emergencyPhone: '',
                     insuranceNumber: '',
@@ -165,6 +227,18 @@ export default function PatientModal({ open, onOpenChange, patient, onSuccess }:
                     chronicConditions: '',
                     notes: '',
                     status: 'ACTIVE',
+                    sector: '',
+                    familyFolderId: '',
+                    occupation: '',
+                    educationLevel: '',
+                    maritalStatus: '',
+                    ethnicity: '',
+                    motherTongue: '',
+                    isIntercultural: false,
+                    sisCode: '',
+                    sisModalidad: '',
+                    sisStatus: '',
+                    sisAssignedIpress: '',
                 })
             }
         }
@@ -196,6 +270,17 @@ export default function PatientModal({ open, onOpenChange, patient, onSuccess }:
                 allergies: data.allergies === '' ? undefined : data.allergies,
                 chronicConditions: data.chronicConditions === '' ? undefined : data.chronicConditions,
                 notes: data.notes === '' ? undefined : data.notes,
+                sector: data.sector === '' ? undefined : data.sector,
+                familyFolderId: data.familyFolderId === '' ? undefined : data.familyFolderId,
+                occupation: data.occupation === '' ? undefined : data.occupation,
+                educationLevel: data.educationLevel === '' ? undefined : data.educationLevel,
+                maritalStatus: data.maritalStatus === '' ? undefined : data.maritalStatus,
+                ethnicity: data.ethnicity === '' ? undefined : data.ethnicity,
+                motherTongue: data.motherTongue === '' ? undefined : data.motherTongue,
+                sisCode: data.sisCode === '' ? undefined : data.sisCode,
+                sisModalidad: data.sisModalidad === '' ? undefined : data.sisModalidad,
+                sisStatus: data.sisStatus === '' ? undefined : data.sisStatus,
+                sisAssignedIpress: data.sisAssignedIpress === '' ? undefined : data.sisAssignedIpress,
             }
 
             if (patient) {
@@ -226,14 +311,40 @@ export default function PatientModal({ open, onOpenChange, patient, onSuccess }:
         }
     }
 
+    const currentDob = form.watch('dateOfBirth');
+
+    const getLifeStageAndAge = () => {
+        if (!currentDob) return null;
+        const dob = new Date(currentDob);
+        const age = differenceInYears(new Date(), dob);
+        let stage = 'Adulto Mayor';
+        let color = 'bg-stone-100 text-stone-800';
+        if (age < 12) { stage = 'Niño'; color = 'bg-sky-100 text-sky-800'; }
+        else if (age < 18) { stage = 'Adolescente'; color = 'bg-emerald-100 text-emerald-800'; }
+        else if (age < 30) { stage = 'Joven'; color = 'bg-indigo-100 text-indigo-800'; }
+        else if (age < 60) { stage = 'Adulto'; color = 'bg-slate-100 text-slate-800'; }
+
+        return { age, stage, color };
+    };
+
+    const dobStats = getLifeStageAndAge();
+
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+            <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                     <DialogTitle>{patient ? 'Editar Paciente' : 'Agregar Nuevo Paciente'}</DialogTitle>
                     <DialogDescription>
-                        {patient ? 'Actualizar información del paciente' : 'Ingresar detalles del paciente para crear un nuevo registro'}
+                        {patient ? 'Actualizar información clínica y administrativa del paciente' : 'Ingresar datos MINSA y demográficos obligatorios.'}
                     </DialogDescription>
+                    {dobStats && (
+                        <div className="absolute top-4 right-10">
+                            <span className="text-sm text-slate-500 mr-2">{dobStats.age} años</span>
+                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${dobStats.color}`}>
+                                {dobStats.stage}
+                            </span>
+                        </div>
+                    )}
                 </DialogHeader>
 
                 <Form {...form}>
@@ -273,12 +384,39 @@ export default function PatientModal({ open, onOpenChange, patient, onSuccess }:
                                 />
                                 <FormField
                                     control={form.control}
+                                    name="documentType"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Tipo de Documento *</FormLabel>
+                                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                                <FormControl>
+                                                    <SelectTrigger>
+                                                        <SelectValue placeholder="DNI" />
+                                                    </SelectTrigger>
+                                                </FormControl>
+                                                <SelectContent>
+                                                    <SelectItem value="DNI">DNI</SelectItem>
+                                                    <SelectItem value="CARNET_EXTRANJERIA">Carnet de Extranjería</SelectItem>
+                                                    <SelectItem value="CODIGO_UNICO">Código Único Institucional (CUI)</SelectItem>
+                                                </SelectContent>
+                                            </Select>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                                <FormField
+                                    control={form.control}
                                     name="documentNumber"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel>DNI / Documento *</FormLabel>
+                                            <FormLabel>Número de Documento *</FormLabel>
                                             <FormControl>
-                                                <Input placeholder="12345678" {...field} />
+                                                <div className="flex gap-2">
+                                                    <Input placeholder="12345678" {...field} />
+                                                    <Button type="button" variant="outline" size="sm" onClick={() => {
+                                                        toast({ title: 'Consulta RENIEC', description: 'Simulando consulta en tiempo real...' });
+                                                    }}>RENIEC</Button>
+                                                </div>
                                             </FormControl>
                                             <FormMessage />
                                         </FormItem>
@@ -448,6 +586,32 @@ export default function PatientModal({ open, onOpenChange, patient, onSuccess }:
                                 />
                                 <FormField
                                     control={form.control}
+                                    name="ubigeo"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Ubigeo (INEI)</FormLabel>
+                                            <FormControl>
+                                                <Input placeholder="Ej. 211101" {...field} />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                                <FormField
+                                    control={form.control}
+                                    name="sector"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Sector / Red</FormLabel>
+                                            <FormControl>
+                                                <Input placeholder="Ej. Santa Adriana" {...field} />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                                <FormField
+                                    control={form.control}
                                     name="emergencyContact"
                                     render={({ field }) => (
                                         <FormItem className="col-span-2">
@@ -525,37 +689,139 @@ export default function PatientModal({ open, onOpenChange, patient, onSuccess }:
                             </div>
                         </div>
 
-                        {/* 4. Seguro Médico */}
+                        {/* 4. Seguro Médico y Financiamiento */}
                         <div className="space-y-4">
                             <h3 className="text-lg font-semibold flex items-center gap-2">
                                 <span className="flex items-center justify-center w-6 h-6 rounded-full bg-primary/10 text-primary text-xs">4</span>
-                                Seguro Médico
+                                Seguro Médico y Financiamiento
                             </h3>
                             <div className="grid grid-cols-2 gap-4">
                                 <FormField
                                     control={form.control}
                                     name="insuranceProvider"
                                     render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Aseguradora</FormLabel>
+                                        <FormItem className="col-span-2">
+                                            <FormLabel>Tipo de Seguro / Financiamiento</FormLabel>
                                             <Select onValueChange={field.onChange} defaultValue={field.value}>
                                                 <FormControl>
                                                     <SelectTrigger>
-                                                        <SelectValue placeholder="Selecciona aseguradora" />
+                                                        <SelectValue placeholder="Selecciona el seguro del paciente" />
                                                     </SelectTrigger>
                                                 </FormControl>
                                                 <SelectContent>
-                                                    <SelectItem value="NONE">Sin Seguro</SelectItem>
-                                                    <SelectItem value="Pacífico Seguros">Pacífico Seguros</SelectItem>
-                                                    <SelectItem value="Rímac Seguros">Rímac Seguros</SelectItem>
-                                                    <SelectItem value="La Positiva">La Positiva</SelectItem>
-                                                    <SelectItem value="Mapfre Perú">Mapfre Perú</SelectItem>
-                                                    <SelectItem value="Sanitas Perú">Sanitas Perú</SelectItem>
-                                                    <SelectItem value="Oncosalud">Oncosalud</SelectItem>
-                                                    <SelectItem value="Vida Seguros">Vida Seguros</SelectItem>
-                                                    <SelectItem value="Internacional de Seguros">Internacional de Seguros</SelectItem>
-                                                    <SelectItem value="EsSalud">EsSalud</SelectItem>
-                                                    <SelectItem value="SIS - Seguro Integral de Salud">SIS - Seguro Integral de Salud</SelectItem>
+                                                    <SelectItem value="NINGUNO">Ninguno (Usuario Libre)</SelectItem>
+                                                    <SelectItem value="SIS_GRATUITO">SIS Gratuito</SelectItem>
+                                                    <SelectItem value="SIS_PARA_TODOS">SIS Para Todos</SelectItem>
+                                                    <SelectItem value="SIS_INDEPENDIENTE">SIS Independiente</SelectItem>
+                                                    <SelectItem value="SIS_EMPRENDEDOR">SIS Emprendedor</SelectItem>
+                                                    <SelectItem value="SIS_MICROEMPRESAS">SIS Microempresas</SelectItem>
+                                                    <SelectItem value="ESSALUD">EsSalud</SelectItem>
+                                                    <SelectItem value="SOAT">SOAT</SelectItem>
+                                                    <SelectItem value="EPS">EPS (Privado Diferenciado)</SelectItem>
+                                                    <SelectItem value="PRIVADO">Seguro Privado</SelectItem>
+                                                </SelectContent>
+                                            </Select>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                                {form.watch('insuranceProvider')?.startsWith('SIS') && (
+                                    <>
+                                        <FormField
+                                            control={form.control}
+                                            name="sisStatus"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>Estado del SIS en Línea</FormLabel>
+                                                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                                        <FormControl>
+                                                            <SelectTrigger>
+                                                                <SelectValue placeholder="Seleccionar" />
+                                                            </SelectTrigger>
+                                                        </FormControl>
+                                                        <SelectContent>
+                                                            <SelectItem value="ACTIVO">Activo</SelectItem>
+                                                            <SelectItem value="INACTIVO">Inactivo</SelectItem>
+                                                            <SelectItem value="SUSPENDIDO">Suspendido</SelectItem>
+                                                            <SelectItem value="CANCELADO">Cancelado</SelectItem>
+                                                        </SelectContent>
+                                                    </Select>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                        <FormField
+                                            control={form.control}
+                                            name="sisCode"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>Código SIS (Contrato)</FormLabel>
+                                                    <FormControl>
+                                                        <div className="flex gap-2">
+                                                            <Input placeholder="Ej. 2-50012345" {...field} />
+                                                            <Button type="button" variant="outline" size="sm" onClick={() => {
+                                                                toast({ title: 'Consulta SIS', description: 'Simulando validación SUSALUD...' });
+                                                            }}>Validar</Button>
+                                                        </div>
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                        <FormField
+                                            control={form.control}
+                                            name="sisAssignedIpress"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>IPRESS Asignada</FormLabel>
+                                                    <FormControl>
+                                                        <Input placeholder="Código Renipress (Ej. 00003308)" {...field} />
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                    </>
+                                )}
+                                {!form.watch('insuranceProvider')?.startsWith('SIS') && (
+                                    <FormField
+                                        control={form.control}
+                                        name="insuranceNumber"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Número de Póliza / Autogenerado</FormLabel>
+                                                <FormControl>
+                                                    <Input placeholder="N° de Póliza o Afiliación" {...field} />
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                )}
+                            </div>
+                        </div>
+
+                        {/* 5. Datos Socioeconómicos */}
+                        <div className="space-y-4">
+                            <h3 className="text-lg font-semibold flex items-center gap-2">
+                                <span className="flex items-center justify-center w-6 h-6 rounded-full bg-primary/10 text-primary text-xs">5</span>
+                                Datos Socioeconómicos y Demográficos
+                            </h3>
+                            <div className="grid grid-cols-2 gap-4">
+                                <FormField
+                                    control={form.control}
+                                    name="educationLevel"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Nivel de Instrucción</FormLabel>
+                                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                                <FormControl><SelectTrigger><SelectValue placeholder="Seleccionar" /></SelectTrigger></FormControl>
+                                                <SelectContent>
+                                                    <SelectItem value="SIN_INSTRUCCION">Sin Instrucción</SelectItem>
+                                                    <SelectItem value="PRIMARIA">Primaria</SelectItem>
+                                                    <SelectItem value="SECUNDARIA">Secundaria</SelectItem>
+                                                    <SelectItem value="SUPERIOR_TECNICA">Superior Técnica</SelectItem>
+                                                    <SelectItem value="SUPERIOR_UNIVERSITARIA">Superior Universitaria</SelectItem>
                                                 </SelectContent>
                                             </Select>
                                             <FormMessage />
@@ -564,12 +830,51 @@ export default function PatientModal({ open, onOpenChange, patient, onSuccess }:
                                 />
                                 <FormField
                                     control={form.control}
-                                    name="insuranceNumber"
+                                    name="motherTongue"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel>Número de Seguro</FormLabel>
+                                            <FormLabel>Lengua Materna</FormLabel>
+                                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                                <FormControl><SelectTrigger><SelectValue placeholder="Seleccionar" /></SelectTrigger></FormControl>
+                                                <SelectContent>
+                                                    <SelectItem value="CASTELLANO">Castellano</SelectItem>
+                                                    <SelectItem value="QUECHUA">Quechua</SelectItem>
+                                                    <SelectItem value="AYMARA">Aymara</SelectItem>
+                                                    <SelectItem value="OTRO">Otro</SelectItem>
+                                                </SelectContent>
+                                            </Select>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                                <FormField
+                                    control={form.control}
+                                    name="maritalStatus"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Estado Civil</FormLabel>
+                                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                                <FormControl><SelectTrigger><SelectValue placeholder="Seleccionar" /></SelectTrigger></FormControl>
+                                                <SelectContent>
+                                                    <SelectItem value="SOLTERO">Soltero(a)</SelectItem>
+                                                    <SelectItem value="CONVIVIENTE">Conviviente</SelectItem>
+                                                    <SelectItem value="CASADO">Casado(a)</SelectItem>
+                                                    <SelectItem value="DIVORCIADO">Divorciado(a)</SelectItem>
+                                                    <SelectItem value="VIUDO">Viudo(a)</SelectItem>
+                                                </SelectContent>
+                                            </Select>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                                <FormField
+                                    control={form.control}
+                                    name="occupation"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Ocupación</FormLabel>
                                             <FormControl>
-                                                <Input placeholder="N° de Póliza o Afiliación" {...field} />
+                                                <Input placeholder="Ej. Estudiante, Agricultor..." {...field} />
                                             </FormControl>
                                             <FormMessage />
                                         </FormItem>
@@ -578,10 +883,10 @@ export default function PatientModal({ open, onOpenChange, patient, onSuccess }:
                             </div>
                         </div>
 
-                        {/* 5. Estado del Paciente */}
+                        {/* 6. Estado del Paciente */}
                         <div className="space-y-4">
                             <h3 className="text-lg font-semibold flex items-center gap-2">
-                                <span className="flex items-center justify-center w-6 h-6 rounded-full bg-primary/10 text-primary text-xs">5</span>
+                                <span className="flex items-center justify-center w-6 h-6 rounded-full bg-primary/10 text-primary text-xs">6</span>
                                 Estado del Paciente
                             </h3>
                             <div className="grid grid-cols-2 gap-4">

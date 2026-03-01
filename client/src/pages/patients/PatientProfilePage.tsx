@@ -36,11 +36,13 @@ import { useToast } from '@/components/ui/use-toast'
 import { usePermissions } from '@/hooks/usePermissions'
 import PatientModal from '@/components/modals/PatientModal'
 import AddDiagnosisModal from '@/components/modals/AddDiagnosisModal'
+import AddEncounterModal from '@/components/modals/AddEncounterModal'
 import AppointmentModal from '@/components/modals/AppointmentModal'
 import EmergencyModal from '@/components/modals/EmergencyModal'
 import { AddNoteModal } from '@/components/modals/AddNoteModal'
 import { AddDocumentModal } from '@/components/modals/AddDocumentModal'
 import LabOrderModal from '@/components/modals/LabOrderModal'
+import AddMinsaProgramModal from '@/components/modals/AddMinsaProgramModal'
 import { useOrganization } from '@/contexts/OrganizationContext'
 
 
@@ -62,12 +64,14 @@ export default function PatientProfilePage() {
     const [activeTab, setActiveTab] = useState('general')
     const [editModalOpen, setEditModalOpen] = useState(false)
     const [addDiagnosisOpen, setAddDiagnosisOpen] = useState(false)
+    const [addEncounterOpen, setAddEncounterOpen] = useState(false)
     const [createAppointmentOpen, setCreateAppointmentOpen] = useState(false)
     const [addLabOrderOpen, setAddLabOrderOpen] = useState(false)
     const [addEmergencyOpen, setAddEmergencyOpen] = useState(false)
     const [showPortalModal, setShowPortalModal] = useState(false)
     const [credentials, setCredentials] = useState<{ email: string, password: string } | null>(null)
     const [addMedicationOpen, setAddMedicationOpen] = useState(false)
+    const [addMinsaProgramOpen, setAddMinsaProgramOpen] = useState(false)
 
     // AI States
     const [summarizing, setSummarizing] = useState(false)
@@ -129,6 +133,34 @@ export default function PatientProfilePage() {
         }
     }
     const [newMedication, setNewMedication] = useState({ name: '', dosage: '', frequency: '', instructions: '', startDate: new Date().toISOString().split('T')[0] })
+
+    const [validatingSIS, setValidatingSIS] = useState(false)
+
+    const handleValidateSIS = async () => {
+        if (!patientData?.data?.documentNumber) {
+            toast({ title: 'Error', description: 'El paciente no tiene un DNI registrado.', variant: 'destructive' })
+            return
+        }
+        try {
+            setValidatingSIS(true)
+            await sisAPI.validate({ documentType: '1', documentNumber: patientData.data.documentNumber })
+
+            toast({
+                title: 'Afiliación SIS verificada correctamente',
+                description: 'Los datos del SIS han sido actualizados exitosamente.'
+            })
+
+            refetch()
+        } catch (error: any) {
+            toast({
+                title: 'Error de validación',
+                description: error.response?.data?.message || 'No se pudo validar el SIS.',
+                variant: 'destructive',
+            })
+        } finally {
+            setValidatingSIS(false)
+        }
+    }
 
     const handleEnablePortal = async (e: any) => {
         e.preventDefault() // prevent dialog from closing automatically
@@ -234,6 +266,17 @@ export default function PatientProfilePage() {
     const emergencies = emergencyData?.data || []
     const labOrders = labData?.data?.data || labData?.data || []
 
+    const getLifeStageBadge = (stage: string) => {
+        switch (stage?.toUpperCase()) {
+            case 'NIÑO': return 'bg-sky-100 text-sky-800 border-sky-200'
+            case 'ADOLESCENTE': return 'bg-emerald-100 text-emerald-800 border-emerald-200'
+            case 'JOVEN': return 'bg-indigo-100 text-indigo-800 border-indigo-200'
+            case 'ADULTO': return 'bg-slate-100 text-slate-800 border-slate-200'
+            case 'ADULTO_MAYOR': return 'bg-stone-100 text-stone-800 border-stone-200'
+            default: return 'bg-gray-100 text-gray-800 border-gray-200'
+        }
+    }
+
 
 
     // Merge medical records and diagnoses for a complete history
@@ -292,8 +335,8 @@ export default function PatientProfilePage() {
                 <body>
                     <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 2px solid #3b82f6; padding-bottom: 10px; margin-bottom: 20px;">
                         <div>
-                            ${config?.logo ? `<img src="${config.logo}" alt="Logo" style="height: 50px;" />` : `<h1 style="margin: 0; color: #1e40af;">${config?.hospitalName || 'EdiCarex'}</h1>`}
-                            <p style="margin: 5px 0 0 0; color: #64748b; font-size: 12px;">${config?.address || ''}</p>
+                            ${config?.logo ? `<img src="${config.logo}" alt="Logo" style="height: 50px;" />` : `<h1 style="margin: 0; color: #1e40af;">Centro de Salud Jorge Chávez | IPRESS 00003308</h1>`}
+                            <p style="margin: 5px 0 0 0; color: #64748b; font-size: 12px;">Jr. Ancash S/N, Juliaca, San Román, Puno</p>
                         </div>
                         <div style="text-align: right;">
                             <h2 style="margin: 0; color: #334155; font-size: 18px;">Expediente Médico Electrónico</h2>
@@ -305,14 +348,15 @@ export default function PatientProfilePage() {
                         <h2>Datos del Paciente</h2>
                         <table>
                             <tr><th>Nombre Completo</th><td>${patient.firstName} ${patient.lastName}</td></tr>
-                            <tr><th>Documento</th><td>${patient.documentId || 'N/A'}</td></tr>
-                            <tr><th>Fecha de Nacimiento</th><td>${patient.dateOfBirth || 'N/A'}</td></tr>
+                            <tr><th>Documento</th><td>${patient.documentId || patient.documentNumber || 'N/A'}</td></tr>
+                            <tr><th>Fecha de Nacimiento</th><td>${patient.dateOfBirth ? format(new Date(patient.dateOfBirth), 'dd/MM/yyyy') : 'N/A'}</td></tr>
                             <tr><th>Edad</th><td>${calculateAge(patient.dateOfBirth)} años</td></tr>
-                            <tr><th>Género</th><td>${patient.gender || 'N/A'}</td></tr>
+                            <tr><th>Género</th><td>${patient.gender === 'FEMALE' ? 'Femenino' : patient.gender === 'MALE' ? 'Masculino' : 'Otro'}</td></tr>
                             <tr><th>Tipo de Sangre</th><td>${patient.bloodType || 'N/A'}</td></tr>
                             <tr><th>Teléfono</th><td>${patient.phone || 'N/A'}</td></tr>
                             <tr><th>Email</th><td>${patient.email || 'N/A'}</td></tr>
                             <tr><th>Dirección</th><td>${patient.address || 'N/A'}</td></tr>
+                            <tr><th>Alergias</th><td>${patient.allergies || 'Ninguna'}</td></tr>
                         </table>
                     </div>
                     <div class="section">
@@ -322,7 +366,7 @@ export default function PatientProfilePage() {
                                 <tr><th>Fecha</th><th>Tipo</th><th>Diagnóstico</th><th>Tratamiento</th></tr>
                                 ${combinedHistory.map((record: any) => `
                                     <tr>
-                                        <td>${record.date ? new Date(record.date).toLocaleDateString() : 'N/A'}</td>
+                                        <td>${record.date ? format(new Date(record.date), 'dd/MM/yyyy') : 'N/A'}</td>
                                         <td>${record.type === 'DIAGNOSIS' ? 'Diagnóstico' : 'Consulta'}</td>
                                         <td>${record.diagnosis || record.diagnosisName || 'N/A'}</td>
                                         <td>${record.treatment || record.notes || 'N/A'}</td>
@@ -346,14 +390,8 @@ export default function PatientProfilePage() {
                             </table>
                         ` : '<p>No hay medicamentos registrados</p>'}
                     </div>
-                    <div class="section">
-                        <h2>Información Adicional</h2>
-                        <p><strong>Alergias:</strong> ${patient.allergies || 'Ninguna registrada'}</p>
-                        <p><strong>Condiciones Crónicas:</strong> ${patient.chronicConditions || 'Ninguna registrada'}</p>
-                    </div>
                     <div style="margin-top: 50px; text-align: center; color: #64748b; font-size: 12px;">
-                        <p>Documento generado el ${new Date().toLocaleString()}</p>
-                        <p>${config?.hospitalName || 'Centro de Salud Jorge Chávez I-4'} - DIRESA PUNO</p>
+                        <p>Generado el ${format(new Date(), 'dd/MM/yyyy HH:mm')} — Centro de Salud Jorge Chávez IPRESS 00003308</p>
                     </div>
                 </body>
                 </html>
@@ -409,6 +447,10 @@ export default function PatientProfilePage() {
                     </div>
                 </div>
                 <div className="flex gap-2">
+                    <Button variant="outline" className="border-green-500 text-green-600 hover:bg-green-50" onClick={handleValidateSIS} disabled={validatingSIS}>
+                        {validatingSIS ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Shield className="h-4 w-4 mr-2" />}
+                        Validar SIS
+                    </Button>
                     <Button variant="outline" onClick={handleDownload}>
                         <Download className="h-4 w-4 mr-2" />
                         Descargar Registros
@@ -521,6 +563,12 @@ export default function PatientProfilePage() {
                                     <p className="font-medium">{patient.gender || 'N/A'}</p>
                                 </div>
                                 <div>
+                                    <p className="text-xs text-muted-foreground">Etapa de Vida</p>
+                                    <Badge variant="outline" className={`mt-1 text-[10px] h-5 px-2 ${getLifeStageBadge(patient.lifeStage)}`}>
+                                        {patient.lifeStage?.replace('_', ' ') || 'No Calculada'}
+                                    </Badge>
+                                </div>
+                                <div>
                                     <p className="text-xs text-muted-foreground">Edad</p>
                                     <p className="font-medium">{calculateAge(patient.dateOfBirth)} años</p>
                                 </div>
@@ -622,8 +670,18 @@ export default function PatientProfilePage() {
                                         <p className="font-medium">{patient.bloodType || 'Desconocido'}</p>
                                     </div>
                                     <div>
+                                        <p className="text-sm text-muted-foreground">Tipo de Documento</p>
+                                        <p className="font-medium">{patient.documentType?.replace('_', ' ') || 'DNI'}</p>
+                                    </div>
+                                    <div>
                                         <p className="text-sm text-muted-foreground">Número de Documento</p>
                                         <p className="font-medium">{patient.documentNumber || 'N/A'}</p>
+                                    </div>
+                                    <div className="col-span-2">
+                                        <p className="text-sm text-muted-foreground">Etapa de Vida MINSA</p>
+                                        <Badge variant="outline" className={`mt-1 text-[10px] h-5 px-2 ${getLifeStageBadge(patient.lifeStage)}`}>
+                                            {patient.lifeStage?.replace('_', ' ') || 'No Calculada'}
+                                        </Badge>
                                     </div>
                                 </div>
                             </CardContent>
@@ -643,8 +701,22 @@ export default function PatientProfilePage() {
                                     <p className="font-medium">{patient.phone || 'Sin teléfono'}</p>
                                 </div>
                                 <div>
-                                    <p className="text-sm text-muted-foreground">Dirección</p>
+                                    <p className="text-sm text-muted-foreground">Dirección/Domicilio</p>
                                     <p className="font-medium">{patient.address || 'Sin dirección'}</p>
+                                </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <p className="text-sm text-muted-foreground">Ubigeo</p>
+                                        <p className="font-medium">{patient.ubigeo || 'No asignado'}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-sm text-muted-foreground">Sector / Barrio</p>
+                                        <p className="font-medium">{patient.sector || 'No asignado'}</p>
+                                    </div>
+                                </div>
+                                <div>
+                                    <p className="text-sm text-muted-foreground">Carpeta Familiar / Nro HC</p>
+                                    <p className="font-medium">{patient.familyFolderId || 'No asignada'}</p>
                                 </div>
                                 <div>
                                     <p className="text-sm text-muted-foreground">Contacto de Emergencia</p>
@@ -659,12 +731,83 @@ export default function PatientProfilePage() {
                             </CardHeader>
                             <CardContent className="space-y-3">
                                 <div>
-                                    <p className="text-sm text-muted-foreground">Proveedor</p>
-                                    <p className="font-medium">{patient.insuranceProvider || 'Ninguno'}</p>
+                                    <p className="text-sm text-muted-foreground">Seguro Principal</p>
+                                    <p className="font-medium flex items-center gap-2">
+                                        {patient.insuranceProvider?.replace(/_/g, ' ') || 'Ninguno'}
+                                        {patient.insuranceProvider?.startsWith('SIS') && (
+                                            patient.sisStatus === 'ACTIVO' || patient.sisStatus === 'ACTIVE' ? (
+                                                <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">ACTIVO</Badge>
+                                            ) : (
+                                                <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">{patient.sisStatus || 'INACTIVO'}</Badge>
+                                            )
+                                        )}
+                                    </p>
                                 </div>
-                                <div>
-                                    <p className="text-sm text-muted-foreground">Número de Póliza</p>
-                                    <p className="font-medium">{patient.insuranceNumber || 'N/A'}</p>
+                                {patient.insuranceProvider?.startsWith('SIS') ? (
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <p className="text-sm text-muted-foreground">Código SIS / Contrato</p>
+                                            <p className="font-medium">{patient.sisCode || 'N/A'}</p>
+                                        </div>
+                                        <div>
+                                            <p className="text-sm text-muted-foreground">Modalidad</p>
+                                            <p className="font-medium">{patient.sisModalidad || 'N/A'}</p>
+                                        </div>
+                                        <div className="col-span-2">
+                                            <p className="text-sm text-muted-foreground">IPRESS Asignada</p>
+                                            <p className="font-medium">{patient.sisAssignedIpress || 'No asignada / En validación'}</p>
+                                        </div>
+                                        <div className="col-span-2">
+                                            <p className="text-sm text-muted-foreground">Última validación SUSALUD</p>
+                                            <p className="font-medium text-xs">
+                                                {patient.sisValidatedAt ? format(new Date(patient.sisValidatedAt), 'PPP p', { locale: es }) : 'Nunca'}
+                                            </p>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div>
+                                        <p className="text-sm text-muted-foreground">Número de Póliza</p>
+                                        <p className="font-medium">{patient.insuranceNumber || 'N/A'}</p>
+                                    </div>
+                                )}
+                            </CardContent>
+                        </Card>
+
+                        <Card className="col-span-full">
+                            <CardHeader>
+                                <CardTitle>Datos Socioeconómicos y Determinantes CCEE</CardTitle>
+                                <CardDescription>Variables para programas sociales y MINSA</CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                    <div>
+                                        <p className="text-sm text-muted-foreground">Nivel Educativo</p>
+                                        <p className="font-medium">{patient.educationLevel?.replace(/_/g, ' ') || 'N/A'}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-sm text-muted-foreground">Ocupación</p>
+                                        <p className="font-medium">{patient.occupation || 'N/A'}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-sm text-muted-foreground">Estado Civil</p>
+                                        <p className="font-medium">{patient.maritalStatus?.replace(/_/g, ' ') || 'N/A'}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-sm text-muted-foreground">Lengua Materna</p>
+                                        <p className="font-medium">{patient.motherTongue?.replace(/_/g, ' ') || 'N/A'}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-sm text-muted-foreground">Etnia</p>
+                                        <p className="font-medium">{patient.ethnicity?.replace(/_/g, ' ') || 'N/A'}</p>
+                                    </div>
+                                    <div className="col-span-2 md:col-span-3">
+                                        <p className="text-sm text-muted-foreground">Enfoque Intercultural</p>
+                                        <p className="font-medium">
+                                            {patient.isIntercultural ? (
+                                                <Badge className="bg-indigo-50 text-indigo-700 hover:bg-indigo-100 shadow-none border border-indigo-200">Aplica Beneficio Intercultural</Badge>
+                                            ) : 'No aplica'}
+                                        </p>
+                                    </div>
                                 </div>
                             </CardContent>
                         </Card>
@@ -751,9 +894,9 @@ export default function PatientProfilePage() {
                                                 Resumen Clínico IA
                                             </Button>
                                         )}
-                                        <Button onClick={() => setAddDiagnosisOpen(true)}>
+                                        <Button onClick={() => setAddEncounterOpen(true)}>
                                             <Plus className="h-4 w-4 mr-2" />
-                                            Agregar Registro Médico
+                                            Crear Encuentro Clínico
                                         </Button>
                                     </div>
                                 )}
@@ -1243,9 +1386,15 @@ export default function PatientProfilePage() {
                 {/* Tab: MINSA Programs */}
                 <TabsContent value="minsa">
                     <Card>
-                        <CardHeader>
-                            <CardTitle>Programas MINSA</CardTitle>
-                            <CardDescription>Participación e inscripción en programas de salud</CardDescription>
+                        <CardHeader className="flex flex-row items-center justify-between">
+                            <div>
+                                <CardTitle>Programas MINSA</CardTitle>
+                                <CardDescription>Participación e inscripción en programas de salud</CardDescription>
+                            </div>
+                            <Button onClick={() => setAddMinsaProgramOpen(true)}>
+                                <Plus className="h-4 w-4 mr-2" />
+                                Inscribir Programa
+                            </Button>
                         </CardHeader>
                         <CardContent>
                             {minsaPrograms.length === 0 ? (
@@ -1255,13 +1404,13 @@ export default function PatientProfilePage() {
                                     {minsaPrograms.map((mp: any) => (
                                         <Card key={mp.id} className="border border-blue-100 bg-blue-50/20">
                                             <CardHeader className="pb-2 flex flex-row items-center justify-between">
-                                                <CardTitle className="text-lg text-blue-800">{mp.program?.name || 'Programa'}</CardTitle>
+                                                <CardTitle className="text-lg text-blue-800">{mp.program?.name || mp.program?.name || mp.programName || 'Programa'}</CardTitle>
                                                 <Activity className="h-5 w-5 text-blue-500" />
                                             </CardHeader>
                                             <CardContent className="text-sm">
                                                 <p className="line-clamp-2 text-muted-foreground mb-3">{mp.notes}</p>
                                                 <div className="flex justify-between text-xs font-semibold text-blue-700">
-                                                    <span>Última visita: {format(new Date(mp.visitDate), 'dd/MM/yyyy')}</span>
+                                                    <span>Última visita: {format(new Date(mp.visitDate || mp.createdAt), 'dd/MM/yyyy')}</span>
                                                     <span>Próxima: {mp.nextAppointment ? format(new Date(mp.nextAppointment), 'dd/MM/yyyy') : 'N/A'}</span>
                                                 </div>
                                             </CardContent>
@@ -1491,6 +1640,15 @@ export default function PatientProfilePage() {
                 }}
             />
 
+            <AddEncounterModal
+                open={addEncounterOpen}
+                onOpenChange={setAddEncounterOpen}
+                patientId={id!}
+                onSuccess={() => {
+                    refetchHistory()
+                }}
+            />
+
             <AppointmentModal
                 open={createAppointmentOpen}
                 onOpenChange={setCreateAppointmentOpen}
@@ -1505,6 +1663,15 @@ export default function PatientProfilePage() {
                 defaultPatientId={id}
                 onSuccess={() => {
                     refetchEmergencies()
+                }}
+            />
+
+            <AddMinsaProgramModal
+                open={addMinsaProgramOpen}
+                onOpenChange={setAddMinsaProgramOpen}
+                patientId={id!}
+                onSuccess={() => {
+                    refetch()
                 }}
             />
             {/* AI Summary Modal */}

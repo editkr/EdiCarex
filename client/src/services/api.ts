@@ -122,8 +122,12 @@ export const patientsAPI = {
     addNote: (id: string, data: any) => api.post(`/patients/${id}/notes`, data),
     // Ext
     getVaccinations: (id: string) => api.get(`/patients/${id}/vaccinations`),
+    addVaccination: (id: string, data: any) => api.post(`/patients/${id}/vaccinations`, data),
     getEncounters: (id: string) => api.get(`/patients/${id}/encounters`),
     getMinsaPrograms: (id: string) => api.get(`/patients/${id}/minsa-programs`),
+    enrollMinsaProgram: (id: string, data: any) => api.post(`/patients/${id}/minsa-programs`, data),
+    getSISHistory: (id: string) => api.get(`/patients/${id}/sis-history`),
+    getDashboardStats: () => api.get('/patients/stats/dashboard'),
 }
 
 // ============================================
@@ -136,6 +140,7 @@ export const healthStaffAPI = {
     update: (id: string, data: any) => api.patch(`/health-staff/${id}`, data),
     delete: (id: string) => api.delete(`/health-staff/${id}`),
     getSpecialties: () => api.get('/health-staff/specialties'),
+    getStats: (id: string, period?: string) => api.get(`/health-staff/${id}/stats`, { params: { period } }),
     // Documents
     getDocuments: (id: string) => api.get(`/health-staff/${id}/documents`),
     addDocument: (id: string, data: any) => api.post(`/health-staff/${id}/documents`, data),
@@ -155,6 +160,8 @@ export const appointmentsAPI = {
     delete: (id: string) => api.delete(`/appointments/${id}`),
     cancel: (id: string) => api.patch(`/appointments/${id}/status`, { status: 'CANCELLED' }),
     getNotifications: (id: string) => api.get(`/appointments/${id}/notifications`),
+    getDashboardStats: () => api.get('/appointments/stats/dashboard'),
+    generateHis: (id: string) => api.post(`/appointments/${id}/generate-his`),
 }
 
 // ============================================
@@ -498,6 +505,16 @@ export const programasMinsaAPI = {
         api.get(`/programas-minsa/${programId}/records`, { params: { month } }),
     createRecord: (data: any) => api.post('/programas-minsa/records', data),
     updateRecord: (id: string, data: any) => api.put(`/programas-minsa/records/${id}`, data),
+}
+
+// ============================================
+// ENCOUNTERS API
+// ============================================
+export const encountersAPI = {
+    getAll: (params?: any) => api.get('/encounters', { params }),
+    getOne: (id: string) => api.get(`/encounters/${id}`),
+    create: (data: any) => api.post('/encounters', data),
+    update: (id: string, data: any) => api.patch(`/encounters/${id}`, data),
 }
 
 // ============================================

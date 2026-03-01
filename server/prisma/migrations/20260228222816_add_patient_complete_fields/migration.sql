@@ -1,0 +1,15 @@
+-- AlterTable
+ALTER TABLE "patients" ADD COLUMN     "documentType" TEXT NOT NULL DEFAULT 'DNI',
+ADD COLUMN     "educationLevel" TEXT,
+ADD COLUMN     "ethnicity" TEXT,
+ADD COLUMN     "familyFolderId" TEXT,
+ADD COLUMN     "isIntercultural" BOOLEAN NOT NULL DEFAULT false,
+ADD COLUMN     "lifeStage" TEXT,
+ADD COLUMN     "maritalStatus" TEXT,
+ADD COLUMN     "motherTongue" TEXT,
+ADD COLUMN     "occupation" TEXT,
+ADD COLUMN     "sector" TEXT,
+ADD COLUMN     "sisAssignedIpress" TEXT,
+ADD COLUMN     "sisModalidad" TEXT,
+ADD COLUMN     "ubigeo" TEXT NOT NULL DEFAULT '211101',
+ALTER COLUMN "insuranceProvider" SET DEFAULT 'SIS_PARA_TODOS';

@@ -16,7 +16,7 @@ import {
     FormMessage,
 } from '@/components/ui/form'
 import { useToast } from '@/components/ui/use-toast'
-import { hisAPI, patientsAPI } from '@/services/api'
+import { hisAPI, patientsAPI, healthStaffAPI } from '@/services/api'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { useAuthStore } from '@/stores/authStore'
 
@@ -29,6 +29,7 @@ const diagnosisSchema = z.object({
 const hisRecordSchema = z.object({
     attentionDate: z.string().min(1, 'La fecha es obligatoria'),
     patientId: z.string().min(1, 'Debe seleccionar un paciente'),
+    staffId: z.string().optional(),
     diagnoses: z.array(diagnosisSchema).min(1, 'Debe agregar al menos un diagnóstico')
 })
 
@@ -47,9 +48,17 @@ export default function HISReportingNewPage() {
         defaultValues: {
             attentionDate: new Date().toISOString().split('T')[0],
             patientId: '',
+            staffId: '',
             diagnoses: [{ code: '', type: 'DEFINITIVE', labValue: '' }]
         }
     })
+
+    // Personal disponible
+    const { data: staffData } = useQuery({
+        queryKey: ['staff-available'],
+        queryFn: () => healthStaffAPI.getAll({ isAvailable: 'true', limit: 100 }),
+    })
+    const availableStaff: any[] = staffData?.data?.data || []
 
     const { fields, append, remove } = useFieldArray({
         control: form.control,
@@ -70,6 +79,7 @@ export default function HISReportingNewPage() {
         mutationFn: async (data: HISFormData) => {
             const res = await hisAPI.create({
                 patientId: data.patientId,
+                staffId: data.staffId || undefined,
                 attentionDate: new Date(data.attentionDate).toISOString(),
                 diagnoses: data.diagnoses
             })
@@ -148,8 +158,28 @@ export default function HISReportingNewPage() {
                                         )}
                                     />
                                     <div className="space-y-1">
-                                        <label className="text-[10px] font-bold uppercase text-muted-foreground">Profesional</label>
-                                        <p className="text-sm font-semibold pt-1">{user?.firstName} {user?.lastName}</p>
+                                        <label className="text-[10px] font-bold uppercase text-muted-foreground">Profesional Responsable</label>
+                                        <FormField
+                                            control={form.control}
+                                            name="staffId"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormControl>
+                                                        <select
+                                                            {...field}
+                                                            className="h-9 rounded-md border border-input bg-transparent px-2 text-sm text-foreground"
+                                                        >
+                                                            <option value="">{user?.firstName} {user?.lastName} (actual)</option>
+                                                            {availableStaff.map((s: any) => (
+                                                                <option key={s.id} value={s.id}>
+                                                                    {s.user?.firstName} {s.user?.lastName} — {s.profession?.replace(/_/g, ' ')}
+                                                                </option>
+                                                            ))}
+                                                        </select>
+                                                    </FormControl>
+                                                </FormItem>
+                                            )}
+                                        />
                                     </div>
                                 </div>
                                 <div className="text-right">

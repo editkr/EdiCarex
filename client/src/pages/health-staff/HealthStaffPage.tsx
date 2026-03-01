@@ -247,11 +247,14 @@ export default function HealthStaffPage() {
         return { days: dayStr, hours }
     }
 
-    const filteredMembers = staff.filter((member: any) =>
-        `${member.user?.firstName} ${member.user?.lastName}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        member.specialization?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        member.licenseNumber?.includes(searchTerm)
-    )
+    const filteredMembers = staff.filter((member: any) => {
+        const fullName = `${member.user?.firstName} ${member.user?.lastName}`.toLowerCase()
+        const term = searchTerm.toLowerCase()
+        return fullName.includes(term) ||
+            member.licenseNumber?.includes(term) ||
+            member.dniNumber?.includes(term) ||
+            member.profession?.toLowerCase().includes(term)
+    })
 
     if (loading) {
         return (
@@ -294,122 +297,113 @@ export default function HealthStaffPage() {
 
             {/* Doctors Table */}
             <Card>
-                <Table>
-                    <TableHeader>
-                        <TableRow>
-                            <TableHead>Foto</TableHead>
-                            <TableHead>Nombre</TableHead>
-                            <TableHead>Especialidad</TableHead>
-                            <TableHead>Horario</TableHead>
-                            <TableHead>Estado</TableHead>
-                            <TableHead>Pacientes Hoy</TableHead>
-                            <TableHead>Teléfono</TableHead>
-                            <TableHead className="text-right">Acciones</TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {filteredMembers.length === 0 ? (
+                <div className="overflow-x-auto">
+                    <Table>
+                        <TableHeader>
                             <TableRow>
-                                <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
-                                    No se encontraron registros
-                                </TableCell>
+                                <TableHead>Personal</TableHead>
+                                <TableHead>Profesión</TableHead>
+                                <TableHead>Colegiatura</TableHead>
+                                <TableHead>Contrato</TableHead>
+                                <TableHead>Horario Asistencial</TableHead>
+                                <TableHead>Disponibilidad</TableHead>
+                                <TableHead className="text-right">Acciones</TableHead>
                             </TableRow>
-                        ) : (
-                            filteredMembers.map((member: any) => {
-                                const statusInfo = getStaffStatus(member)
-                                const patientsToday = getPatientsToday(member.id)
+                        </TableHeader>
+                        <TableBody>
+                            {filteredMembers.length === 0 ? (
+                                <TableRow>
+                                    <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                                        No se encontraron registros
+                                    </TableCell>
+                                </TableRow>
+                            ) : (
+                                filteredMembers.map((member: any) => {
+                                    const statusInfo = getStaffStatus(member)
 
-                                return (
-                                    <TableRow key={member.id} className="hover:bg-accent/50 transition-colors">
-                                        <TableCell>
-                                            {member.user?.avatar ? (
-                                                <img
-                                                    src={member.user.avatar}
-                                                    alt={`${member.user.firstName} ${member.user.lastName}`}
-                                                    className="h-10 w-10 rounded-full object-cover"
-                                                />
-                                            ) : (
-                                                <div className="h-10 w-10 rounded-full bg-gradient-to-br from-green-400 to-blue-500 flex items-center justify-center text-white font-semibold">
-                                                    {member.user?.firstName?.[0]}{member.user?.lastName?.[0]}
+                                    return (
+                                        <TableRow key={member.id} className="hover:bg-accent/50 transition-colors">
+                                            <TableCell>
+                                                <div className="flex items-center gap-3">
+                                                    {member.user?.avatar ? (
+                                                        <img src={member.user.avatar} alt="avatar" className="h-10 w-10 rounded-full object-cover" />
+                                                    ) : (
+                                                        <div className="h-10 w-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 font-semibold border">
+                                                            {member.user?.firstName?.[0]}{member.user?.lastName?.[0]}
+                                                        </div>
+                                                    )}
+                                                    <div>
+                                                        <p className="font-semibold text-slate-900">{member.user?.firstName} {member.user?.lastName}</p>
+                                                        <p className="text-xs text-slate-500">{member.dniNumber ? `DNI: ${member.dniNumber}` : 'Sin DNI'} • {member.user?.phone || 'Sin tel.'}</p>
+                                                    </div>
                                                 </div>
-                                            )}
-                                        </TableCell>
-                                        <TableCell className="font-medium">
-                                            <div>
-                                                <p>{member.user?.firstName} {member.user?.lastName}</p>
-                                                <p className="text-xs text-muted-foreground">
-                                                    Licencia: {member.licenseNumber}
-                                                </p>
-                                            </div>
-                                        </TableCell>
-                                        <TableCell>
-                                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-blue-100 text-blue-800">
-                                                {member.specialization || 'General'}
-                                            </span>
-                                        </TableCell>
-                                        <TableCell>
-                                            <ScheduleBadges schedules={member.schedules} />
-                                        </TableCell>
-                                        <TableCell>
-                                            <div className="flex items-center gap-2">
-                                                <Switch
-                                                    checked={member.isAvailable}
-                                                    onCheckedChange={() => handleToggleAvailability(member)}
-                                                />
-                                                <span className={`text-xs px-2 py-1 rounded-full ${statusInfo.bgColor} ${statusInfo.color}`}>
-                                                    {statusInfo.status}
-                                                </span>
-                                            </div>
-                                        </TableCell>
-                                        <TableCell>
-                                            <div className="flex items-center gap-2">
-                                                <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
-                                                    <span className="text-sm font-semibold text-primary">{patientsToday}</span>
+                                            </TableCell>
+                                            <TableCell>
+                                                <div className="flex flex-col">
+                                                    <span className="text-sm font-medium">{member.profession ? member.profession.replace(/_/g, ' ') : 'No especificado'}</span>
+                                                    {member.specialtyArea && <span className="text-xs text-slate-500">{member.specialtyArea.replace(/_/g, ' ')}</span>}
                                                 </div>
-                                                <span className="text-xs text-muted-foreground">pacientes</span>
-                                            </div>
-                                        </TableCell>
-                                        <TableCell>
-                                            <div className="flex items-center gap-1 text-sm">
-                                                <Phone className="h-3 w-3 text-muted-foreground" />
-                                                <span>{member.user?.phone || 'N/A'}</span>
-                                            </div>
-                                        </TableCell>
-                                        <TableCell className="text-right">
-                                            <div className="flex justify-end gap-2">
-                                                <Button
-                                                    variant="ghost"
-                                                    size="sm"
-                                                    onClick={() => handleViewProfile(member.id)}
-                                                >
-                                                    <Eye className="h-4 w-4" />
-                                                </Button>
-                                                {hasPermission('STAFF_EDIT') && (
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="sm"
-                                                        onClick={() => handleEdit(member)}
-                                                    >
-                                                        <Edit className="h-4 w-4" />
+                                            </TableCell>
+                                            <TableCell>
+                                                {member.licenseNumber ? (
+                                                    <div className="flex flex-col gap-1 items-start">
+                                                        <span className="text-xs font-medium">{member.collegiateBody}: {member.licenseNumber}</span>
+                                                        <span className={`text-[10px] w-fit px-2 py-0.5 rounded-full ${member.collegiateStatus === 'HABILITADO' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                                                            {member.collegiateStatus || 'DESCONOCIDO'}
+                                                        </span>
+                                                    </div>
+                                                ) : <span className="text-xs text-slate-400">No aplica</span>}
+                                            </TableCell>
+                                            <TableCell>
+                                                <div className="flex flex-col gap-1 items-start">
+                                                    <span className={`text-[10px] uppercase font-semibold w-fit px-2 py-1 rounded-md ${member.contractType === 'NOMBRADO' ? 'bg-blue-100 text-blue-700' :
+                                                        member.contractType === 'CAS' ? 'bg-amber-100 text-amber-700' :
+                                                            member.contractType === 'SERUMS' ? 'bg-purple-100 text-purple-700' :
+                                                                'bg-slate-100 text-slate-600'
+                                                        }`}>
+                                                        {member.contractType || 'NO DEFINIDO'}
+                                                    </span>
+                                                    {member.contractType === 'SERUMS' && <span className="text-[10px] text-slate-500">Ciclo {member.serumsCycle}</span>}
+                                                </div>
+                                            </TableCell>
+                                            <TableCell>
+                                                <ScheduleBadges schedules={member.schedules} />
+                                            </TableCell>
+                                            <TableCell>
+                                                <div className="flex items-center gap-2">
+                                                    <Switch
+                                                        checked={member.isAvailable}
+                                                        onCheckedChange={() => handleToggleAvailability(member)}
+                                                    />
+                                                    <span className={`text-[10px] font-semibold px-2 py-1 rounded-full ${statusInfo.bgColor} ${statusInfo.color}`}>
+                                                        {statusInfo.status}
+                                                    </span>
+                                                </div>
+                                            </TableCell>
+                                            <TableCell className="text-right">
+                                                <div className="flex justify-end gap-1">
+                                                    <Button variant="ghost" size="sm" onClick={() => handleViewProfile(member.id)} title="Ver Perfil">
+                                                        <Eye className="h-4 w-4" />
                                                     </Button>
-                                                )}
-                                                {hasPermission('STAFF_DELETE') && (
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="sm"
-                                                        onClick={() => setDeleteId(member.id)}
-                                                    >
-                                                        <Trash2 className="h-4 w-4 text-red-500" />
-                                                    </Button>
-                                                )}
-                                            </div>
-                                        </TableCell>
-                                    </TableRow>
-                                )
-                            })
-                        )}
-                    </TableBody>
-                </Table>
+                                                    {hasPermission('STAFF_EDIT') && (
+                                                        <Button variant="ghost" size="sm" onClick={() => handleEdit(member)} title="Editar">
+                                                            <Edit className="h-4 w-4 text-slate-600" />
+                                                        </Button>
+                                                    )}
+                                                    {hasPermission('STAFF_DELETE') && (
+                                                        <Button variant="ghost" size="sm" onClick={() => setDeleteId(member.id)} title="Eliminar">
+                                                            <Trash2 className="h-4 w-4 text-red-500" />
+                                                        </Button>
+                                                    )}
+                                                </div>
+                                            </TableCell>
+                                        </TableRow>
+                                    )
+                                })
+                            )}
+                        </TableBody>
+                    </Table>
+                </div>
             </Card>
 
             {/* Modal */}

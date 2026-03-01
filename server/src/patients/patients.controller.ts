@@ -61,19 +61,48 @@ export class PatientsController {
     @ApiQuery({ name: 'query', required: false, type: String })
     @ApiQuery({ name: 'gender', required: false, type: String })
     @ApiQuery({ name: 'status', required: false, type: String })
+    @ApiQuery({ name: 'insuranceType', required: false, type: String })
+    @ApiQuery({ name: 'sisStatus', required: false, type: String })
+    @ApiQuery({ name: 'lifeStage', required: false, type: String })
+    @ApiQuery({ name: 'sector', required: false, type: String })
+    @ApiQuery({ name: 'ubigeo', required: false, type: String })
+    @ApiQuery({ name: 'isIntercultural', required: false, type: Boolean })
     findAll(
         @Query('page') page?: string,
         @Query('limit') limit?: string,
         @Query('query') query?: string,
         @Query('gender') gender?: string,
         @Query('status') status?: string,
+        @Query('insuranceType') insuranceType?: string,
+        @Query('sisStatus') sisStatus?: string,
+        @Query('lifeStage') lifeStage?: string,
+        @Query('sector') sector?: string,
+        @Query('ubigeo') ubigeo?: string,
+        @Query('isIntercultural') isIntercultural?: string,
     ) {
-        const search: SearchPatientsDto = { query, gender, status };
+        const search: SearchPatientsDto = {
+            query,
+            gender,
+            status,
+            insuranceType,
+            sisStatus,
+            lifeStage,
+            sector,
+            ubigeo,
+            isIntercultural
+        };
         return this.patientsService.findAll(
             page ? parseInt(page) : 1,
             limit ? parseInt(limit) : 20,
             search,
         );
+    }
+
+    @Get('stats/dashboard')
+    @ApiOperation({ summary: 'Get patients statistics for dashboard' })
+    @RequirePermission('PATIENTS_VIEW')
+    getDashboardStats() {
+        return this.patientsService.getDashboardStats();
     }
 
     @Get(':id')
@@ -292,5 +321,12 @@ export class PatientsController {
     @ApiOperation({ summary: 'Get patient MINSA program records' })
     getMinsaPrograms(@Param('id') id: string) {
         return this.patientsService.getMinsaPrograms(id);
+    }
+
+    @Get(':id/sis-history')
+    @ApiOperation({ summary: 'Get patient SIS validation history' })
+    @RequirePermission('PATIENTS_VIEW')
+    getSisHistory(@Param('id') id: string) {
+        return this.patientsService.getSisHistory(id);
     }
 }

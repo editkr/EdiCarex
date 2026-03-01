@@ -56,11 +56,13 @@ import {
 } from "@/components/ui/alert-dialog"
 
 import { usePermissions } from '@/hooks/usePermissions'
+import { useAuthStore } from '@/stores/authStore'
 
 export default function PatientsPage() {
     const navigate = useNavigate()
     const { toast } = useToast()
     const { hasPermission } = usePermissions()
+    const user = useAuthStore(state => state.user)
 
     // Estados
     const [searchTerm, setSearchTerm] = useState('')
@@ -203,22 +205,16 @@ export default function PatientsPage() {
         try {
             const doc = new jsPDF() as any
 
-            // Header - Institucional MINSA/DIRESA
+            // Header
             doc.setFontSize(14)
             doc.setTextColor(30)
-            doc.text('C.S. JORGE CHÁVEZ I-4 - RED SAN ROMÁN', 14, 20)
-            doc.setFontSize(10)
-            doc.setTextColor(80)
-            doc.text('MICRORED SANTA ADRIANA - DIRESA PUNO', 14, 26)
-
-            doc.setFontSize(16)
-            doc.setTextColor(40)
-            doc.text('REPORTE GENERAL DE PACIENTES', 14, 36)
+            const orgTitle = (user as any)?.organization ? `${(user as any).organization.name} | IPRESS ${(user as any).organization.code}` : 'Centro de Salud Jorge Chávez | IPRESS 00003308'
+            doc.text(`REPORTE DE PACIENTES — ${orgTitle}`, 14, 20)
 
             doc.setFontSize(10)
             doc.setTextColor(100)
-            doc.text(`Generado el: ${format(new Date(), 'PPP', { locale: es })}`, 14, 44)
-            doc.text(`Total de pacientes: ${filteredPatients.length}`, 14, 50)
+            doc.text(`Generado el: ${format(new Date(), 'PPP', { locale: es })}`, 14, 30)
+            doc.text(`Total de registros: ${filteredPatients.length}`, 14, 36)
 
             // Table data
             const tableData = filteredPatients.map((patient: any) => [
@@ -420,6 +416,17 @@ export default function PatientsPage() {
         return colors[priority] || colors.MEDIUM
     }
 
+    const getLifeStageBadge = (stage: string) => {
+        switch (stage?.toUpperCase()) {
+            case 'NIÑO': return 'bg-sky-100 text-sky-800 border-sky-200'
+            case 'ADOLESCENTE': return 'bg-emerald-100 text-emerald-800 border-emerald-200'
+            case 'JOVEN': return 'bg-indigo-100 text-indigo-800 border-indigo-200'
+            case 'ADULTO': return 'bg-slate-100 text-slate-800 border-slate-200'
+            case 'ADULTO_MAYOR': return 'bg-stone-100 text-stone-800 border-stone-200'
+            default: return 'bg-gray-100 text-gray-800 border-gray-200'
+        }
+    }
+
     if (isLoading) {
         return (
             <div className="flex items-center justify-center h-96">
@@ -564,11 +571,9 @@ export default function PatientsPage() {
                         <TableRow>
                             <TableHead>Foto</TableHead>
                             <TableHead>Nombre Completo</TableHead>
-                            <TableHead>DNI/ID</TableHead>
-                            <TableHead>Género</TableHead>
-                            <TableHead>Edad</TableHead>
-                            <TableHead>Estado SIS</TableHead>
-                            <TableHead>Teléfono</TableHead>
+                            <TableHead>Documento</TableHead>
+                            <TableHead>Datos Vitales</TableHead>
+                            <TableHead>Seguro / Financiamiento</TableHead>
                             <TableHead>Prioridad</TableHead>
                             <TableHead>Última Visita</TableHead>
                             <TableHead>Estado</TableHead>
@@ -604,26 +609,50 @@ export default function PatientsPage() {
                                         </div>
                                     </TableCell>
                                     <TableCell className="font-medium">
-                                        {patient.firstName} {patient.lastName}
+                                        <div className="flex flex-col">
+                                            <span>{patient.firstName} {patient.lastName}</span>
+                                            <span className="text-xs text-muted-foreground">{patient.phone || 'Sin teléfono'}</span>
+                                        </div>
                                     </TableCell>
-                                    <TableCell>{patient.documentNumber || 'N/A'}</TableCell>
-                                    <TableCell>{patient.gender || 'N/A'}</TableCell>
-                                    <TableCell>{calculateAge(patient.dateOfBirth)}</TableCell>
+                                    <TableCell>
+                                        <div className="flex flex-col">
+                                            <span className="text-xs text-muted-foreground font-semibold">{patient.documentType || 'DNI'}</span>
+                                            <span>{patient.documentNumber || 'N/A'}</span>
+                                        </div>
+                                    </TableCell>
                                     <TableCell>
                                         <div className="flex flex-col gap-1 items-start">
-                                            <span className="text-xs text-muted-foreground">{patient.sisCode || 'Sin código'}</span>
-                                            {patient.sisStatus === 'ACTIVE' ? (
-                                                <Badge variant="outline" className="text-[10px] h-4 px-1 py-0 bg-green-50 text-green-700 border-green-200">
-                                                    SIS Activo
-                                                </Badge>
-                                            ) : (
-                                                <Badge variant="outline" className="text-[10px] h-4 px-1 py-0 bg-slate-50 text-slate-500 border-slate-200">
-                                                    {patient.sisStatus === 'NOT_AFFILIATED' ? 'No Afiliado' : patient.sisStatus || 'Validar'}
+                                            <span className="text-sm">{calculateAge(patient.dateOfBirth)} años ({patient.gender === 'MALE' ? 'M' : patient.gender === 'FEMALE' ? 'F' : 'O'})</span>
+                                            {patient.lifeStage && (
+                                                <Badge variant="outline" className={`text-[10px] h-4 px-1.5 py-0 ${getLifeStageBadge(patient.lifeStage)}`}>
+                                                    {patient.lifeStage.replace('_', ' ')}
                                                 </Badge>
                                             )}
                                         </div>
                                     </TableCell>
-                                    <TableCell>{patient.phone || 'N/A'}</TableCell>
+                                    <TableCell>
+                                        <div className="flex flex-col gap-1 items-start">
+                                            <span className="text-sm truncate w-[140px] font-medium" title={patient.insuranceProvider || 'Ninguno'}>
+                                                {patient.insuranceProvider?.replace(/_/g, ' ') || 'Ninguno'}
+                                            </span>
+                                            {patient.insuranceProvider?.startsWith('SIS') ? (
+                                                <div className="flex items-center gap-1">
+                                                    <span className="text-[10px] text-muted-foreground">{patient.sisCode || 'Sin código'}</span>
+                                                    {patient.sisStatus === 'ACTIVO' || patient.sisStatus === 'ACTIVE' ? (
+                                                        <Badge variant="outline" className="text-[10px] h-4 px-1 py-0 bg-green-50 text-green-700 border-green-200">
+                                                            ACTIVO
+                                                        </Badge>
+                                                    ) : (
+                                                        <Badge variant="outline" className="text-[10px] h-4 px-1 py-0 bg-red-50 text-red-700 border-red-200">
+                                                            {patient.sisStatus || 'INACTIVO'}
+                                                        </Badge>
+                                                    )}
+                                                </div>
+                                            ) : (
+                                                <span className="text-[10px] text-muted-foreground truncate w-[120px]">{patient.insuranceNumber || 'Sin Póliza'}</span>
+                                            )}
+                                        </div>
+                                    </TableCell>
                                     <TableCell>
                                         <span className={`text-xs px-2 py-1 rounded-full ${getPriorityBadge(getPatientPriority(patient))}`}>
                                             {getPatientPriority(patient) === 'HIGH' ? 'ALTA' :
